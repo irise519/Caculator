@@ -403,7 +403,6 @@
                     });
                     semestersContainer.appendChild(semesterEl);
                 });
-                // ✅ 修复：将不完整的 "container.appendChil" 修正为完整的 appendChild 语句
                 container.appendChild(studentContent);
                 updateAllCalculations();
             }
@@ -503,35 +502,60 @@
                     showError('数据更新失败', error.message);
                 }
             });
+
+            // === 修改开始 ===
+            // === 解决输入失焦问题：使用防抖（Debounced Save） ===
+            // 在全局作用域声明一个变量来存储防抖定时器
+            let saveTimeout = null;
+
+            // 修改 input 事件监听器
             document.getElementById('student-content-container').addEventListener('input', async (e) => {
                 if (!selectedStudentId || !currentUser) return;
-                const studentDocRef = doc(db, 'users', currentUser.uid, 'students', selectedStudentId);
-                let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
-                if (!studentData) return;
-                const target = e.target;
-                const courseCard = target.closest('.course-card');
+
+                // 获取当前输入框所在的课程卡片
+                const courseCard = e.target.closest('.course-card');
                 if (!courseCard) return;
+
+                // 获取数据索引
                 const { semesterIndex, courseIndex } = courseCard.dataset;
-                const courseData = studentData.semesters[semesterIndex].courses[courseIndex];
-                if (target.classList.contains('course-name-input')) courseData.name = target.value;
-                if (target.classList.contains('course-credits-input')) courseData.credits = target.value;
-                if (target.classList.contains('target-grade-input')) courseData.targetGrade = target.value;
-                const assignmentRow = target.closest('.assignment-row');
-                if (assignmentRow) {
-                    const { assignmentIndex } = assignmentRow.dataset;
-                    const assignmentData = courseData.assignments[assignmentIndex];
-                    if (target.classList.contains('assignment-name-input')) assignmentData.name = target.value;
-                    if (target.classList.contains('assignment-weight-input')) assignmentData.weight = target.value;
-                    if (target.classList.contains('assignment-score-input')) assignmentData.score = target.value;
-                    if (target.classList.contains('assignment-max-score-input')) assignmentData.maxScore = target.value;
-                }
-                try {
-                    await updateDoc(studentDocRef, { semesters: studentData.semesters });
-                } catch (error) {
-                    console.error("输入更新失败", error);
-                    showError('输入更新失败', error.message);
-                }
+                const assignmentRow = e.target.closest('.assignment-row');
+                const assignmentIndex = assignmentRow ? assignmentRow.dataset.assignmentIndex : null;
+
+                // 清除之前的保存定时器
+                if (saveTimeout) clearTimeout(saveTimeout);
+
+                // 设置新的定时器，延迟 500ms 执行保存
+                saveTimeout = setTimeout(async () => {
+                    try {
+                        const studentDocRef = doc(db, 'users', currentUser.uid, 'students', selectedStudentId);
+                        let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
+                        if (!studentData) return;
+
+                        // 更新课程数据
+                        const courseData = studentData.semesters[semesterIndex].courses[courseIndex];
+                        if (e.target.classList.contains('course-name-input')) courseData.name = e.target.value;
+                        if (e.target.classList.contains('course-credits-input')) courseData.credits = e.target.value;
+                        if (e.target.classList.contains('target-grade-input')) courseData.targetGrade = e.target.value;
+
+                        // 更新作业数据
+                        if (assignmentRow && assignmentIndex !== null) {
+                            const assignmentData = courseData.assignments[assignmentIndex];
+                            if (e.target.classList.contains('assignment-name-input')) assignmentData.name = e.target.value;
+                            if (e.target.classList.contains('assignment-weight-input')) assignmentData.weight = e.target.value;
+                            if (e.target.classList.contains('assignment-score-input')) assignmentData.score = e.target.value;
+                            if (e.target.classList.contains('assignment-max-score-input')) assignmentData.maxScore = e.target.value;
+                        }
+
+                        // 执行 Firestore 更新
+                        await updateDoc(studentDocRef, { semesters: studentData.semesters });
+                    } catch (error) {
+                        console.error("输入更新失败", error);
+                        showError('输入更新失败', error.message);
+                    }
+                }, 500); // 500ms 防抖
             });
+            // === 修改结束 ===
+
             // === 计算逻辑 ===
             function updateAllCalculations() {
                 if (!selectedStudentId) return;
