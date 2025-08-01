@@ -352,7 +352,6 @@
             let studentsUnsubscribe = null;
             let localStudentsData = [];
             let selectedStudentId = null;
-            let saveTimeout = null;
 
             // === UI 元素 ===
             const ui = {
@@ -439,6 +438,7 @@
 
             // === 渲染逻辑 ===
             function renderStudentSelector() {
+                const currentFocus = document.activeElement;
                 ui.studentSelector.innerHTML = '';
                 if (localStudentsData.length === 0) {
                     ui.studentSelector.innerHTML = '<option disabled selected>请先添加学生</option>';
@@ -457,9 +457,16 @@
                     selectedStudentId = localStudentsData[0]?.id || null;
                     ui.studentSelector.value = selectedStudentId;
                 }
+                if (currentFocus && currentFocus.id === 'student-selector') {
+                    ui.studentSelector.focus();
+                }
             }
 
             function renderStudentContent() {
+                // 保存当前焦点
+                const activeEl = document.activeElement;
+                const activeElPath = getElementPath(activeEl);
+
                 ui.studentContentContainer.innerHTML = '';
                 if (!selectedStudentId) {
                     updateAllCalculations(); // 清空总览数据
@@ -469,7 +476,6 @@
                 if (!student) return;
                 const studentContent = document.getElementById('student-content-template').content.cloneNode(true);
                 const semestersContainer = studentContent.querySelector('.space-y-12');
-                // 确保 semesters 字段存在且是数组
                 if (Array.isArray(student.semesters)) {
                     student.semesters.forEach((semesterData, semesterIndex) => {
                         const semesterEl = createSemesterElement(semesterData, semesterIndex);
@@ -478,7 +484,65 @@
                 }
                 ui.studentContentContainer.appendChild(studentContent);
                 updateAllCalculations();
+                
+                // 恢复焦点
+                if (activeElPath) {
+                    const newActiveEl = findElementByPath(activeElPath);
+                    if (newActiveEl) {
+                        newActiveEl.focus();
+                        // 如果是输入框，恢复光标位置
+                        if (activeEl.tagName === 'INPUT' && typeof activeEl.selectionStart === 'number') {
+                            newActiveEl.selectionStart = activeEl.selectionStart;
+                            newActiveEl.selectionEnd = activeEl.selectionEnd;
+                        }
+                    }
+                }
             }
+            
+            // === 焦点管理辅助函数 ===
+            function getElementPath(el) {
+                if (!el || !el.closest || !el.closest('#student-content-container')) return null;
+                const path = [];
+                let current = el;
+                while (current && current.id !== 'student-content-container') {
+                    const parent = current.parentElement;
+                    if (!parent) break;
+                    const index = Array.from(parent.children).indexOf(current);
+                    const part = {
+                        tag: current.tagName,
+                        index: index,
+                        className: current.className, // 使用className作为更可靠的标识
+                        dataset: { ...current.dataset }
+                    };
+                    path.unshift(part);
+                    current = parent;
+                }
+                return path;
+            }
+
+            function findElementByPath(path) {
+                let current = document.getElementById('student-content-container');
+                for (const part of path) {
+                    if (!current) return null;
+                    const children = Array.from(current.children);
+                    let found = false;
+                    for(let i = 0; i < children.length; i++) {
+                        const child = children[i];
+                        // 匹配更具体的标识
+                        if(child.tagName === part.tag && child.className === part.className && JSON.stringify(child.dataset) === JSON.stringify(part.dataset)){
+                            current = child;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(!found) {
+                        // 如果精确匹配失败，退回到按索引匹配
+                        current = children[part.index];
+                    }
+                }
+                return current;
+            }
+
 
             function createSemesterElement(semesterData, semesterIndex) {
                  const semesterTemplate = document.getElementById('semester-template').content.cloneNode(true);
@@ -618,43 +682,43 @@
                 }
             });
 
-            // === 输入事件监听 (防抖保存) ===
-            ui.studentContentContainer.addEventListener('input', (e) => {
+            // === 数据保存事件监听 (修复输入打断问题) ===
+            // 使用 'change' 事件代替 'input' 事件。
+            // 'change' 在 input 元素失去焦点且值已改变时触发，
+            // 这完美地解决了输入被打断的问题，同时确保了数据在用户完成输入后保存。
+            ui.studentContentContainer.addEventListener('change', (e) => {
                 if (!selectedStudentId || !currentUser) return;
                 const target = e.target;
                 if (!target.closest('.semester-section')) return;
 
-                clearTimeout(saveTimeout);
-                saveTimeout = setTimeout(() => {
-                    let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
-                    if (!studentData) return;
+                let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
+                if (!studentData) return;
 
-                    const semesterSection = target.closest('.semester-section');
-                    const courseCard = target.closest('.course-card');
-                    const assignmentRow = target.closest('.assignment-row');
-                    
-                    const { semesterIndex } = semesterSection.dataset;
-                    
-                    if (target.classList.contains('semester-name-input')) {
-                        studentData.semesters[semesterIndex].name = target.value;
-                    } else if (courseCard) {
-                        const { courseIndex } = courseCard.dataset;
-                        const courseData = studentData.semesters[semesterIndex].courses[courseIndex];
-                        if (assignmentRow) {
-                            const { assignmentIndex } = assignmentRow.dataset;
-                            const assignmentData = courseData.assignments[assignmentIndex];
-                            if (target.classList.contains('assignment-name-input')) assignmentData.name = target.value;
-                            if (target.classList.contains('assignment-weight-input')) assignmentData.weight = target.value;
-                            if (target.classList.contains('assignment-score-input')) assignmentData.score = target.value;
-                            if (target.classList.contains('assignment-max-score-input')) assignmentData.maxScore = target.value;
-                        } else {
-                            if (target.classList.contains('course-name-input')) courseData.name = target.value;
-                            if (target.classList.contains('course-credits-input')) courseData.credits = target.value;
-                            if (target.classList.contains('target-grade-input')) courseData.targetGrade = target.value;
-                        }
+                const semesterSection = target.closest('.semester-section');
+                const courseCard = target.closest('.course-card');
+                const assignmentRow = target.closest('.assignment-row');
+                
+                const { semesterIndex } = semesterSection.dataset;
+                
+                if (target.classList.contains('semester-name-input')) {
+                    studentData.semesters[semesterIndex].name = target.value;
+                } else if (courseCard) {
+                    const { courseIndex } = courseCard.dataset;
+                    const courseData = studentData.semesters[semesterIndex].courses[courseIndex];
+                    if (assignmentRow) {
+                        const { assignmentIndex } = assignmentRow.dataset;
+                        const assignmentData = courseData.assignments[assignmentIndex];
+                        if (target.classList.contains('assignment-name-input')) assignmentData.name = target.value;
+                        if (target.classList.contains('assignment-weight-input')) assignmentData.weight = target.value;
+                        if (target.classList.contains('assignment-score-input')) assignmentData.score = target.value;
+                        if (target.classList.contains('assignment-max-score-input')) assignmentData.maxScore = target.value;
+                    } else {
+                        if (target.classList.contains('course-name-input')) courseData.name = target.value;
+                        if (target.classList.contains('course-credits-input')) courseData.credits = target.value;
+                        if (target.classList.contains('target-grade-input')) courseData.targetGrade = target.value;
                     }
-                    updateStudentData(studentData.semesters);
-                }, 1500); // 1500ms 防抖
+                }
+                updateStudentData(studentData.semesters);
             });
 
             // === 计算逻辑 ===
