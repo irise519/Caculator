@@ -7,19 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    <script>
-        (function (jsPDFAPI) {
-            'use strict';
-            var font = 'AAEAAAAKAIAAAwAgT1MvMjv3l7cAAAEoAAAAYGNtYXABDQGXAAABsAAAAkRjdnQgEGkC7AAABZAAAAEUZ2x5Zg2s6pEAAAWsAAGNbGhlYWQGZuKBAA0e8AAAADZoaGVhB/8D3AANHvwAAAA2aGhlYwz/DrwADSQQAAADYbG9jYQG8BIwADSYIAAAGeG1heHABDQG2AA0mqAAAACBuYW1lGk9qBQA0nFAAAApocG9zdP+eADIAADtEAAAAoAAAAAAAAAAAAAAAO3sAAQAAAAABAACoAAAAAQAAAAIAAgAAAAEAAAAAAAUAAQAAAAAAAQAAAAIZAAAACGMAAAMDAAAAAgABBQMAAAAAAAABAAYGAAAAAAACAAkACgABAAAAAAAEAAEAAAAAAAAAAAAAAQAAAAEAAAAAAAEAAQAAAAEAAAAAAAEAAQAAAAEAAAAAAAEAAQAAAAEAAAAAAAEAAQAAAAEAAAAAAAEAAQAAAAEAAAAAAAMAAQAFAAEAAAAAAAQABABQAAEAAAAAAAUACQBMAAEAAAAAAAYAAQAGAAMAAEAAAAAAAQAAAAAAAwACAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAADgAAAAAAAAAAAAAAAQAAAAAAAQAAAAAAAAAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAAAAAQAAAAEAAAABAAAAAAAAAQAAAAEAAAAAAAAAAQAAAAEAAAAAAAAAAQAAAAEAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACgAAABAAAAADAAAAAwAAABwAAQAAAAAAbwA3AAUAAAAAAAoAVgADAAEECQAAAAQAgAADAQEECQABABYAAAEDAQEECQACABYAAAEDAQEECQADACwAAAEDAQEECQAEABYAAAEDAQEECQAFABYAAAEDAQEECQAGAEAAAAAAVgBlAHIAcwBpAG8AbgAgADEALgAwADEAVgBlAHIAcwBpAG8AbgAgADEALgAwADEAUwBpAG0ASABlAGkAUwBpAG0ASABlAGkAUwBpAG0ASABlAGkAUgBlAGcAdQBsAGEAcgBSAGUAZwB1AGwAYQByAFMAaQBtAEgAZQBpACAAUgBlAGcAdQBsAGEAcgBTAGkAbQBIAGUAaQAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
-            var callAddFont = function () {
-                this.addFileToVFS('simhei.ttf', font);
-                this.addFont('simhei.ttf', 'simhei', 'normal');
-            };
-            jsPDFAPI.events.push(['addFonts', callAddFont]);
-        })(jsPDF.API);
-    </script>
     <style>
         body {
             font-family: 'Inter', 'Helvetica Neue', 'Arial', 'sans-serif';
@@ -75,6 +62,11 @@
             border-radius: 0.5rem;
             margin-bottom: 1rem;
         }
+        /* === 新增样式：根据分数动态着色 === */
+        .score-excellent { color: #10b981; } /* 绿色 */
+        .score-good { color: #3b82f6; } /* 蓝色 */
+        .score-average { color: #f59e0b; } /* 黄色 */
+        .score-poor { color: #ef4444; } /* 红色 */
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -115,19 +107,21 @@
                             </svg>
                         </button>
                     </div>
+                    <!-- === 新增：在导出菜单中添加 "清空所有数据" 选项 === -->
                     <div id="export-menu-options" class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="export-menu-btn">
                         <div class="py-1" role="none">
                             <a href="#" id="export-txt" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1">为 Text (.txt)</a>
                             <a href="#" id="export-doc" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1">为 Word (.doc)</a>
-                            <a href="#" id="export-pdf" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1">为 PDF (.pdf)</a>
                             <a href="#" id="export-xlsx" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1">为 Excel (.xlsx)</a>
+                        </div>
+                        <div class="border-t border-gray-200 py-1">
+                            <a href="#" id="clear-all-data" class="text-red-600 block px-4 py-2 text-sm hover:bg-red-50" role="menuitem" tabindex="-1">清空所有数据</a>
                         </div>
                     </div>
                 </div>
                 <button id="logout-btn" class="btn btn-secondary">登出</button>
             </div>
         </header>
-
         <div class="card p-6 mb-8 fade-in">
             <div class="grid md:grid-cols-3 gap-6 items-end">
                 <div class="md:col-span-1">
@@ -151,7 +145,6 @@
                 </div>
             </div>
         </div>
-
         <div id="overall-summary-card" class="card p-6 mb-10 fade-in">
             <h2 class="text-xl font-bold text-gray-800 mb-4">学业总览</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -165,9 +158,7 @@
                 </div>
             </div>
         </div>
-
         <div id="student-content-container"></div>
-        
         <div class="mt-10 text-center">
             <button id="add-semester-btn" class="btn btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" /></svg>
@@ -199,6 +190,7 @@
             <h3 id="confirm-modal-title" class="text-xl font-bold mb-4 text-gray-800">确认操作</h3>
             <p id="confirm-modal-body" class="mb-8 text-gray-600">您确定要继续吗？此操作无法撤销。</p>
             <div class="flex justify-end space-x-4">
+                <!-- === 用户友好性：将取消按钮放在左边，确认按钮放在右边 === -->
                 <button id="confirm-modal-cancel-btn" class="btn btn-secondary">取消</button>
                 <button id="confirm-modal-confirm-btn" class="btn btn-danger">确认删除</button>
             </div>
@@ -258,7 +250,7 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div>
-                        <label class="text-sm font-medium text-gray-500">学分</label>
+                        <label class="text-sm font-medium text-gray-500">学期总分权重</label>
                         <input type="number" min="0" step="0.5" placeholder="3" class="course-credits-input form-input w-full p-2 mt-1 rounded-md">
                     </div>
                     <div>
@@ -275,6 +267,8 @@
                         <thead class="border-b-2 border-gray-200">
                             <tr>
                                 <th class="p-3 text-sm font-semibold text-gray-500">评分项目</th>
+                                <!-- === 新增：为评分项目添加“类型”表头 === -->
+                                <th class="p-3 text-sm font-semibold text-gray-500">类型</th>
                                 <th class="p-3 text-sm font-semibold text-gray-500">权重(%)</th>
                                 <th class="p-3 text-sm font-semibold text-gray-500">得分</th>
                                 <th class="p-3 text-sm font-semibold text-gray-500">满分</th>
@@ -301,6 +295,19 @@
             <tr class="assignment-row border-b border-gray-100 last:border-b-0">
                 <td class="p-2">
                     <input type="text" placeholder="例如: 期中论文" class="assignment-name-input w-full bg-transparent outline-none p-1">
+                </td>
+                <!-- === 新增：为评分项目添加“类型”选择框 === -->
+                <td class="p-2">
+                    <select class="assignment-type-input w-full bg-transparent outline-none p-1">
+                        <option value="">请选择</option>
+                        <option value="作业">作业</option>
+                        <option value="小测验">小测验</option>
+                        <option value="期中考试">期中考试</option>
+                        <option value="期末考试">期末考试</option>
+                        <option value="项目">项目</option>
+                        <option value="出勤">出勤</option>
+                        <option value="其他">其他</option>
+                    </select>
                 </td>
                 <td class="p-2">
                     <input type="number" min="0" placeholder="20" class="assignment-weight-input w-20 bg-transparent outline-none p-1 text-center">
@@ -337,10 +344,27 @@
                 errorDiv.remove();
             }, 6000);
         }
+        // === 新增：成功提示函数 ===
+        function showSuccess(message) {
+            const errorContainer = document.getElementById('error-container');
+            const successId = `success-${Date.now()}`;
+            const successDiv = document.createElement('div');
+            successDiv.id = successId;
+            successDiv.className = 'fade-in p-4 mb-2 rounded-lg bg-green-50 border border-green-200 text-green-800';
+            successDiv.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span><strong>成功:</strong> ${message}</span>
+                    <button onclick="document.getElementById('${successId}').remove()" class="text-lg font-bold text-green-600">&times;</button>
+                </div>
+            `;
+            errorContainer.appendChild(successDiv);
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000); // 3秒后自动消失
+        }
         function updateStatus(message) {
             document.getElementById('status-message').textContent = message;
         }
-
         // === Firebase 配置和初始化 ===
         updateStatus('正在初始化 Firebase...');
         try {
@@ -348,7 +372,6 @@
             const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
             const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
             const { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, query, orderBy } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-            
             // Firebase 配置 (请替换为您自己的配置)
             const firebaseConfig = {
                 apiKey: "AIzaSyBgYSM_HCYqUSvIN5VifHbX-j9p6IjhVJs",
@@ -358,7 +381,6 @@
                 messagingSenderId: "887928734431",
                 appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"
             };
-            
             // 初始化 Firebase
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
@@ -366,13 +388,11 @@
             const provider = new GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
             updateStatus('Firebase 初始化成功！');
-
             // === 应用状态变量 ===
             let currentUser = null;
             let studentsUnsubscribe = null;
             let localStudentsData = [];
             let selectedStudentId = null;
-
             // === UI 元素 ===
             const ui = {
                 loginView: document.getElementById('login-view'),
@@ -398,7 +418,6 @@
                     options: document.getElementById('export-menu-options'),
                 }
             };
-            
             // === 确认模态框逻辑 ===
             let confirmCallback = null;
             const showConfirmModal = (title, body, onConfirm) => {
@@ -418,7 +437,6 @@
                 hideConfirmModal();
             });
             ui.confirmModal.cancelBtn.addEventListener('click', hideConfirmModal);
-
             // === 认证状态管理 ===
             onAuthStateChanged(auth, (user) => {
                 ui.loadingOverlay.style.display = 'flex';
@@ -438,11 +456,9 @@
                     updateStatus('请点击按钮登录');
                 }
             });
-
             // === 登录和登出处理 ===
             document.getElementById('login-btn').addEventListener('click', () => signInWithPopup(auth, provider).catch(err => showError('登录失败', err.message)));
             document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).catch(err => showError('登出失败', err.message)));
-
             // === Firestore 数据监听 ===
             function setupStudentListener() {
                 if (!currentUser) return;
@@ -459,7 +475,6 @@
                     ui.loadingOverlay.style.display = 'none';
                 });
             }
-
             // === 渲染逻辑 ===
             function renderStudentSelector() {
                 const currentFocus = document.activeElement;
@@ -485,12 +500,10 @@
                     ui.studentSelector.focus();
                 }
             }
-
             function renderStudentContent() {
                 // 保存当前焦点
                 const activeEl = document.activeElement;
                 const activeElPath = getElementPath(activeEl);
-
                 ui.studentContentContainer.innerHTML = '';
                 if (!selectedStudentId) {
                     updateAllCalculations(); // 清空总览数据
@@ -508,7 +521,6 @@
                 }
                 ui.studentContentContainer.appendChild(studentContent);
                 updateAllCalculations();
-                
                 // 恢复焦点
                 if (activeElPath) {
                     const newActiveEl = findElementByPath(activeElPath);
@@ -522,7 +534,6 @@
                     }
                 }
             }
-            
             // === 焦点管理辅助函数 ===
             function getElementPath(el) {
                 if (!el || !el.closest || !el.closest('#student-content-container')) return null;
@@ -543,7 +554,6 @@
                 }
                 return path;
             }
-
             function findElementByPath(path) {
                 let current = document.getElementById('student-content-container');
                 for (const part of path) {
@@ -566,12 +576,40 @@
                 }
                 return current;
             }
-
-
             function createSemesterElement(semesterData, semesterIndex) {
                  const semesterTemplate = document.getElementById('semester-template').content.cloneNode(true);
                  const semesterEl = semesterTemplate.querySelector('.semester-section');
                  semesterEl.dataset.semesterIndex = semesterIndex;
+                 // === 新增：智能生成学期名称 ===
+                 if (!semesterData.name) {
+                    let nextYear = new Date().getFullYear();
+                    let semesterNum = 1;
+
+                    if (semesterIndex > 0) {
+                        const lastSemesterName = localStudentsData.find(s => s.id === selectedStudentId)?.semesters[semesterIndex - 1]?.name || '';
+                        const yearMatch = lastSemesterName.match(/(\d{4})-(\d{4})/);
+                        const termMatch = lastSemesterName.match(/(第一|第二|1|2)/);
+
+                        if (yearMatch && termMatch) {
+                            const endYear = parseInt(yearMatch[2]);
+                            const isSecond = termMatch[1].includes('二') || termMatch[1] === '2';
+                            if (isSecond) {
+                                nextYear = endYear + 1;
+                                semesterNum = 1;
+                            } else {
+                                nextYear = endYear;
+                                semesterNum = 2;
+                            }
+                        } else {
+                            semesterNum = semesterIndex + 1;
+                        }
+                    }
+
+                    const startYear = nextYear - 1;
+                    const endYear = nextYear;
+                    const semesterText = semesterNum === 1 ? "第一学期" : "第二学期";
+                    semesterData.name = `${startYear}-${endYear}学年 ${semesterText}`;
+                 }
                  semesterEl.querySelector('.semester-name-input').value = semesterData.name;
                  const coursesContainer = semesterEl.querySelector('.courses-container');
                  if(Array.isArray(semesterData.courses)) {
@@ -582,7 +620,6 @@
                  }
                  return semesterEl;
             }
-
             function createCourseElement(courseData, semesterIndex, courseIndex) {
                 const courseTemplate = document.getElementById('course-template').content.cloneNode(true);
                 const courseEl = courseTemplate.querySelector('.course-card');
@@ -600,7 +637,7 @@
                 }
                 return courseEl;
             }
-
+            // === 新增：createAssignmentElement 中处理 type 字段 ===
             function createAssignmentElement(assignmentData, semesterIndex, courseIndex, assignmentIndex) {
                 const assignmentTemplate = document.getElementById('assignment-template').content.cloneNode(true);
                 const assignmentEl = assignmentTemplate.querySelector('.assignment-row');
@@ -608,12 +645,16 @@
                 assignmentEl.dataset.courseIndex = courseIndex;
                 assignmentEl.dataset.assignmentIndex = assignmentIndex;
                 assignmentEl.querySelector('.assignment-name-input').value = assignmentData.name;
+                // === 新增：设置类型选择框的值 ===
+                const typeSelect = assignmentEl.querySelector('.assignment-type-input');
+                if (assignmentData.type) {
+                    typeSelect.value = assignmentData.type;
+                }
                 assignmentEl.querySelector('.assignment-weight-input').value = assignmentData.weight;
                 assignmentEl.querySelector('.assignment-score-input').value = assignmentData.score;
                 assignmentEl.querySelector('.assignment-max-score-input').value = assignmentData.maxScore;
                 return assignmentEl;
             }
-
             // === 数据操作 (CRUD) ===
             async function updateStudentData(updatedSemesters) {
                 if (!selectedStudentId || !currentUser) return;
@@ -624,6 +665,12 @@
                     showError('数据更新失败', error.message);
                 }
             }
+            // === 新增：允许在添加学生输入框中按 Enter 键 ===
+            document.getElementById('new-student-name').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('add-student-btn').click();
+                }
+            });
 
             document.getElementById('add-student-btn').addEventListener('click', async () => {
                 const nameInput = document.getElementById('new-student-name');
@@ -634,9 +681,9 @@
                     const docRef = await addDoc(collection(db, 'users', currentUser.uid, 'students'), newStudent);
                     selectedStudentId = docRef.id;
                     nameInput.value = '';
+                    showSuccess('学生添加成功！'); // === 新增：显示成功提示 ===
                 } catch (e) { showError('添加学生失败', e.message); }
             });
-            
             document.getElementById('remove-student-btn').addEventListener('click', () => {
                 if (!selectedStudentId || !currentUser) { showError('没有选中的学生可删除。'); return; }
                 const studentName = localStudentsData.find(s => s.id === selectedStudentId)?.name;
@@ -647,35 +694,35 @@
                         try {
                             await deleteDoc(doc(db, 'users', currentUser.uid, 'students', selectedStudentId));
                             selectedStudentId = null;
+                            showSuccess('学生删除成功！'); // === 新增：显示成功提示 ===
                         } catch (e) { showError('删除学生失败', e.message); }
                     }
                 );
             });
-
             document.getElementById('add-semester-btn').addEventListener('click', () => {
                 if (!selectedStudentId || !currentUser) { showError('请先选择或添加一个学生。'); return; }
                 let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
                 if (!studentData) return;
-                const newSemesterName = `新学期 ${studentData.semesters.length + 1}`;
-                studentData.semesters.push({ name: newSemesterName, courses: [] });
+                // === 新增：使用智能生成的名称，而不是简单的 "新学期 X" ===
+                // const newSemesterName = `新学期 ${studentData.semesters.length + 1}`;
+                // studentData.semesters.push({ name: newSemesterName, courses: [] });
+                // updateStudentData(studentData.semesters);
+                // === 改为：直接创建一个空对象，createSemesterElement 会负责生成名称 ===
+                studentData.semesters.push({ courses: [] });
                 updateStudentData(studentData.semesters);
+                showSuccess('新学期已添加！'); // === 新增：显示成功提示 ===
             });
-
             ui.studentSelector.addEventListener('change', (e) => {
                 selectedStudentId = e.target.value;
                 renderStudentContent();
             });
-
             ui.studentContentContainer.addEventListener('click', (e) => {
                 const target = e.target.closest('button');
                 if (!target) return;
-                
                 let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
                 if (!studentData) return;
-
                 const semesterSection = target.closest('.semester-section');
                 const courseCard = target.closest('.course-card');
-
                 if (target.classList.contains('remove-semester-btn')) {
                     const { semesterIndex } = semesterSection.dataset;
                     const semesterName = studentData.semesters[semesterIndex].name;
@@ -685,42 +732,42 @@
                         () => {
                             studentData.semesters.splice(semesterIndex, 1);
                             updateStudentData(studentData.semesters);
+                            showSuccess('学期删除成功！'); // === 新增：显示成功提示 ===
                         }
                     );
                 } else if (target.classList.contains('add-course-btn')) {
                     const { semesterIndex } = semesterSection.dataset;
                     studentData.semesters[semesterIndex].courses.push({ name: '', credits: '3', targetGrade: '90', assignments: [{ name: '', weight: '', score: '', maxScore: 100 }]});
                     updateStudentData(studentData.semesters);
+                    showSuccess('课程已添加！'); // === 新增：显示成功提示 ===
                 } else if (target.classList.contains('remove-course-btn')) {
                     const { semesterIndex, courseIndex } = courseCard.dataset;
                     studentData.semesters[semesterIndex].courses.splice(courseIndex, 1);
                     updateStudentData(studentData.semesters);
+                    showSuccess('课程删除成功！'); // === 新增：显示成功提示 ===
                 } else if (target.classList.contains('add-assignment-btn')) {
                     const { semesterIndex, courseIndex } = courseCard.dataset;
                     studentData.semesters[semesterIndex].courses[courseIndex].assignments.push({ name: '', weight: '', score: '', maxScore: 100 });
                     updateStudentData(studentData.semesters);
+                    showSuccess('评分项目已添加！'); // === 新增：显示成功提示 ===
                 } else if (target.classList.contains('remove-assignment-btn')) {
                     const { semesterIndex, courseIndex, assignmentIndex } = target.closest('.assignment-row').dataset;
                     studentData.semesters[semesterIndex].courses[courseIndex].assignments.splice(assignmentIndex, 1);
                     updateStudentData(studentData.semesters);
+                    showSuccess('评分项目删除成功！'); // === 新增：显示成功提示 ===
                 }
             });
-
             // === 数据保存事件监听 (修复输入打断问题) ===
             ui.studentContentContainer.addEventListener('change', (e) => {
                 if (!selectedStudentId || !currentUser) return;
                 const target = e.target;
                 if (!target.closest('.semester-section')) return;
-
                 let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
                 if (!studentData) return;
-
                 const semesterSection = target.closest('.semester-section');
                 const courseCard = target.closest('.course-card');
                 const assignmentRow = target.closest('.assignment-row');
-                
                 const { semesterIndex } = semesterSection.dataset;
-                
                 if (target.classList.contains('semester-name-input')) {
                     studentData.semesters[semesterIndex].name = target.value;
                 } else if (courseCard) {
@@ -730,6 +777,8 @@
                         const { assignmentIndex } = assignmentRow.dataset;
                         const assignmentData = courseData.assignments[assignmentIndex];
                         if (target.classList.contains('assignment-name-input')) assignmentData.name = target.value;
+                        // === 新增：保存类型字段 ===
+                        if (target.classList.contains('assignment-type-input')) assignmentData.type = target.value;
                         if (target.classList.contains('assignment-weight-input')) assignmentData.weight = target.value;
                         if (target.classList.contains('assignment-score-input')) assignmentData.score = target.value;
                         if (target.classList.contains('assignment-max-score-input')) assignmentData.maxScore = target.value;
@@ -741,11 +790,11 @@
                 }
                 updateStudentData(studentData.semesters);
             });
-
             // === 计算逻辑 ===
             function updateAllCalculations() {
                 if (!selectedStudentId) {
                     ui.overall.gpa.textContent = 'N/A';
+                    ui.overall.gpa.className = 'text-4xl font-extrabold text-gray-500'; // === 新增：重置样式 ===
                     ui.overall.score.textContent = 'N/A';
                     return;
                 }
@@ -753,7 +802,6 @@
                 document.querySelectorAll('.semester-section').forEach(updateSemesterCalculations);
                 updateOverallCalculations();
             }
-
             function updateCourseCalculations(courseEl) {
                 const { semesterIndex, courseIndex } = courseEl.dataset;
                 const studentData = localStudentsData.find(s => s.id === selectedStudentId);
@@ -806,7 +854,6 @@
                     targetAnalysisDisplay.textContent = '输入目标分以分析';
                 }
             }
-
             function updateSemesterCalculations(semesterEl) {
                 const { semesterIndex } = semesterEl.dataset;
                 const studentData = localStudentsData.find(s => s.id === selectedStudentId);
@@ -831,11 +878,11 @@
                     weightedScoreDisplay.textContent = 'N/A';
                 }
             }
-            
             function updateOverallCalculations() {
                 const studentData = localStudentsData.find(s => s.id === selectedStudentId);
                 if (!studentData || !Array.isArray(studentData.semesters)) {
                     ui.overall.gpa.textContent = 'N/A';
+                    ui.overall.gpa.className = 'text-4xl font-extrabold text-gray-500';
                     ui.overall.score.textContent = 'N/A';
                     return;
                 }
@@ -850,25 +897,29 @@
                         }
                     });
                 });
-
                 if(overallTotalCredits > 0) {
-                    ui.overall.gpa.textContent = (overallTotalQualityPoints / overallTotalCredits).toFixed(2);
+                    const gpaValue = (overallTotalQualityPoints / overallTotalCredits).toFixed(2);
+                    ui.overall.gpa.textContent = gpaValue;
+                    // === 新增：根据 GPA 值动态着色 ===
+                    ui.overall.gpa.className = 'text-4xl font-extrabold';
+                    if (gpaValue >= 3.7) ui.overall.gpa.classList.add('score-excellent');
+                    else if (gpaValue >= 3.0) ui.overall.gpa.classList.add('score-good');
+                    else if (gpaValue >= 2.0) ui.overall.gpa.classList.add('score-average');
+                    else ui.overall.gpa.classList.add('score-poor');
                     ui.overall.score.textContent = (overallWeightedScoreSum / overallTotalCredits).toFixed(2);
                 } else {
                     ui.overall.gpa.textContent = 'N/A';
+                    ui.overall.gpa.className = 'text-4xl font-extrabold text-gray-500';
                     ui.overall.score.textContent = 'N/A';
                 }
             }
-
             function scoreToGpaPoint(score) {
                 if (score >= 90) return 4.0; if (score >= 85) return 3.7; if (score >= 82) return 3.3;
                 if (score >= 78) return 3.0; if (score >= 75) return 2.7; if (score >= 72) return 2.3;
                 if (score >= 68) return 2.0; if (score >= 65) return 1.7; if (score >= 60) return 1.0;
                 return 0.0;
             }
-            
             // === EXPORT LOGIC ===
-            
             // --- Dropdown Menu Control ---
             ui.exportMenu.btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -882,7 +933,6 @@
                     ui.exportMenu.btn.setAttribute('aria-expanded', 'false');
                 }
             });
-
             function downloadFile(blob, filename) {
                 const link = document.createElement('a');
                 const url = URL.createObjectURL(blob);
@@ -894,23 +944,19 @@
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
             }
-            
             const getFilename = () => `grade_report_${new Date().toISOString().slice(0, 10)}`;
-
             // --- Core Data Preparation ---
-
             // Defines the complete and fixed structure for exports.
             const EXPORT_HEADERS = [
-                "学生姓名", "学期", "课程名称", "学分",
-                "目标分", "课程总分", "评分项目",
+                "学生姓名", "学期", "课程名称", "学期总分权重",
+                "目标分", "课程总分", "评分项目", "类型",
                 "权重 (%)", "得分", "满分"
             ];
             const HEADER_KEYS = {
-                studentName: "学生姓名", semesterName: "学期", courseName: "课程名称", courseCredits: "学分",
-                courseTargetGrade: "目标分", courseFinalGrade: "课程总分", assignmentName: "评分项目",
+                studentName: "学生姓名", semesterName: "学期", courseName: "课程名称", courseCredits: "学期总分权重",
+                courseTargetGrade: "目标分", courseFinalGrade: "课程总分", assignmentName: "评分项目", assignmentType: "类型",
                 assignmentWeight: "权重 (%)", assignmentScore: "得分", assignmentMaxScore: "满分"
             };
-
             function updateAllFinalGradesForExport() {
                 if (!localStudentsData) return;
                 localStudentsData.forEach(student => {
@@ -931,14 +977,12 @@
                     });
                 });
             }
-
             function getExportData() {
                 updateAllFinalGradesForExport();
                 if (!localStudentsData || localStudentsData.length === 0) {
                     showError("没有可导出的数据。");
                     return null;
                 }
-
                 const dataRows = [];
                 localStudentsData.forEach(student => {
                     const baseRow = { [HEADER_KEYS.studentName]: student.name };
@@ -966,6 +1010,8 @@
                                             dataRows.push({
                                                 ...courseRow,
                                                 [HEADER_KEYS.assignmentName]: assignment.name,
+                                                // === 新增：导出类型字段 ===
+                                                [HEADER_KEYS.assignmentType]: assignment.type || '',
                                                 [HEADER_KEYS.assignmentWeight]: assignment.weight,
                                                 [HEADER_KEYS.assignmentScore]: (assignment.score === null || assignment.score === undefined) ? "" : assignment.score,
                                                 [HEADER_KEYS.assignmentMaxScore]: assignment.maxScore
@@ -979,54 +1025,57 @@
                 });
                 return dataRows;
             }
-
             // --- Export Implementations ---
             document.getElementById('export-txt').addEventListener('click', (e) => {
                 e.preventDefault();
                 const data = getExportData();
                 if (!data) return;
-                
-                let textContent = `成绩报告 - ${new Date().toLocaleString('zh-CN')}\n\n`;
+                let textContent = `成绩报告 - ${new Date().toLocaleString('zh-CN')}
+`;
                 let currentStudent = "", currentSemester = "", currentCourse = "";
-
                 data.forEach(row => {
                     if (row[HEADER_KEYS.studentName] !== currentStudent) {
                         currentStudent = row[HEADER_KEYS.studentName];
-                        textContent += `========================================\n`;
-                        textContent += `学生: ${currentStudent}\n`;
-                        textContent += `========================================\n\n`;
+                        textContent += `========================================
+`;
+                        textContent += `学生: ${currentStudent}
+`;
+                        textContent += `========================================
+`;
                         currentSemester = ""; currentCourse = "";
                     }
                     if (row[HEADER_KEYS.semesterName] && row[HEADER_KEYS.semesterName] !== currentSemester) {
                         currentSemester = row[HEADER_KEYS.semesterName];
-                        textContent += `--- 学期: ${currentSemester} ---\n\n`;
+                        textContent += `--- 学期: ${currentSemester} ---
+`;
                         currentCourse = "";
                     }
                     if (row[HEADER_KEYS.courseName] && row[HEADER_KEYS.courseName] !== currentCourse) {
                         currentCourse = row[HEADER_KEYS.courseName];
-                        textContent += `  课程: ${currentCourse}\n`;
-                        textContent += `  - 学分: ${row[HEADER_KEYS.courseCredits] || 'N/A'}, 目标分: ${row[HEADER_KEYS.courseTargetGrade] || 'N/A'}, 最终总分: ${row[HEADER_KEYS.courseFinalGrade]}\n`;
+                        textContent += `  课程: ${currentCourse}
+`;
+                        textContent += `  - 学期总分权重: ${row[HEADER_KEYS.courseCredits] || 'N/A'}, 目标分: ${row[HEADER_KEYS.courseTargetGrade] || 'N/A'}, 最终总分: ${row[HEADER_KEYS.courseFinalGrade]}
+`;
                     }
                     if (row[HEADER_KEYS.assignmentName]) {
-                        textContent += `    - ${row[HEADER_KEYS.assignmentName]}: 得分 ${row[HEADER_KEYS.assignmentScore]}/${row[HEADER_KEYS.assignmentMaxScore]} (权重: ${row[HEADER_KEYS.assignmentWeight]}%)\n`;
+                        // === 新增：在文本导出中包含类型 ===
+                        textContent += `    - (${row[HEADER_KEYS.assignmentType] || '未知'}) ${row[HEADER_KEYS.assignmentName]}: 得分 ${row[HEADER_KEYS.assignmentScore]}/${row[HEADER_KEYS.assignmentMaxScore]} (权重: ${row[HEADER_KEYS.assignmentWeight]}%)
+`;
                     }
                 });
-
                 const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
                 downloadFile(blob, `${getFilename()}.txt`);
+                showSuccess('文本文件导出成功！'); // === 新增：显示成功提示 ===
             });
-
             document.getElementById('export-doc').addEventListener('click', (e) => {
                 e.preventDefault();
                 const data = getExportData();
                 if (!data) return;
-
                 let htmlContent = `
                     <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
                     <head><meta charset='utf-8'><title>Grade Report</title></head>
                     <body>
                         <h1>成绩报告 - ${new Date().toLocaleString('zh-CN')}</h1>`;
-
                 htmlContent += `<table border="1" style="border-collapse: collapse; width: 100%;">
                                     <thead><tr>${EXPORT_HEADERS.map(h => `<th>${h}</th>`).join('')}</tr></thead>
                                     <tbody>`;
@@ -1038,17 +1087,14 @@
                     htmlContent += '</tr>';
                 });
                 htmlContent += `</tbody></table></body></html>`;
-
                 const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
                 downloadFile(blob, `${getFilename()}.doc`);
+                showSuccess('Word文档导出成功！'); // === 新增：显示成功提示 ===
             });
-
             document.getElementById('export-xlsx').addEventListener('click', (e) => {
                 e.preventDefault();
                 const data = getExportData();
                 if (!data) return;
-
-                // For XLSX, we need an array of objects with keys that match the headers.
                 const xlsxData = data.map(row => {
                     const newRow = {};
                     EXPORT_HEADERS.forEach(header => {
@@ -1056,42 +1102,32 @@
                     });
                     return newRow;
                 });
-                
                 const worksheet = XLSX.utils.json_to_sheet(xlsxData);
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "成绩单");
                 XLSX.writeFile(workbook, `${getFilename()}.xlsx`);
+                showSuccess('Excel文件导出成功！'); // === 新增：显示成功提示 ===
             });
-            
-            document.getElementById('export-pdf').addEventListener('click', (e) => {
+            // === 新增：清空所有数据功能 ===
+            document.getElementById('clear-all-data').addEventListener('click', (e) => {
                 e.preventDefault();
-                const data = getExportData();
-                if (!data) return;
-                
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                doc.setFont('simhei'); 
-                
-                const body = data.map(row => EXPORT_HEADERS.map(header => (row[header] === undefined || row[header] === null) ? '' : row[header]));
-
-                doc.autoTable({
-                    head: [EXPORT_HEADERS],
-                    body: body,
-                    styles: {
-                        font: 'simhei', 
-                        fontStyle: 'normal',
-                    },
-                    headStyles: { 
-                        fillColor: [22, 160, 133],
-                        font: 'simhei',
-                        fontStyle: 'normal',
-                    },
-                });
-
-                doc.save(`${getFilename()}.pdf`);
+                showConfirmModal(
+                    '警告：清空所有数据',
+                    '您确定要删除当前用户下的所有学生和成绩数据吗？此操作无法撤销，请谨慎操作！',
+                    async () => {
+                        if (!currentUser) return;
+                        const studentsColRef = collection(db, 'users', currentUser.uid, 'students');
+                        try {
+                            const snapshot = await getDocs(studentsColRef);
+                            const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+                            await Promise.all(deletePromises);
+                            showSuccess('所有数据已清空。');
+                        } catch (e) {
+                            showError('清空数据失败', e.message);
+                        }
+                    }
+                );
             });
-
         } catch (error) {
             console.error("初始化失败:", error);
             showError('应用初始化失败', error.message);
