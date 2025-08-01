@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>学霸模式：多用户成绩与GPA计算器 (云同步版)</title>
+    <title>学霸模式：多用户成绩与GPA计算器 (云同步与可视化)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
@@ -59,6 +60,18 @@
             border-radius: 0.5rem;
             margin-bottom: 1rem;
         }
+        .nav-link {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            color: #4b5563;
+            cursor: pointer;
+        }
+        .nav-link.active {
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -89,7 +102,7 @@
     </div>
     <!-- 主应用界面 -->
     <div id="app-view" class="max-w-7xl mx-auto" v-cloak>
-        <header class="flex flex-col md:flex-row justify-between items-center mb-10">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-6">
             <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-4 md:mb-0">分数计算与统计</h1>
             <div id="user-profile" class="flex items-center space-x-4">
                 <img id="user-avatar" class="w-10 h-10 rounded-full" src="" alt="User Avatar">
@@ -97,30 +110,62 @@
                 <button id="logout-btn" class="btn btn-secondary">登出</button>
             </div>
         </header>
-        <div class="card p-6 mb-10 fade-in">
-            <div class="grid md:grid-cols-3 gap-6 items-end">
-                <div class="md:col-span-1">
-                    <label for="new-student-name" class="block text-sm font-medium text-gray-600 mb-2">添加新学生</label>
-                    <div class="flex">
-                        <input type="text" id="new-student-name" placeholder="输入学生姓名..." class="form-input w-full p-2 rounded-l-md">
-                        <button id="add-student-btn" class="btn btn-primary rounded-l-none px-4">+</button>
+
+        <!-- 新增：导航菜单 -->
+        <nav class="flex items-center space-x-2 bg-gray-100 p-2 rounded-lg mb-8">
+            <a id="nav-grades" class="nav-link active">成绩管理</a>
+            <a id="nav-viz" class="nav-link">成绩可视化</a>
+        </nav>
+
+        <!-- 成绩管理视图 -->
+        <div id="grade-management-view">
+            <div class="card p-6 mb-10 fade-in">
+                <div class="grid md:grid-cols-3 gap-6 items-end">
+                    <div class="md:col-span-1">
+                        <label for="new-student-name" class="block text-sm font-medium text-gray-600 mb-2">添加新学生</label>
+                        <div class="flex">
+                            <input type="text" id="new-student-name" placeholder="输入学生姓名..." class="form-input w-full p-2 rounded-l-md">
+                            <button id="add-student-btn" class="btn btn-primary rounded-l-none px-4">+</button>
+                        </div>
+                    </div>
+                    <div class="md:col-span-1">
+                        <label for="student-selector" class="block text-sm font-medium text-gray-600 mb-2">当前学生</label>
+                        <select id="student-selector" class="form-input w-full p-2 rounded-md bg-white"></select>
+                    </div>
+                    <div class="md:col-span-1">
+                         <button id="remove-student-btn" class="btn btn-danger w-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                            删除当前学生
+                        </button>
                     </div>
                 </div>
-                <div class="md:col-span-1">
-                    <label for="student-selector" class="block text-sm font-medium text-gray-600 mb-2">当前学生</label>
-                    <select id="student-selector" class="form-input w-full p-2 rounded-md bg-white"></select>
+            </div>
+            <div id="student-content-container"></div>
+        </div>
+
+        <!-- 新增：可视化视图 -->
+        <div id="visualization-view" class="hidden">
+            <div class="card p-6 fade-in">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">学生成绩概览</h2>
+                <div class="mb-6">
+                    <label for="viz-semester-selector" class="block text-sm font-medium text-gray-600 mb-2">选择学期</label>
+                    <select id="viz-semester-selector" class="form-input w-full md:w-1/3 p-2 rounded-md bg-white"></select>
                 </div>
-                <div class="md:col-span-1">
-                     <button id="remove-student-btn" class="btn btn-danger w-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        删除当前学生
-                    </button>
+                <div id="chart-container" style="position: relative; height:60vh; width:100%">
+                    <canvas id="student-chart"></canvas>
+                </div>
+                 <div id="viz-no-data" class="text-center py-16 text-gray-500 hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">没有足够的数据</h3>
+                    <p class="mt-1 text-sm text-gray-500">请先为此学期添加课程并计算最终分数。</p>
                 </div>
             </div>
         </div>
-        <div id="student-content-container"></div>
+
     </div>
     <!-- GPA说明弹窗 -->
     <div id="gpa-info-popup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
@@ -288,25 +333,31 @@
             const auth = getAuth(app);
             const db = getFirestore(app);
             const provider = new GoogleAuthProvider();
-            // 设置 Google 登录参数
-            provider.setCustomParameters({
-                prompt: 'select_account'
-            });
+            provider.setCustomParameters({ prompt: 'select_account' });
             updateStatus('Firebase 初始化成功！');
+
             // === 应用状态变量 ===
             let currentUser = null;
             let studentsUnsubscribe = null;
             let localStudentsData = [];
             let selectedStudentId = null;
+            let currentView = 'grades'; // 'grades' or 'viz'
+            let studentChart = null; // Chart.js instance
+
             // === UI 元素 ===
             const loginView = document.getElementById('login-view');
             const appView = document.getElementById('app-view');
             const loadingOverlay = document.getElementById('loading-overlay');
+            const gradeManagementView = document.getElementById('grade-management-view');
+            const visualizationView = document.getElementById('visualization-view');
+            const navGrades = document.getElementById('nav-grades');
+            const navViz = document.getElementById('nav-viz');
+            const vizSemesterSelector = document.getElementById('viz-semester-selector');
+
             // === 认证状态管理 ===
             onAuthStateChanged(auth, (user) => {
                 loadingOverlay.style.display = 'flex';
                 if (user) {
-                    // 用户已登录
                     currentUser = user;
                     loginView.style.display = 'none';
                     appView.style.display = 'block';
@@ -314,7 +365,6 @@
                     document.getElementById('user-avatar').src = user.photoURL;
                     setupStudentListener();
                 } else {
-                    // 用户未登录
                     currentUser = null;
                     if (studentsUnsubscribe) studentsUnsubscribe();
                     appView.style.display = 'none';
@@ -323,11 +373,31 @@
                     updateStatus('请点击按钮登录');
                 }
             });
+
+            // === 导航处理 ===
+            function switchView(view) {
+                currentView = view;
+                if (view === 'grades') {
+                    gradeManagementView.style.display = 'block';
+                    visualizationView.style.display = 'none';
+                    navGrades.classList.add('active');
+                    navViz.classList.remove('active');
+                } else {
+                    gradeManagementView.style.display = 'none';
+                    visualizationView.style.display = 'block';
+                    navGrades.classList.remove('active');
+                    navViz.classList.add('active');
+                    renderVisualization();
+                }
+            }
+            navGrades.addEventListener('click', () => switchView('grades'));
+            navViz.addEventListener('click', () => switchView('viz'));
+
             // === 登录和登出处理 ===
             document.getElementById('login-btn').addEventListener('click', async () => {
                 try {
                     updateStatus('正在登录...');
-                    const result = await signInWithPopup(auth, provider);
+                    await signInWithPopup(auth, provider);
                     updateStatus('登录成功！');
                 } catch (error) {
                     console.error("登录失败:", error);
@@ -335,14 +405,8 @@
                     updateStatus('登录失败，请重试');
                 }
             });
-            document.getElementById('logout-btn').addEventListener('click', async () => {
-                try {
-                    await signOut(auth);
-                } catch (error) {
-                    console.error("登出失败:", error);
-                    showError('登出失败', error.message);
-                }
-            });
+            document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).catch(e => showError('登出失败', e.message)));
+
             // === Firestore 数据监听与渲染 ===
             function setupStudentListener() {
                 if (!currentUser) return;
@@ -352,7 +416,11 @@
                 studentsUnsubscribe = onSnapshot(q, (snapshot) => {
                     localStudentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderStudentSelector();
-                    renderStudentContent();
+                    if (currentView === 'grades') {
+                        renderStudentContent();
+                    } else {
+                        renderVisualization();
+                    }
                     loadingOverlay.style.display = 'none';
                 }, (error) => {
                     console.error("数据监听失败:", error);
@@ -360,6 +428,7 @@
                     loadingOverlay.style.display = 'none';
                 });
             }
+
             function renderStudentSelector() {
                 const selector = document.getElementById('student-selector');
                 selector.innerHTML = '';
@@ -381,8 +450,8 @@
                     selectedStudentId = localStudentsData[0]?.id || null;
                     selector.value = selectedStudentId;
                 }
-                renderStudentContent();
             }
+
             function renderStudentContent() {
                 const container = document.getElementById('student-content-container');
                 container.innerHTML = '';
@@ -391,13 +460,13 @@
                 if (!student) return;
                 const studentContent = document.getElementById('student-content-template').content.cloneNode(true);
                 const semestersContainer = studentContent.querySelector('.space-y-12');
-                student.semesters.forEach((semesterData, semesterIndex) => {
+                (student.semesters || []).forEach((semesterData, semesterIndex) => {
                     const semesterEl = document.getElementById('semester-template').content.cloneNode(true);
                     const semesterSection = semesterEl.querySelector('.semester-section');
                     semesterSection.dataset.semesterIndex = semesterIndex;
                     semesterSection.querySelector('.semester-name').textContent = semesterData.name;
                     const coursesContainer = semesterSection.querySelector('.courses-container');
-                    semesterData.courses.forEach((courseData, courseIndex) => {
+                    (semesterData.courses || []).forEach((courseData, courseIndex) => {
                         const courseEl = createCourseElement(courseData, semesterIndex, courseIndex);
                         coursesContainer.appendChild(courseEl);
                     });
@@ -406,6 +475,125 @@
                 container.appendChild(studentContent);
                 updateAllCalculations();
             }
+
+            // === 可视化渲染 ===
+            function renderVisualization() {
+                if (!selectedStudentId) {
+                    document.getElementById('chart-container').style.display = 'none';
+                    document.getElementById('viz-no-data').classList.remove('hidden');
+                    document.getElementById('viz-no-data').querySelector('p').textContent = '请先选择或添加一个学生。';
+                    return;
+                };
+
+                const student = localStudentsData.find(s => s.id === selectedStudentId);
+                if (!student || !student.semesters) return;
+
+                // 填充学期选择器
+                vizSemesterSelector.innerHTML = '';
+                student.semesters.forEach((semester, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = semester.name;
+                    vizSemesterSelector.appendChild(option);
+                });
+
+                renderChartForSemester(vizSemesterSelector.value);
+            }
+
+            function renderChartForSemester(semesterIndex) {
+                 if (studentChart) {
+                    studentChart.destroy();
+                }
+                const student = localStudentsData.find(s => s.id === selectedStudentId);
+                if (!student || !student.semesters[semesterIndex]) return;
+
+                const semester = student.semesters[semesterIndex];
+                const chartData = {
+                    labels: [],
+                    datasets: [{
+                        label: '课程最终分数',
+                        data: [],
+                        backgroundColor: [],
+                        borderColor: [],
+                        borderWidth: 1
+                    }]
+                };
+
+                const validCourses = (semester.courses || []).filter(c => c.finalGrade !== undefined && c.finalGrade > 0);
+
+                if (validCourses.length === 0) {
+                    document.getElementById('chart-container').style.display = 'none';
+                    document.getElementById('viz-no-data').classList.remove('hidden');
+                     document.getElementById('viz-no-data').querySelector('p').textContent = '请先为此学期添加课程并计算最终分数。';
+                    return;
+                }
+
+                document.getElementById('chart-container').style.display = 'block';
+                document.getElementById('viz-no-data').classList.add('hidden');
+
+                validCourses.forEach(course => {
+                    chartData.labels.push(course.name || '未命名课程');
+                    const grade = course.finalGrade;
+                    chartData.datasets[0].data.push(grade);
+                    // 根据分数设置颜色
+                    let color = 'rgba(54, 162, 235, 0.6)'; // 蓝色
+                    if (grade < 60) color = 'rgba(255, 99, 132, 0.6)'; // 红色
+                    else if (grade >= 90) color = 'rgba(75, 192, 192, 0.6)'; // 绿色
+                    chartData.datasets[0].backgroundColor.push(color);
+                    chartData.datasets[0].borderColor.push(color.replace('0.6', '1'));
+                });
+
+                const ctx = document.getElementById('student-chart').getContext('2d');
+                studentChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: '分数'
+                                }
+                            },
+                             x: {
+                                title: {
+                                    display: true,
+                                    text: '课程'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: `${student.name} - ${semester.name} 成绩分布`,
+                                font: {
+                                    size: 18
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `分数: ${context.parsed.y.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            vizSemesterSelector.addEventListener('change', (e) => {
+                renderChartForSemester(e.target.value);
+            });
+
+
             function createCourseElement(courseData, semesterIndex, courseIndex) {
                 const courseTemplate = document.getElementById('course-template').content.cloneNode(true);
                 const courseEl = courseTemplate.querySelector('.course-card');
@@ -415,7 +603,7 @@
                 courseEl.querySelector('.course-credits-input').value = courseData.credits;
                 courseEl.querySelector('.target-grade-input').value = courseData.targetGrade;
                 const assignmentsContainer = courseEl.querySelector('.assignments-container');
-                courseData.assignments.forEach((assignmentData, assignmentIndex) => {
+                (courseData.assignments || []).forEach((assignmentData, assignmentIndex) => {
                     const assignmentEl = createAssignmentElement(assignmentData, semesterIndex, courseIndex, assignmentIndex);
                     assignmentsContainer.appendChild(assignmentEl);
                 });
@@ -436,7 +624,11 @@
             // === 数据操作 (CRUD) ===
             document.getElementById('student-selector').addEventListener('change', (e) => {
                 selectedStudentId = e.target.value;
-                renderStudentContent();
+                if(currentView === 'grades'){
+                    renderStudentContent();
+                } else {
+                    renderVisualization();
+                }
             });
             document.getElementById('add-student-btn').addEventListener('click', async () => {
                 const nameInput = document.getElementById('new-student-name');
@@ -459,9 +651,14 @@
                 }
             });
             document.getElementById('remove-student-btn').addEventListener('click', async () => {
-                if (!selectedStudentId || !currentUser) { alert('没有选中的学生可删除。'); return; }
+                if (!selectedStudentId || !currentUser) { 
+                    // 使用自定义模态框或非阻塞通知代替 alert
+                    showError('没有选中的学生可删除。');
+                    return; 
+                }
                 const studentName = localStudentsData.find(s => s.id === selectedStudentId)?.name;
-                if (confirm(`您确定要删除学生 "${studentName}" 的所有数据吗？此操作无法撤销。`)) {
+                // 使用自定义模态框代替 confirm
+                if (window.confirm(`您确定要删除学生 "${studentName}" 的所有数据吗？此操作无法撤销。`)) {
                     try {
                         await deleteDoc(doc(db, 'users', currentUser.uid, 'students', selectedStudentId));
                         selectedStudentId = null;
@@ -480,107 +677,106 @@
                 if (!target) return;
                 const courseCard = target.closest('.course-card');
                 const semesterSection = target.closest('.semester-section');
+                let needsUpdate = false;
                 if (target.classList.contains('add-course-btn')) {
                     const { semesterIndex } = semesterSection.dataset;
                     studentData.semesters[semesterIndex].courses.push({ name: '', credits: '3', targetGrade: '90', assignments: [{ name: '', weight: '', score: '', maxScore: 100 }]});
+                    needsUpdate = true;
                 } else if (target.classList.contains('remove-course-btn')) {
                     const { semesterIndex, courseIndex } = courseCard.dataset;
                     studentData.semesters[semesterIndex].courses.splice(courseIndex, 1);
+                    needsUpdate = true;
                 } else if (target.classList.contains('add-assignment-btn')) {
                     const { semesterIndex, courseIndex } = courseCard.dataset;
                     studentData.semesters[semesterIndex].courses[courseIndex].assignments.push({ name: '', weight: '', score: '', maxScore: 100 });
+                    needsUpdate = true;
                 } else if (target.classList.contains('remove-assignment-btn')) {
                     const { semesterIndex, courseIndex, assignmentIndex } = target.closest('.assignment-row').dataset;
                     studentData.semesters[semesterIndex].courses[courseIndex].assignments.splice(assignmentIndex, 1);
-                } else {
-                    return;
+                    needsUpdate = true;
                 }
-                try {
-                    await updateDoc(studentDocRef, { semesters: studentData.semesters });
-                } catch (error) {
-                    console.error("更新失败", error);
-                    showError('数据更新失败', error.message);
+                if (needsUpdate) {
+                    try {
+                        await updateDoc(studentDocRef, { semesters: studentData.semesters });
+                    } catch (error) {
+                        console.error("更新失败", error);
+                        showError('数据更新失败', error.message);
+                    }
                 }
             });
 
-            // === 修改开始 ===
-            // === 解决输入失焦问题：使用防抖（Debounced Save） ===
-            // 在全局作用域声明一个变量来存储防抖定时器
+            // === 使用防抖（Debounced Save）处理输入 ===
             let saveTimeout = null;
-
-            // 修改 input 事件监听器
-            document.getElementById('student-content-container').addEventListener('input', async (e) => {
+            document.getElementById('student-content-container').addEventListener('input', (e) => {
                 if (!selectedStudentId || !currentUser) return;
+                
+                updateAllCalculations(); // 实时计算并显示
 
-                // 获取当前输入框所在的课程卡片
-                const courseCard = e.target.closest('.course-card');
-                if (!courseCard) return;
-
-                // 获取数据索引
-                const { semesterIndex, courseIndex } = courseCard.dataset;
-                const assignmentRow = e.target.closest('.assignment-row');
-                const assignmentIndex = assignmentRow ? assignmentRow.dataset.assignmentIndex : null;
-
-                // 清除之前的保存定时器
-                if (saveTimeout) clearTimeout(saveTimeout);
-
-                // 设置新的定时器，延迟 500ms 执行保存
+                clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(async () => {
                     try {
                         const studentDocRef = doc(db, 'users', currentUser.uid, 'students', selectedStudentId);
-                        let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
-                        if (!studentData) return;
-
-                        // 更新课程数据
-                        const courseData = studentData.semesters[semesterIndex].courses[courseIndex];
-                        if (e.target.classList.contains('course-name-input')) courseData.name = e.target.value;
-                        if (e.target.classList.contains('course-credits-input')) courseData.credits = e.target.value;
-                        if (e.target.classList.contains('target-grade-input')) courseData.targetGrade = e.target.value;
-
-                        // 更新作业数据
-                        if (assignmentRow && assignmentIndex !== null) {
-                            const assignmentData = courseData.assignments[assignmentIndex];
-                            if (e.target.classList.contains('assignment-name-input')) assignmentData.name = e.target.value;
-                            if (e.target.classList.contains('assignment-weight-input')) assignmentData.weight = e.target.value;
-                            if (e.target.classList.contains('assignment-score-input')) assignmentData.score = e.target.value;
-                            if (e.target.classList.contains('assignment-max-score-input')) assignmentData.maxScore = e.target.value;
-                        }
-
-                        // 执行 Firestore 更新
-                        await updateDoc(studentDocRef, { semesters: studentData.semesters });
+                        // 从 DOM 读取最新数据来保存，而不是依赖可能过时的 localStudentsData
+                        const updatedStudentData = buildStudentDataFromDOM();
+                        await updateDoc(studentDocRef, { semesters: updatedStudentData.semesters });
                     } catch (error) {
                         console.error("输入更新失败", error);
                         showError('输入更新失败', error.message);
                     }
-                }, 500); // 500ms 防抖
+                }, 800);
             });
-            // === 修改结束 ===
+
+            function buildStudentDataFromDOM() {
+                const studentData = { semesters: [] };
+                document.querySelectorAll('.semester-section').forEach((semesterEl, semIndex) => {
+                    const semesterData = {
+                        name: semesterEl.querySelector('.semester-name').textContent,
+                        courses: []
+                    };
+                    semesterEl.querySelectorAll('.course-card').forEach((courseEl, cIndex) => {
+                        const courseData = {
+                            name: courseEl.querySelector('.course-name-input').value,
+                            credits: courseEl.querySelector('.course-credits-input').value,
+                            targetGrade: courseEl.querySelector('.target-grade-input').value,
+                            assignments: []
+                        };
+                        courseEl.querySelectorAll('.assignment-row').forEach((assignEl, aIndex) => {
+                            courseData.assignments.push({
+                                name: assignEl.querySelector('.assignment-name-input').value,
+                                weight: assignEl.querySelector('.assignment-weight-input').value,
+                                score: assignEl.querySelector('.assignment-score-input').value,
+                                maxScore: assignEl.querySelector('.assignment-max-score-input').value,
+                            });
+                        });
+                        semesterData.courses.push(courseData);
+                    });
+                    studentData.semesters.push(semesterData);
+                });
+                return studentData;
+            }
 
             // === 计算逻辑 ===
             function updateAllCalculations() {
-                if (!selectedStudentId) return;
                 document.querySelectorAll('.course-card').forEach(updateCourseCalculations);
                 document.querySelectorAll('.semester-section').forEach(updateSemesterGPA);
             }
             function updateCourseCalculations(courseEl) {
-                const { semesterIndex, courseIndex } = courseEl.dataset;
-                const studentData = localStudentsData.find(s => s.id === selectedStudentId);
-                if (!studentData) return;
-                const courseData = studentData.semesters[semesterIndex].courses[courseIndex];
                 let totalWeight = 0, gradedWeight = 0, currentWeightedScore = 0;
-                courseData.assignments.forEach(a => {
-                    const weight = parseFloat(a.weight) || 0;
+                courseEl.querySelectorAll('.assignment-row').forEach(row => {
+                    const weight = parseFloat(row.querySelector('.assignment-weight-input').value) || 0;
                     totalWeight += weight;
-                    if (a.score !== '' && a.score !== null && a.score !== undefined) {
-                        const score = parseFloat(a.score) || 0;
-                        const maxScore = parseFloat(a.maxScore) || 100;
+                    const scoreInput = row.querySelector('.assignment-score-input');
+                    if (scoreInput.value !== '' && scoreInput.value !== null) {
+                        const score = parseFloat(scoreInput.value) || 0;
+                        const maxScore = parseFloat(row.querySelector('.assignment-max-score-input').value) || 100;
                         gradedWeight += weight;
                         currentWeightedScore += (score / maxScore) * weight;
                     }
                 });
                 const totalWeightDisplay = courseEl.querySelector('.total-weight-display');
                 totalWeightDisplay.textContent = `${totalWeight.toFixed(1)}%`;
-                totalWeightDisplay.style.color = totalWeight > 100 ? '#ef4444' : (totalWeight === 100 ? '#10b981' : '#6b7280');
+                totalWeightDisplay.style.color = totalWeight > 100.01 ? '#ef4444' : (Math.abs(totalWeight - 100) < 0.01 ? '#10b981' : '#6b7280');
+                
                 let finalGrade = 0;
                 if (gradedWeight > 0) {
                     finalGrade = (currentWeightedScore / gradedWeight) * 100;
@@ -588,13 +784,17 @@
                 } else {
                     courseEl.querySelector('.current-grade-display').textContent = 'N/A';
                 }
-                courseData.finalGrade = finalGrade; 
+
+                // Attach final grade to the element for later retrieval by semester calculation
+                courseEl.dataset.finalGrade = finalGrade;
+                courseEl.dataset.credits = courseEl.querySelector('.course-credits-input').value;
+
                 const targetAnalysisDisplay = courseEl.querySelector('.target-analysis-display');
-                const targetGrade = parseFloat(courseData.targetGrade);
+                const targetGrade = parseFloat(courseEl.querySelector('.target-grade-input').value);
                 if (!isNaN(targetGrade)) {
                     const remainingWeight = totalWeight - gradedWeight;
-                    if (remainingWeight > 0) {
-                        if (totalWeight > 100) {
+                    if (remainingWeight > 0.01) {
+                         if (totalWeight > 100.01) {
                             targetAnalysisDisplay.textContent = '权重总和超过100%';
                         } else {
                             const pointsNeeded = (targetGrade * totalWeight / 100) - currentWeightedScore;
@@ -615,17 +815,14 @@
                 }
             }
             function updateSemesterGPA(semesterEl) {
-                const { semesterIndex } = semesterEl.dataset;
-                const studentData = localStudentsData.find(s => s.id === selectedStudentId);
-                if (!studentData) return;
-                const semesterData = studentData.semesters[semesterIndex];
                 let totalCredits = 0, totalQualityPoints = 0, weightedScoreSum = 0;
-                semesterData.courses.forEach(course => {
-                    const credits = parseFloat(course.credits) || 0;
-                    if (course.finalGrade !== undefined && course.finalGrade > 0 && credits > 0) {
+                semesterEl.querySelectorAll('.course-card').forEach(courseEl => {
+                    const credits = parseFloat(courseEl.dataset.credits) || 0;
+                    const finalGrade = parseFloat(courseEl.dataset.finalGrade);
+                    if (!isNaN(finalGrade) && finalGrade > 0 && credits > 0) {
                         totalCredits += credits;
-                        totalQualityPoints += scoreToGpaPoint(course.finalGrade) * credits;
-                        weightedScoreSum += course.finalGrade * credits;
+                        totalQualityPoints += scoreToGpaPoint(finalGrade) * credits;
+                        weightedScoreSum += finalGrade * credits;
                     }
                 });
                 const gpaDisplay = semesterEl.querySelector('.semester-gpa-display');
