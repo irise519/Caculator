@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>学霸模式：多用户成绩与GPA计算器 (云同步增强版)</title>
+    <title>多用户成绩与GPA计算器 (云同步增强版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://raw.githack.com/sphilee/jsPDF-CustomFonts-support/master/dist/simhei.js"></script>
     <style>
         body {
             font-family: 'Inter', 'Helvetica Neue', 'Arial', 'sans-serif';
@@ -64,15 +68,12 @@
     </style>
 </head>
 <body class="p-4 md:p-8">
-    <!-- 加载动画 -->
     <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
     </div>
-    <!-- 错误显示区域 -->
     <div id="error-container" class="fixed top-5 right-5 z-50 w-full max-w-sm"></div>
-    <!-- 登录界面 -->
     <div id="login-view" class="max-w-md mx-auto text-center mt-20 fade-in">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800">学霸模式</h1>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800">Calculator</h1>
         <p class="text-gray-500 mt-3 text-lg mb-8">您的私人成绩与GPA智能管家</p>
         <div class="card p-8">
             <h2 class="text-xl font-bold text-gray-700 mb-2">欢迎使用</h2>
@@ -89,18 +90,34 @@
             <div id="status-message" class="mt-4 text-sm text-gray-600"></div>
         </div>
     </div>
-    <!-- 主应用界面 -->
     <div id="app-view" class="max-w-7xl mx-auto" v-cloak>
         <header class="flex flex-col md:flex-row justify-between items-center mb-6">
             <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-4 md:mb-0">分数计算与统计</h1>
             <div id="user-profile" class="flex items-center space-x-4">
                 <img id="user-avatar" class="w-10 h-10 rounded-full" src="" alt="User Avatar">
                 <span id="user-name" class="font-semibold text-gray-700"></span>
+                <div class="relative inline-block text-left">
+                    <div>
+                        <button type="button" id="export-menu-btn" class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" aria-expanded="false" aria-haspopup="true">
+                            导出
+                            <svg class="-mr-1 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="export-menu-options" class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="export-menu-btn">
+                        <div class="py-1" role="none">
+                            <a href="#" id="export-txt" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1">为 Text (.txt)</a>
+                            <a href="#" id="export-doc" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1">为 Word (.doc)</a>
+                            <a href="#" id="export-pdf" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1">为 PDF (.pdf)</a>
+                            <a href="#" id="export-xlsx" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1">为 Excel (.xlsx)</a>
+                        </div>
+                    </div>
+                </div>
                 <button id="logout-btn" class="btn btn-secondary">登出</button>
             </div>
         </header>
 
-        <!-- 学生管理 -->
         <div class="card p-6 mb-8 fade-in">
             <div class="grid md:grid-cols-3 gap-6 items-end">
                 <div class="md:col-span-1">
@@ -125,7 +142,6 @@
             </div>
         </div>
 
-        <!-- 学业总览 -->
         <div id="overall-summary-card" class="card p-6 mb-10 fade-in">
             <h2 class="text-xl font-bold text-gray-800 mb-4">学业总览</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -140,10 +156,8 @@
             </div>
         </div>
 
-        <!-- 学生内容容器 -->
         <div id="student-content-container"></div>
         
-        <!-- 添加学期按钮 -->
         <div class="mt-10 text-center">
             <button id="add-semester-btn" class="btn btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" /></svg>
@@ -151,7 +165,6 @@
             </button>
         </div>
     </div>
-    <!-- GPA说明弹窗 -->
     <div id="gpa-info-popup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
         <div class="card p-8 max-w-md w-full fade-in">
             <h3 class="text-2xl font-bold mb-4 text-gray-800">GPA换算规则</h3>
@@ -171,7 +184,6 @@
             <button onclick="document.getElementById('gpa-info-popup').style.display='none'" class="btn btn-primary w-full mt-8">我明白了</button>
         </div>
     </div>
-    <!-- 确认删除模态框 -->
     <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
         <div class="card p-8 max-w-md w-full fade-in">
             <h3 id="confirm-modal-title" class="text-xl font-bold mb-4 text-gray-800">确认操作</h3>
@@ -182,7 +194,6 @@
             </div>
         </div>
     </div>
-    <!-- 模板区域 -->
     <template id="student-content-template">
         <div class="space-y-12"></div>
     </template>
@@ -296,7 +307,6 @@
             </tr>
         </template>
     </div>
-    <!-- Firebase SDK -->
     <script type="module">
         // === 错误处理与状态更新 ===
         function showError(message, details = null) {
@@ -315,7 +325,7 @@
             errorContainer.appendChild(errorDiv);
             setTimeout(() => {
                 errorDiv.remove();
-            }, 5000);
+            }, 6000);
         }
         function updateStatus(message) {
             document.getElementById('status-message').textContent = message;
@@ -372,6 +382,10 @@
                 overall: {
                     gpa: document.getElementById('overall-gpa-display'),
                     score: document.getElementById('overall-weighted-score-display'),
+                },
+                exportMenu: {
+                    btn: document.getElementById('export-menu-btn'),
+                    options: document.getElementById('export-menu-options'),
                 }
             };
             
@@ -683,9 +697,6 @@
             });
 
             // === 数据保存事件监听 (修复输入打断问题) ===
-            // 使用 'change' 事件代替 'input' 事件。
-            // 'change' 在 input 元素失去焦点且值已改变时触发，
-            // 这完美地解决了输入被打断的问题，同时确保了数据在用户完成输入后保存。
             ui.studentContentContainer.addEventListener('change', (e) => {
                 if (!selectedStudentId || !currentUser) return;
                 const target = e.target;
@@ -845,6 +856,214 @@
                 if (score >= 68) return 2.0; if (score >= 65) return 1.7; if (score >= 60) return 1.0;
                 return 0.0;
             }
+            
+            // === EXPORT LOGIC ===
+            
+            // --- Dropdown Menu Control ---
+            ui.exportMenu.btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = ui.exportMenu.options.classList.contains('hidden');
+                ui.exportMenu.options.classList.toggle('hidden', !isHidden);
+                ui.exportMenu.btn.setAttribute('aria-expanded', isHidden);
+            });
+            window.addEventListener('click', (event) => {
+                if (!ui.exportMenu.btn.contains(event.target) && !ui.exportMenu.options.contains(event.target)) {
+                    ui.exportMenu.options.classList.add('hidden');
+                    ui.exportMenu.btn.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            function downloadFile(blob, filename) {
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+            
+            const getFilename = () => `grade_report_${new Date().toISOString().slice(0, 10)}`;
+
+            // --- Core Data Preparation ---
+            function updateAllFinalGradesForExport() {
+                if (!localStudentsData) return;
+                localStudentsData.forEach(student => {
+                    student.semesters?.forEach(semester => {
+                        semester.courses?.forEach(course => {
+                            let gradedWeight = 0, currentWeightedScore = 0;
+                            course.assignments?.forEach(a => {
+                                const weight = parseFloat(a.weight) || 0;
+                                if (a.score !== '' && a.score !== null && a.score !== undefined) {
+                                    const score = parseFloat(a.score) || 0;
+                                    const maxScore = parseFloat(a.maxScore) || 100;
+                                    gradedWeight += weight;
+                                    currentWeightedScore += (score / maxScore) * weight;
+                                }
+                            });
+                            course.finalGrade = (gradedWeight > 0) ? (currentWeightedScore / gradedWeight) * 100 : 0;
+                        });
+                    });
+                });
+            }
+
+            function getExportData() {
+                updateAllFinalGradesForExport();
+                if (!localStudentsData || localStudentsData.length === 0) {
+                    showError("没有可导出的数据。");
+                    return null;
+                }
+                const dataRows = [];
+                const headers = {
+                    studentName: "学生姓名", semesterName: "学期", courseName: "课程名称", courseCredits: "学分",
+                    courseTargetGrade: "目标分", courseFinalGrade: "课程总分", assignmentName: "评分项目",
+                    assignmentWeight: "权重 (%)", assignmentScore: "得分", assignmentMaxScore: "满分"
+                };
+
+                localStudentsData.forEach(student => {
+                    if (!student.semesters || student.semesters.length === 0) {
+                        dataRows.push({ [headers.studentName]: student.name });
+                    } else {
+                        student.semesters.forEach(semester => {
+                            if (!semester.courses || semester.courses.length === 0) {
+                                dataRows.push({ [headers.studentName]: student.name, [headers.semesterName]: semester.name });
+                            } else {
+                                semester.courses.forEach(course => {
+                                    const finalGrade = (course.finalGrade > 0) ? course.finalGrade.toFixed(2) : "N/A";
+                                    if (!course.assignments || course.assignments.length === 0) {
+                                        dataRows.push({
+                                            [headers.studentName]: student.name, [headers.semesterName]: semester.name,
+                                            [headers.courseName]: course.name, [headers.courseCredits]: course.credits,
+                                            [headers.courseTargetGrade]: course.targetGrade, [headers.courseFinalGrade]: finalGrade,
+                                        });
+                                    } else {
+                                        course.assignments.forEach(assignment => {
+                                            dataRows.push({
+                                                [headers.studentName]: student.name, [headers.semesterName]: semester.name,
+                                                [headers.courseName]: course.name, [headers.courseCredits]: course.credits,
+                                                [headers.courseTargetGrade]: course.targetGrade, [headers.courseFinalGrade]: finalGrade,
+                                                [headers.assignmentName]: assignment.name, [headers.assignmentWeight]: assignment.weight,
+                                                [headers.assignmentScore]: (assignment.score === null || assignment.score === undefined) ? "" : assignment.score,
+                                                [headers.assignmentMaxScore]: assignment.maxScore
+                                            });
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+                return dataRows;
+            }
+
+            // --- Export Implementations ---
+            document.getElementById('export-txt').addEventListener('click', (e) => {
+                e.preventDefault();
+                const data = getExportData();
+                if (!data) return;
+                
+                let textContent = `成绩报告 - ${new Date().toLocaleString('zh-CN')}\n\n`;
+                let currentStudent = "", currentSemester = "", currentCourse = "";
+
+                data.forEach(row => {
+                    if (row['学生姓名'] !== currentStudent) {
+                        currentStudent = row['学生姓名'];
+                        textContent += `========================================\n`;
+                        textContent += `学生: ${currentStudent}\n`;
+                        textContent += `========================================\n\n`;
+                        currentSemester = ""; // Reset semester
+                    }
+                    if (row['学期'] && row['学期'] !== currentSemester) {
+                        currentSemester = row['学期'];
+                        textContent += `--- 学期: ${currentSemester} ---\n\n`;
+                        currentCourse = ""; // Reset course
+                    }
+                    if (row['课程名称'] && row['课程名称'] !== currentCourse) {
+                        currentCourse = row['课程名称'];
+                        textContent += `  课程: ${currentCourse}\n`;
+                        textContent += `  - 学分: ${row['学分'] || 'N/A'}, 目标分: ${row['目标分'] || 'N/A'}, 最终总分: ${row['课程总分']}\n`;
+                    }
+                    if (row['评分项目']) {
+                        textContent += `    - ${row['评分项目']}: 得分 ${row['得分']}/${row['满分']} (权重: ${row['权重 (%)']}%)\n`;
+                    }
+                });
+
+                const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+                downloadFile(blob, `${getFilename()}.txt`);
+            });
+
+            document.getElementById('export-doc').addEventListener('click', (e) => {
+                e.preventDefault();
+                const data = getExportData();
+                if (!data) return;
+
+                let htmlContent = `
+                    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                    <head><meta charset='utf-8'><title>Grade Report</title></head>
+                    <body>
+                        <h1>成绩报告 - ${new Date().toLocaleString('zh-CN')}</h1>`;
+
+                const headers = Object.keys(data[0] || {});
+                htmlContent += `<table border="1" style="border-collapse: collapse; width: 100%;">
+                                    <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                                    <tbody>`;
+                data.forEach(row => {
+                    htmlContent += '<tr>';
+                    headers.forEach(header => {
+                        htmlContent += `<td>${row[header] === undefined ? '' : row[header]}</td>`;
+                    });
+                    htmlContent += '</tr>';
+                });
+                htmlContent += `</tbody></table></body></html>`;
+
+                const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
+                downloadFile(blob, `${getFilename()}.doc`);
+            });
+
+            document.getElementById('export-xlsx').addEventListener('click', (e) => {
+                e.preventDefault();
+                const data = getExportData();
+                if (!data) return;
+                
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "成绩单");
+                XLSX.writeFile(workbook, `${getFilename()}.xlsx`);
+            });
+            
+            document.getElementById('export-pdf').addEventListener('click', (e) => {
+                e.preventDefault();
+                const data = getExportData();
+                if (!data) return;
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Set the font that was loaded in the <head>
+                doc.setFont('simhei'); 
+                
+                const headers = Object.keys(data[0] || {});
+                const body = data.map(row => headers.map(header => (row[header] === undefined || row[header] === null) ? '' : row[header]));
+
+                doc.autoTable({
+                    head: [headers],
+                    body: body,
+                    styles: {
+                        font: 'simhei', // Apply the font to the table
+                        fontStyle: 'normal',
+                    },
+                    headStyles: { 
+                        fillColor: [22, 160, 133],
+                        font: 'simhei', // Apply the font to the header as well
+                        fontStyle: 'normal',
+                    },
+                });
+
+                doc.save(`${getFilename()}.pdf`);
+            });
+
 
         } catch (error) {
             console.error("初始化失败:", error);
