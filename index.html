@@ -73,7 +73,7 @@
     </div>
     <div id="error-container" class="fixed top-5 right-5 z-50 w-full max-w-sm"></div>
     <div id="login-view" class="max-w-md mx-auto text-center mt-20 fade-in">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800">Calculator</h1>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800">GRADESC</h1>
         <p class="text-gray-500 mt-3 text-lg mb-8">您的私人成绩与GPA智能管家</p>
         <div class="card p-8">
             <h2 class="text-xl font-bold text-gray-700 mb-2">欢迎使用</h2>
@@ -888,6 +888,19 @@
             const getFilename = () => `grade_report_${new Date().toISOString().slice(0, 10)}`;
 
             // --- Core Data Preparation ---
+
+            // Defines the complete and fixed structure for exports.
+            const EXPORT_HEADERS = [
+                "学生姓名", "学期", "课程名称", "学分",
+                "目标分", "课程总分", "评分项目",
+                "权重 (%)", "得分", "满分"
+            ];
+            const HEADER_KEYS = {
+                studentName: "学生姓名", semesterName: "学期", courseName: "课程名称", courseCredits: "学分",
+                courseTargetGrade: "目标分", courseFinalGrade: "课程总分", assignmentName: "评分项目",
+                assignmentWeight: "权重 (%)", assignmentScore: "得分", assignmentMaxScore: "满分"
+            };
+
             function updateAllFinalGradesForExport() {
                 if (!localStudentsData) return;
                 localStudentsData.forEach(student => {
@@ -915,38 +928,37 @@
                     showError("没有可导出的数据。");
                     return null;
                 }
-                const dataRows = [];
-                const headers = {
-                    studentName: "学生姓名", semesterName: "学期", courseName: "课程名称", courseCredits: "学分",
-                    courseTargetGrade: "目标分", courseFinalGrade: "课程总分", assignmentName: "评分项目",
-                    assignmentWeight: "权重 (%)", assignmentScore: "得分", assignmentMaxScore: "满分"
-                };
 
+                const dataRows = [];
                 localStudentsData.forEach(student => {
+                    const baseRow = { [HEADER_KEYS.studentName]: student.name };
                     if (!student.semesters || student.semesters.length === 0) {
-                        dataRows.push({ [headers.studentName]: student.name });
+                        dataRows.push(baseRow);
                     } else {
                         student.semesters.forEach(semester => {
+                            const semesterRow = { ...baseRow, [HEADER_KEYS.semesterName]: semester.name };
                             if (!semester.courses || semester.courses.length === 0) {
-                                dataRows.push({ [headers.studentName]: student.name, [headers.semesterName]: semester.name });
+                                dataRows.push(semesterRow);
                             } else {
                                 semester.courses.forEach(course => {
                                     const finalGrade = (course.finalGrade > 0) ? course.finalGrade.toFixed(2) : "N/A";
+                                    const courseRow = {
+                                        ...semesterRow,
+                                        [HEADER_KEYS.courseName]: course.name,
+                                        [HEADER_KEYS.courseCredits]: course.credits,
+                                        [HEADER_KEYS.courseTargetGrade]: course.targetGrade,
+                                        [HEADER_KEYS.courseFinalGrade]: finalGrade,
+                                    };
                                     if (!course.assignments || course.assignments.length === 0) {
-                                        dataRows.push({
-                                            [headers.studentName]: student.name, [headers.semesterName]: semester.name,
-                                            [headers.courseName]: course.name, [headers.courseCredits]: course.credits,
-                                            [headers.courseTargetGrade]: course.targetGrade, [headers.courseFinalGrade]: finalGrade,
-                                        });
+                                        dataRows.push(courseRow);
                                     } else {
                                         course.assignments.forEach(assignment => {
                                             dataRows.push({
-                                                [headers.studentName]: student.name, [headers.semesterName]: semester.name,
-                                                [headers.courseName]: course.name, [headers.courseCredits]: course.credits,
-                                                [headers.courseTargetGrade]: course.targetGrade, [headers.courseFinalGrade]: finalGrade,
-                                                [headers.assignmentName]: assignment.name, [headers.assignmentWeight]: assignment.weight,
-                                                [headers.assignmentScore]: (assignment.score === null || assignment.score === undefined) ? "" : assignment.score,
-                                                [headers.assignmentMaxScore]: assignment.maxScore
+                                                ...courseRow,
+                                                [HEADER_KEYS.assignmentName]: assignment.name,
+                                                [HEADER_KEYS.assignmentWeight]: assignment.weight,
+                                                [HEADER_KEYS.assignmentScore]: (assignment.score === null || assignment.score === undefined) ? "" : assignment.score,
+                                                [HEADER_KEYS.assignmentMaxScore]: assignment.maxScore
                                             });
                                         });
                                     }
@@ -968,25 +980,25 @@
                 let currentStudent = "", currentSemester = "", currentCourse = "";
 
                 data.forEach(row => {
-                    if (row['学生姓名'] !== currentStudent) {
-                        currentStudent = row['学生姓名'];
+                    if (row[HEADER_KEYS.studentName] !== currentStudent) {
+                        currentStudent = row[HEADER_KEYS.studentName];
                         textContent += `========================================\n`;
                         textContent += `学生: ${currentStudent}\n`;
                         textContent += `========================================\n\n`;
-                        currentSemester = ""; // Reset semester
+                        currentSemester = ""; currentCourse = "";
                     }
-                    if (row['学期'] && row['学期'] !== currentSemester) {
-                        currentSemester = row['学期'];
+                    if (row[HEADER_KEYS.semesterName] && row[HEADER_KEYS.semesterName] !== currentSemester) {
+                        currentSemester = row[HEADER_KEYS.semesterName];
                         textContent += `--- 学期: ${currentSemester} ---\n\n`;
-                        currentCourse = ""; // Reset course
+                        currentCourse = "";
                     }
-                    if (row['课程名称'] && row['课程名称'] !== currentCourse) {
-                        currentCourse = row['课程名称'];
+                    if (row[HEADER_KEYS.courseName] && row[HEADER_KEYS.courseName] !== currentCourse) {
+                        currentCourse = row[HEADER_KEYS.courseName];
                         textContent += `  课程: ${currentCourse}\n`;
-                        textContent += `  - 学分: ${row['学分'] || 'N/A'}, 目标分: ${row['目标分'] || 'N/A'}, 最终总分: ${row['课程总分']}\n`;
+                        textContent += `  - 学分: ${row[HEADER_KEYS.courseCredits] || 'N/A'}, 目标分: ${row[HEADER_KEYS.courseTargetGrade] || 'N/A'}, 最终总分: ${row[HEADER_KEYS.courseFinalGrade]}\n`;
                     }
-                    if (row['评分项目']) {
-                        textContent += `    - ${row['评分项目']}: 得分 ${row['得分']}/${row['满分']} (权重: ${row['权重 (%)']}%)\n`;
+                    if (row[HEADER_KEYS.assignmentName]) {
+                        textContent += `    - ${row[HEADER_KEYS.assignmentName]}: 得分 ${row[HEADER_KEYS.assignmentScore]}/${row[HEADER_KEYS.assignmentMaxScore]} (权重: ${row[HEADER_KEYS.assignmentWeight]}%)\n`;
                     }
                 });
 
@@ -1005,14 +1017,13 @@
                     <body>
                         <h1>成绩报告 - ${new Date().toLocaleString('zh-CN')}</h1>`;
 
-                const headers = Object.keys(data[0] || {});
                 htmlContent += `<table border="1" style="border-collapse: collapse; width: 100%;">
-                                    <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                                    <thead><tr>${EXPORT_HEADERS.map(h => `<th>${h}</th>`).join('')}</tr></thead>
                                     <tbody>`;
                 data.forEach(row => {
                     htmlContent += '<tr>';
-                    headers.forEach(header => {
-                        htmlContent += `<td>${row[header] === undefined ? '' : row[header]}</td>`;
+                    EXPORT_HEADERS.forEach(header => {
+                        htmlContent += `<td>${row[header] === undefined || row[header] === null ? '' : row[header]}</td>`;
                     });
                     htmlContent += '</tr>';
                 });
@@ -1026,8 +1037,17 @@
                 e.preventDefault();
                 const data = getExportData();
                 if (!data) return;
+
+                // For XLSX, we need an array of objects with keys that match the headers.
+                const xlsxData = data.map(row => {
+                    const newRow = {};
+                    EXPORT_HEADERS.forEach(header => {
+                        newRow[header] = row[header];
+                    });
+                    return newRow;
+                });
                 
-                const worksheet = XLSX.utils.json_to_sheet(data);
+                const worksheet = XLSX.utils.json_to_sheet(xlsxData);
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "成绩单");
                 XLSX.writeFile(workbook, `${getFilename()}.xlsx`);
@@ -1041,29 +1061,26 @@
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
-                // Set the font that was loaded in the <head>
                 doc.setFont('simhei'); 
                 
-                const headers = Object.keys(data[0] || {});
-                const body = data.map(row => headers.map(header => (row[header] === undefined || row[header] === null) ? '' : row[header]));
+                const body = data.map(row => EXPORT_HEADERS.map(header => (row[header] === undefined || row[header] === null) ? '' : row[header]));
 
                 doc.autoTable({
-                    head: [headers],
+                    head: [EXPORT_HEADERS],
                     body: body,
                     styles: {
-                        font: 'simhei', // Apply the font to the table
+                        font: 'simhei', 
                         fontStyle: 'normal',
                     },
                     headStyles: { 
                         fillColor: [22, 160, 133],
-                        font: 'simhei', // Apply the font to the header as well
+                        font: 'simhei',
                         fontStyle: 'normal',
                     },
                 });
 
                 doc.save(`${getFilename()}.pdf`);
             });
-
 
         } catch (error) {
             console.error("初始化失败:", error);
