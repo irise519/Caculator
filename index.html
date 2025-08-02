@@ -453,7 +453,6 @@
                         <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">个人目标达成分析:</h3>
                         <p class="target-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400 text-right">输入个人目标分以分析</p>
                     </div>
-                    <div class="semester-goal-contribution-display pt-2 border-t border-gray-200 dark:border-gray-700 text-sm" style="display: none;"></div>
                 </div>
             </div>
         </template>
@@ -668,7 +667,7 @@
                         return semester;
                     }).filter(semester => semester.courses.length > 0);
                 }
-                filteredSemesters.forEach((semesterData, index) => {
+                filteredSemesters.forEach((semesterData) => {
                     const originalIndex = student.semesters.findIndex(s => s.id === semesterData.id);
                     if (originalIndex === -1) return;
                     const semesterEl = createSemesterElement(semesterData, originalIndex);
@@ -727,7 +726,6 @@
                  courseEl.dataset.semesterIndex = semesterIndex;
                  courseEl.dataset.courseIndex = courseIndex;
                  courseEl.querySelector('.course-name-input').value = courseData.name;
-                 // FIX: Change to credits
                  courseEl.querySelector('.course-credits-input').value = courseData.credits || '';
                  courseEl.querySelector('.target-grade-input').value = courseData.targetGrade;
                  const assignmentsContainer = courseEl.querySelector('.assignments-container');
@@ -892,13 +890,14 @@
                     semester.gpa = totalCredits > 0 ? gpaPointsSum / totalCredits : 0;
                     
                     // NEW: Smart target calculation
-                    calculateSemesterTargetAnalysis(semester);
+                    calculateSmartTargetScores(semester);
                 });
                 
                 return studentCopy;
             }
 
-            function calculateSemesterTargetAnalysis(semester) {
+            // NEW: Robust target score calculation with overflow redistribution
+            function calculateSmartTargetScores(semester) {
                 const targetScore = parseFloat(semester.targetWeightedScore);
                 semester.targetAnalysis = {}; // Reset analysis object
 
@@ -907,7 +906,6 @@
                 let currentWeightedScoreSum = 0;
                 let totalCredits = 0;
                 let ungradedItems = [];
-                let totalUngradedEffectiveWeight = 0;
 
                 (semester.courses || []).forEach((course, courseIndex) => {
                     const credits = parseFloat(course.credits) || 0;
@@ -924,9 +922,10 @@
                                         courseIndex,
                                         assignmentIndex,
                                         maxScore: parseFloat(assignment.maxScore) || 100,
-                                        effectiveWeight
+                                        effectiveWeight,
+                                        requiredScore: 0, // Initialize
+                                        isCapped: false
                                     });
-                                    totalUngradedEffectiveWeight += effectiveWeight;
                                 }
                             }
                         });
@@ -935,30 +934,64 @@
 
                 if (totalCredits === 0) return;
 
-                const pointsNeeded = (targetScore * totalCredits) - currentWeightedScoreSum;
-
-                if (totalUngradedEffectiveWeight < 0.01) {
+                let pointsNeeded = (targetScore * totalCredits) - currentWeightedScoreSum;
+                
+                if (ungradedItems.length === 0) {
                     semester.targetAnalysis.message = "所有项目已评分。";
                     semester.targetAnalysis.status = "done";
                     return;
                 }
-
-                const maxPossiblePoints = totalUngradedEffectiveWeight;
+                
+                // Check for impossibility upfront
+                const maxPossiblePoints = ungradedItems.reduce((sum, item) => sum + (100 / item.maxScore) * item.effectiveWeight, 0);
                 if (pointsNeeded > maxPossiblePoints) {
-                    semester.targetAnalysis.message = `目标无法达成！即使剩余项目全部满分，也无法达到目标分数。`;
-                    semester.targetAnalysis.status = "impossible";
-                    return;
+                     semester.targetAnalysis.message = `目标无法达成！即使剩余项目全部满分也无法达到。`;
+                     semester.targetAnalysis.status = "impossible";
+                     return;
                 }
                 
-                const requiredAvgPercent = (pointsNeeded / totalUngradedEffectiveWeight) * 100;
-                semester.targetAnalysis.message = `为达目标，剩余项目平均需得 <strong class="${requiredAvgPercent > 100 ? 'text-red-500' : 'text-blue-600'}">${requiredAvgPercent.toFixed(2)}%</strong>`;
-                semester.targetAnalysis.status = "possible";
+                // Iterative redistribution loop
+                let hasChanged = true;
+                while(hasChanged) {
+                    hasChanged = false;
+                    const remainingUngradedWeight = ungradedItems.filter(i => !i.isCapped).reduce((sum, i) => sum + i.effectiveWeight, 0);
 
+                    if (remainingUngradedWeight < 0.001) break; // Avoid division by zero
+
+                    const avgPercentNeeded = pointsNeeded / remainingUngradedWeight;
+
+                    for (const item of ungradedItems) {
+                        if (item.isCapped) continue;
+
+                        const scoreNeeded = avgPercentNeeded * item.maxScore;
+
+                        if (scoreNeeded > 100) {
+                            const overflowPoints = (scoreNeeded - 100) / item.maxScore * item.effectiveWeight;
+                            pointsNeeded -= (100 / item.maxScore * item.effectiveWeight); // Reduce points needed by this item's max contribution
+                            item.requiredScore = 100;
+                            item.isCapped = true;
+                            hasChanged = true;
+                        } else {
+                            item.requiredScore = scoreNeeded < 0 ? 0 : scoreNeeded;
+                        }
+                    }
+                }
+
+                // Final check and message
+                if (pointsNeeded > 0.01) {
+                     semester.targetAnalysis.message = `目标无法达成！即使剩余项目全部满分也无法达到。`;
+                     semester.targetAnalysis.status = "impossible";
+                } else {
+                    const overallRequiredPercent = ungradedItems.reduce((sum, item) => sum + (item.requiredScore / item.maxScore * item.effectiveWeight), 0) / ungradedItems.reduce((sum, i) => sum + i.effectiveWeight, 0) * 100;
+                    semester.targetAnalysis.message = `为达目标，剩余项目平均需得 <strong class="${overallRequiredPercent > 90 ? 'text-yellow-500' : 'text-blue-500'}">${overallRequiredPercent.toFixed(2)}%</strong>`;
+                    semester.targetAnalysis.status = "possible";
+                }
+
+                // Apply calculated scores back to the semester object
                 ungradedItems.forEach(item => {
-                    const requiredScore = (requiredAvgPercent / 100) * item.maxScore;
                     const course = semester.courses[item.courseIndex];
                     if (!course.assignments[item.assignmentIndex]) return;
-                    course.assignments[item.assignmentIndex].requiredScore = requiredScore;
+                    course.assignments[item.assignmentIndex].requiredScore = item.requiredScore;
                 });
             }
             
@@ -1028,14 +1061,16 @@
                     breakdownContainer.style.display = 'block';
                     if(semesterData.targetAnalysis.status === 'impossible') {
                         breakdownContainer.className = 'semester-target-breakdown-display p-3 rounded-lg text-sm bg-danger-bg text-danger-text';
-                    } else {
+                    } else if (semesterData.targetAnalysis.status === 'done') {
+                        breakdownContainer.className = 'semester-target-breakdown-display p-3 rounded-lg text-sm bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400';
+                    }
+                    else {
                         breakdownContainer.className = 'semester-target-breakdown-display p-3 rounded-lg text-sm bg-highlight-bg text-highlight-text';
                     }
                 } else {
                     breakdownContainer.style.display = 'none';
                 }
 
-                // Update course and assignment UI from calculated data
                 semesterEl.querySelectorAll('.course-card').forEach((courseEl, courseIndex) => {
                     updateCourseCalculationsUI(courseEl, semesterData.courses[courseIndex]);
                 });
@@ -1059,12 +1094,17 @@
                     if (assignmentData.requiredScore !== undefined) {
                         const score = assignmentData.requiredScore;
                         requiredScoreEl.textContent = score.toFixed(1);
-                        requiredScoreEl.classList.remove('text-green-600', 'text-yellow-600', 'text-red-600');
-                        if (score > 100) requiredScoreEl.classList.add('text-red-600');
-                        else if (score > 85) requiredScoreEl.classList.add('text-yellow-600');
-                        else requiredScoreEl.classList.add('text-green-600');
+                        requiredScoreEl.className = 'required-score-display font-bold'; // Reset classes
+                        if (score >= 100) {
+                             requiredScoreEl.classList.add('text-red-500');
+                        } else if (score > 85) {
+                            requiredScoreEl.classList.add('text-yellow-500');
+                        } else {
+                             requiredScoreEl.classList.add('text-green-600');
+                        }
                     } else {
                         requiredScoreEl.textContent = '-';
+                        requiredScoreEl.className = 'required-score-display font-bold';
                     }
                 });
             }
@@ -1088,7 +1128,7 @@
                     let highEffortCourses = [];
                     (semester.courses || []).forEach(course => {
                         (course.assignments || []).forEach(assignment => {
-                            if (assignment.requiredScore > 100 && !highEffortCourses.includes(course.name)) {
+                            if (assignment.requiredScore >= 100 && !highEffortCourses.includes(course.name)) {
                                 highEffortCourses.push(course.name);
                             }
                         });
@@ -1097,7 +1137,7 @@
                     if (highEffortCourses.length > 0) {
                         suggestions.push({
                             type: 'warning',
-                            text: `<strong>学期 "${semester.name}" 提分预警:</strong> 课程 <span class="font-bold">${highEffortCourses.join(', ')}</span> 的部分项目需要超常发挥才能达成目标，请重点关注！`
+                            text: `<strong>学期 "${semester.name}" 提分预警:</strong> 课程 <span class="font-bold">${highEffortCourses.join(', ')}</span> 的部分项目需要满分才能达成目标，请重点关注！`
                         });
                     }
                 });
@@ -1253,15 +1293,28 @@
                             if (target.classList.contains('target-grade-input')) courseData.targetGrade = target.value;
                         }
                     }
-                    renderApp(); // Re-render with new data to show calculation changes
-                    debouncedUpdater(); // Debounce the actual save to Firestore
+                    renderApp(); 
+                    debouncedUpdater();
                 });
             }
             function showConfirmModal(title, body, onConfirm, confirmText = '确认') { /* ... */ };
             const hideConfirmModal = () => { /* ... */ };
             async function handleAddStudent() { /* ... */ }
             function handleRemoveStudent(studentId, studentName) { /* ... */ }
-            async function handleAddSemester() { /* ... */ }
+            async function handleAddSemester() {
+                 if (!selectedStudentId|| !currentUser) { showError('请先选择或添加一个学生。'); return; }
+                let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
+                if (!studentData) return;
+                if(!studentData.semesters) studentData.semesters = [];
+                const newSemester = { 
+                    id: `sem-${Date.now()}`,
+                    name: `新学期 ${studentData.semesters.length + 1}`, 
+                    courses: [] 
+                };
+                studentData.semesters.push(newSemester);
+                await updateStudentData(studentData.semesters);
+                showSuccess('新学期已添加！');
+            }
             async function updateStudentData(updatedSemesters) {
                 if (!selectedStudentId || !currentUser) return;
                 updatedSemesters.forEach((s, s_idx) => {
