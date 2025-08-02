@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>  
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
     <style>
@@ -266,15 +266,15 @@
                  <div id="analytics-empty-state" class="hidden"></div>
                  <div id="analytics-content" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="card p-6 min-h-[400px]">
-                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">GPA 趋势图</h3>
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">课程表现雷达图</h3>
                         <div class="relative h-96">
-                            <canvas id="gpa-trend-chart"></canvas>
+                            <canvas id="course-performance-radar-chart"></canvas>
                         </div>
                     </div>
                     <div class="card p-6 min-h-[400px]">
-                         <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">课程标签表现 (待开发)</h3>
-                         <div class="relative h-96 flex items-center justify-center text-gray-400 dark:text-gray-500">
-                            <p>未来将支持按课程标签分析成绩...</p>
+                         <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">学分质量分布</h3>
+                         <div class="relative h-96">
+                            <canvas id="grade-credit-distribution-bar-chart"></canvas>
                          </div>
                     </div>
                  </div>
@@ -370,14 +370,6 @@
                             <div class="font-semibold text-gray-600 dark:text-gray-300">学期加权总分</div>
                             <span class="semester-weighted-score-display text-3xl font-extrabold text-blue-600">N/A</span>
                         </div>
-                        <div class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
-                            <div class="font-semibold text-gray-600 dark:text-gray-300">目标总分</div>
-                            <div class="flex items-center space-x-2">
-                                <input type="number" min="0" max="100" placeholder="90" class="target-semester-score-input form-input w-20 p-1 text-center text-sm" style="font-size: 0.875rem;">
-                                <span class="target-semester-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400">输入目标以分析</span>
-                            </div>
-                        </div>
-                        <div class="semester-target-breakdown-display p-3 rounded-lg text-sm" style="display: none;"></div>
                     </div>
                     <div class="relative h-48">
                         <canvas class="grade-distribution-chart"></canvas>
@@ -403,12 +395,8 @@
                         <label class="text-sm font-medium text-gray-500 dark:text-gray-400">学分</label>
                         <input type="number" min="0" max="100" step="0.5" placeholder="3" class="course-credits-input form-input w-full p-2 mt-1 rounded-md">
                     </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">个人目标分</label>
-                        <input type="number" min="0" max="100" placeholder="90" class="target-grade-input form-input w-full p-2 mt-1 rounded-md">
-                    </div>
-                    <div class="relative h-24">
-                        <canvas class="weight-distribution-chart"></canvas>
+                    <div class="md:col-span-2 relative h-24">
+                        <canvas class="course-score-chart"></canvas>
                         <p class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm chart-placeholder">无数据</p>
                     </div>
                 </div>
@@ -529,11 +517,13 @@
             coursesEmptyState: document.getElementById('courses-empty-state'),
             analyticsEmptyState: document.getElementById('analytics-empty-state'),
             analyticsContent: document.getElementById('analytics-content'),
-            gpaTrendChart: document.getElementById('gpa-trend-chart'),
             exportJsonBtn: document.getElementById('export-json-btn'),
             exportXlsxBtn: document.getElementById('export-xlsx'),
             importJsonBtn: document.getElementById('import-json-btn'),
             importDataBtn: document.getElementById('import-data-btn'),
+            // NEW: Add new chart canvases
+            radarChart: document.getElementById('course-performance-radar-chart'),
+            barChart: document.getElementById('grade-credit-distribution-bar-chart'),
         };
         // === Utility Functions ===
         function showError(message, details = null) {
@@ -692,25 +682,6 @@
                     });
                 }
                 
-                const targetScoreInput = semesterEl.querySelector('.target-semester-score-input');
-                targetScoreInput.value = semesterData.targetWeightedScore || '';
-
-                const debouncedSave = debounce((semesters) => {
-                    updateStudentData(semesters);
-                }, 800);
-
-                targetScoreInput.addEventListener('input', (e) => {
-                    let studentDataCopy = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
-                    if (!studentDataCopy) return;
-                    studentDataCopy.semesters[semesterIndex].targetWeightedScore = parseFloat(e.target.value) || null;
-                    
-                    const updatedStudentForUI = updateAllCalculations(studentDataCopy);
-                    const updatedSemesterForUI = updatedStudentForUI.semesters[semesterIndex];
-                    updateSemesterCalculationsUI(semesterEl, updatedSemesterForUI);
-                    
-                    debouncedSave(studentDataCopy.semesters);
-                });
-
                 return semesterEl;
             }
             function createCourseElement(courseData, semesterIndex, courseIndex) {
@@ -720,7 +691,6 @@
                  courseEl.dataset.courseIndex = courseIndex;
                  courseEl.querySelector('.course-name-input').value = courseData.name;
                  courseEl.querySelector('.course-credits-input').value = courseData.credits || '';
-                 courseEl.querySelector('.target-grade-input').value = courseData.targetGrade;
                  const assignmentsContainer = courseEl.querySelector('.assignments-container');
                  (courseData.assignments || []).forEach((assignmentData, assignmentIndex) => {
                     const assignmentEl = createAssignmentElement(assignmentData, semesterIndex, courseIndex, assignmentIndex);
@@ -891,30 +861,25 @@
                     ui.overall.gpa.textContent = 'N/A';
                     ui.overall.score.textContent = 'N/A';
                     ui.deadlines.list.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 text-sm p-4">无日程安排。</p>`;
-                    renderCumulativeGpaChart(null);
+                    renderAnalyticsCharts(null);
                     return;
                 }
                 
                 let overallCredits = 0, overallGpaPoints = 0, overallScorePoints = 0;
-                const cumulativeData = { labels: [], gpas: [], cumulativeGpas: [] };
                 
                 student.semesters.forEach(semester => {
                     if (semester.totalCredits > 0) {
                         overallCredits += semester.totalCredits;
                         overallGpaPoints += semester.gpa * semester.totalCredits;
                         overallScorePoints += semester.weightedScore * semester.totalCredits;
-
-                        cumulativeData.labels.push(semester.name || '未命名学期');
-                        cumulativeData.gpas.push(semester.gpa);
-                        cumulativeData.cumulativeGpas.push(overallGpaPoints / overallCredits);
                     }
                 });
 
                 ui.overall.gpa.textContent = overallCredits > 0 ? (overallGpaPoints / overallCredits).toFixed(2) : 'N/A';
                 ui.overall.score.textContent = overallCredits > 0 ? (overallScorePoints / overallCredits).toFixed(2) : 'N/A';
                 
-                renderCumulativeGpaChart(cumulativeData);
                 renderUpcomingDeadlines(student);
+                renderAnalyticsCharts(student);
             }
 
             function updateSemesterCalculationsUI(semesterEl, semesterData) {
@@ -923,23 +888,6 @@
                 semesterEl.querySelector('.semester-gpa-display').textContent = semesterData.gpa > 0 ? semesterData.gpa.toFixed(2) : 'N/A';
                 semesterEl.querySelector('.semester-weighted-score-display').textContent = semesterData.weightedScore > 0 ? semesterData.weightedScore.toFixed(2) : 'N/A';
                 
-                const targetScoreInput = semesterEl.querySelector('.target-semester-score-input');
-                const analysisDisplay = semesterEl.querySelector('.target-semester-analysis-display');
-                const targetScore = parseFloat(targetScoreInput.value);
-                if (!isNaN(targetScore)) {
-                    if (semesterData.weightedScore >= targetScore) {
-                        analysisDisplay.textContent = '已达到目标！';
-                        analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-green-600';
-                    } else {
-                        const diff = targetScore - semesterData.weightedScore;
-                        analysisDisplay.textContent = `差 ${diff.toFixed(2)} 分`;
-                        analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-red-500';
-                    }
-                } else {
-                    analysisDisplay.textContent = '输入目标以分析';
-                    analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400';
-                }
-
                 semesterEl.querySelectorAll('.course-card').forEach((courseEl, courseIndex) => {
                     updateCourseCalculationsUI(courseEl, semesterData.courses[courseIndex], semesterData);
                 });
@@ -957,11 +905,175 @@
                 } else {
                     contributionDisplay.textContent = 'N/A';
                 }
+
+                renderCourseScoreDistributionChart(courseEl.querySelector('.course-score-chart'), courseData);
             }
 
-            function renderCumulativeGpaChart(data) { /* ... */ }
-            function renderGradeDistributionChart(canvas, data) { /* ... */ }
-            function renderWeightDistributionChart(canvas, data, totalWeight) { /* ... */ }
+            function renderAnalyticsCharts(student) {
+                if (!student || !student.semesters || student.semesters.length === 0) {
+                    ui.analyticsContent.classList.add('hidden');
+                    showEmptyState(ui.analyticsEmptyState, { title: '无数据可供分析', message: '请先添加学生和课程成绩。' });
+                    return;
+                }
+                ui.analyticsContent.classList.remove('hidden');
+                ui.analyticsEmptyState.classList.add('hidden');
+                renderCoursePerformanceRadarChart(ui.radarChart, student);
+                renderGradeCreditDistributionBarChart(ui.barChart, student);
+            }
+
+            function renderCourseScoreDistributionChart(canvas, courseData) {
+                const chartId = `course-score-${courseData.name}`;
+                if (chartInstances[chartId]) chartInstances[chartId].destroy();
+
+                const ctx = canvas.getContext('2d');
+                const placeholder = canvas.nextElementSibling;
+                
+                const labels = [];
+                const data = [];
+                const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+                let totalGradedWeight = 0;
+
+                (courseData.assignments || []).forEach(a => {
+                    if(a.score !== '' && a.score !== null) {
+                        const weight = parseFloat(a.weight) || 0;
+                        const score = parseFloat(a.score) || 0;
+                        const maxScore = parseFloat(a.maxScore) || 100;
+                        labels.push(a.name || '未命名项目');
+                        data.push((score / maxScore) * weight);
+                        totalGradedWeight += weight;
+                    }
+                });
+
+                const remainingWeight = 100 - totalGradedWeight;
+                if (remainingWeight > 0) {
+                    labels.push('未评分');
+                    data.push(remainingWeight);
+                }
+
+                if (data.length === 0) {
+                    placeholder.style.display = 'flex';
+                    return;
+                }
+                placeholder.style.display = 'none';
+
+                chartInstances[chartId] = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{ data: data, backgroundColor: colors.concat(['#9ca3af']), borderWidth: 2, borderColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#fff' }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: '70%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `${context.label}: ${context.parsed.toFixed(1)}%`
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function renderCoursePerformanceRadarChart(canvas, studentData) {
+                const chartId = 'radar-chart';
+                if (chartInstances[chartId]) chartInstances[chartId].destroy();
+                const ctx = canvas.getContext('2d');
+                
+                const labels = [];
+                const data = [];
+                studentData.semesters.forEach(s => {
+                    (s.courses || []).forEach(c => {
+                        labels.push(c.name || '未命名课程');
+                        data.push(c.finalGrade);
+                    });
+                });
+
+                if (labels.length < 3) {
+                    // Radar chart needs at least 3 points
+                    return;
+                }
+
+                const isDark = document.documentElement.classList.contains('dark');
+                const gridColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+                const textColor = isDark ? '#e5e7eb' : '#6b7280';
+
+                chartInstances[chartId] = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '课程最终成绩',
+                            data: data,
+                            fill: true,
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderColor: 'rgb(59, 130, 246)',
+                            pointBackgroundColor: 'rgb(59, 130, 246)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgb(59, 130, 246)'
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true, max: 100,
+                                grid: { color: gridColor },
+                                pointLabels: { color: textColor, font: { size: 12 } },
+                                ticks: { backdropColor: isDark ? '#1f2937' : '#fff', color: textColor }
+                            }
+                        },
+                        plugins: { legend: { labels: { color: textColor } } }
+                    }
+                });
+            }
+
+            function renderGradeCreditDistributionBarChart(canvas, studentData) {
+                const chartId = 'bar-chart';
+                if (chartInstances[chartId]) chartInstances[chartId].destroy();
+                const ctx = canvas.getContext('2d');
+
+                const gradeCredits = { 'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0 };
+                studentData.semesters.forEach(s => {
+                    (s.courses || []).forEach(c => {
+                        const grade = scoreToGrade(c.finalGrade);
+                        if (grade) {
+                            gradeCredits[grade] += parseFloat(c.credits) || 0;
+                        }
+                    });
+                });
+
+                const isDark = document.documentElement.classList.contains('dark');
+                const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                const textColor = isDark ? '#e5e7eb' : '#6b7280';
+
+                chartInstances[chartId] = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(gradeCredits),
+                        datasets: [{
+                            label: '学分',
+                            data: Object.values(gradeCredits),
+                            backgroundColor: [
+                                'rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)',
+                                'rgba(245, 158, 11, 0.7)', 'rgba(239, 68, 68, 0.7)',
+                                'rgba(107, 114, 128, 0.7)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+                            x: { grid: { display: false }, ticks: { color: textColor } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+            
             function renderUpcomingDeadlines(student) { /* ... */ }
             function setupAndStartTour() { /* ... */ }
             // === Event Handlers ===
@@ -1111,7 +1223,7 @@
             function showConfirmModal(title, body, onConfirm, confirmText = '确认') { /* ... */ };
             const hideConfirmModal = () => { /* ... */ };
             async function handleAddStudent() { /* ... */ }
-            function handleRemoveStudent(studentId, studentName) { /* ... */ }
+            function handleRemoveStudent(studentId, studentName) { /* ... */ }  
             async function handleAddSemester() {
                  if (!selectedStudentId|| !currentUser) { showError('请先选择或添加一个学生。'); return; }
                 let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
@@ -1286,7 +1398,7 @@
                 }
             }
             // Initial setup
-            const savedTheme = localStorage.getItem('theme');  
+            const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {
                 document.documentElement.classList.add('dark');
                 ui.themeToggle.checked = true;
