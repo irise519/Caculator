@@ -11,13 +11,18 @@
         body {
             font-family: 'Inter', 'Helvetica Neue', 'Arial', 'sans-serif';
             background-color: #f8f9fa;
+            transition: background-color 0.3s ease;
         }
         .card {
             background-color: white;
             border-radius: 0.75rem;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             transition: all 0.3s ease-in-out;
+            border-left-width: 4px;
+            border-left-color: #3b82f6; /* 默认优先级边框 */
         }
+        .card[data-priority="important"] { border-left-color: #f59e0b; }
+        .card[data-priority="critical"] { border-left-color: #ef4444; }
         .card:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -52,7 +57,7 @@
         .btn-danger-outline:hover { background-color: #fef2f2; color: #dc2626; }
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        #gpa-info-popup, #loading-overlay, #confirm-modal { display: none; }
+        #gpa-info-popup, #loading-overlay, #confirm-modal, #backup-modal { display: none; }
         [v-cloak] { display: none; }
         .error-message {
             background-color: #fef2f2;
@@ -67,19 +72,64 @@
         .score-good { color: #3b82f6; } /* 蓝色 */
         .score-average { color: #f59e0b; } /* 黄色 */
         .score-poor { color: #ef4444; } /* 红色 */
+
+        /* === 新增：深色模式样式 === */
+        .dark body {
+            background-color: #111827;
+            color: #e5e7eb;
+        }
+        .dark .card {
+            background-color: #1f2937;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+        }
+        .dark .form-input {
+            border-color: #4b5563;
+            color: #e5e7eb;
+        }
+        .dark .form-input:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
+        }
+        .dark .btn-primary { background-color: #3b82f6; }
+        .dark .btn-primary:hover { background-color: #2563eb; }
+        .dark .btn-secondary { background-color: #374151; color: #e5e7eb; }
+        .dark .btn-secondary:hover { background-color: #4b5563; }
+        .dark .error-message {
+            background-color: #3f1f1f;
+            border-color: #991b1b;
+            color: #f87171;
+        }
+        .dark .error-message button { color: #f87171; }
+        .dark #error-container .success-message {
+            background-color: #164e33;
+            border-color: #15803d;
+            color: #6ee7b7;
+        }
+        .dark #error-container .success-message button { color: #6ee7b7; }
+
+        /* === 新增：智能建议板块样式 === */
+        .suggestion-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            border-left-width: 4px;
+        }
+        .suggestion-warning { background-color: #fef2f2; border-left-color: #ef4444; }
+        .suggestion-info { background-color: #eff6ff; border-left-color: #3b82f6; }
+        .suggestion-success { background-color: #f0fdf4; border-left-color: #10b981; }
     </style>
 </head>
 <body class="p-4 md:p-8">
-    <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
+    <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-80 dark:bg-gray-900 dark:bg-opacity-80 flex items-center justify-center z-50">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
     </div>
     <div id="error-container" class="fixed top-5 right-5 z-50 w-full max-w-sm"></div>
     <div id="login-view" class="max-w-md mx-auto text-center mt-20 fade-in">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800">GRADESC</h1>
-        <p class="text-gray-500 mt-3 text-lg mb-8">您的私人成绩与GPA智能管家</p>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 dark:text-white">GRADESC</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-3 text-lg mb-8">您的私人成绩与GPA智能管家</p>
         <div class="card p-8">
-            <h2 class="text-xl font-bold text-gray-700 mb-2">欢迎使用</h2>
-            <p class="text-gray-500 mb-6">请登录以在云端安全地同步您的所有数据。</p>
+            <h2 class="text-xl font-bold text-gray-700 dark:text-gray-200 mb-2">欢迎使用</h2>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">请登录以在云端安全地同步您的所有数据。</p>
             <button id="login-btn" class="btn btn-primary w-full">
                 <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
                     <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
@@ -89,32 +139,36 @@
                 </svg>
                 使用 Google 登录
             </button>
-            <div id="status-message" class="mt-4 text-sm text-gray-600"></div>
+            <div id="status-message" class="mt-4 text-sm text-gray-600 dark:text-gray-400"></div>
         </div>
     </div>
     <div id="app-view" class="max-w-7xl mx-auto" v-cloak>
         <header class="flex flex-col md:flex-row justify-between items-center mb-6">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-4 md:mb-0">分数计算与统计</h1>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-white">分数计算与统计</h1>
             <div id="user-profile" class="flex items-center space-x-4">
                 <img id="user-avatar" class="w-10 h-10 rounded-full" src="" alt="User Avatar">
-                <span id="user-name" class="font-semibold text-gray-700"></span>
+                <span id="user-name" class="font-semibold text-gray-700 dark:text-gray-200"></span>
                 <div class="relative inline-block text-left">
                     <div>
-                        <button type="button" id="export-menu-btn" class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" aria-expanded="false" aria-haspopup="true">
+                        <button type="button" id="export-menu-btn" class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white dark:bg-gray-800 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700" aria-expanded="false" aria-haspopup="true">
                             导出
                             <svg class="-mr-1 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                             </svg>
                         </button>
                     </div>
-                    <!-- === 新增：在导出菜单中添加 "清空所有数据" 选项 === -->
-                    <div id="export-menu-options" class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="export-menu-btn">
+                    <div id="export-menu-options" class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-700 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="export-menu-btn">
                         <div class="py-1" role="none">
-                            <a href="#" id="export-txt" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1">为 Text (.txt)</a>
-                            <a href="#" id="export-doc" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1">为 Word (.doc)</a>
-                            <a href="#" id="export-xlsx" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1">为 Excel (.xlsx)</a>
+                            <a href="#" id="export-txt" class="text-gray-700 dark:text-gray-200 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">为 Text (.txt)</a>
+                            <a href="#" id="export-doc" class="text-gray-700 dark:text-gray-200 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">为 Word (.doc)</a>
+                            <a href="#" id="export-xlsx" class="text-gray-700 dark:text-gray-200 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">为 Excel (.xlsx)</a>
+                            <!-- === 新增：数据备份与恢复选项 === -->
+                            <a href="#" id="export-json" class="text-gray-700 dark:text-gray-200 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">导出JSON备份</a>
+                            <a href="#" id="import-json" class="text-gray-700 dark:text-gray-200 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">从JSON恢复</a>
                         </div>
-                        <div class="border-t border-gray-200 py-1">
+                        <div class="border-t border-gray-200 dark:border-gray-700 py-1">
+                            <!-- === 新增：深色模式切换按钮 === -->
+                            <a href="#" id="toggle-dark-mode" class="text-gray-700 dark:text-gray-200 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">切换深色模式</a>
                             <a href="#" id="clear-all-data" class="text-red-600 block px-4 py-2 text-sm hover:bg-red-50" role="menuitem" tabindex="-1">清空所有数据</a>
                         </div>
                     </div>
@@ -125,15 +179,15 @@
         <div class="card p-6 mb-8 fade-in">
             <div class="grid md:grid-cols-3 gap-6 items-end">
                 <div class="md:col-span-1">
-                    <label for="new-student-name" class="block text-sm font-medium text-gray-600 mb-2">添加新学生</label>
+                    <label for="new-student-name" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">添加新学生</label>
                     <div class="flex">
                         <input type="text" id="new-student-name" placeholder="输入学生姓名..." class="form-input w-full p-2 rounded-l-md">
                         <button id="add-student-btn" class="btn btn-primary rounded-l-none px-4">+</button>
                     </div>
                 </div>
                 <div class="md:col-span-1">
-                    <label for="student-selector" class="block text-sm font-medium text-gray-600 mb-2">当前学生</label>
-                    <select id="student-selector" class="form-input w-full p-2 rounded-md bg-white"></select>
+                    <label for="student-selector" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">当前学生</label>
+                    <select id="student-selector" class="form-input w-full p-2 rounded-md bg-white dark:bg-gray-800 dark:text-white"></select>
                 </div>
                 <div class="md:col-span-1">
                      <button id="remove-student-btn" class="btn btn-danger-outline w-full">
@@ -146,16 +200,21 @@
             </div>
         </div>
         <div id="overall-summary-card" class="card p-6 mb-10 fade-in">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">学业总览</h2>
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">学业总览</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                    <div class="font-semibold text-gray-600">累计总 GPA</div>
+                <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="font-semibold text-gray-600 dark:text-gray-300">累计总 GPA</div>
                     <span id="overall-gpa-display" class="text-4xl font-extrabold text-green-600">N/A</span>
                 </div>
-                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                    <div class="font-semibold text-gray-600">总加权平均分</div>
+                <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="font-semibold text-gray-600 dark:text-gray-300">总加权平均分</div>
                     <span id="overall-weighted-score-display" class="text-4xl font-extrabold text-blue-600">N/A</span>
                 </div>
+            </div>
+            <!-- === 新增：智能学习建议板块 === -->
+            <div id="suggestions-container" class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-3">智能学习建议</h3>
+                <div id="suggestions-list"></div>
             </div>
         </div>
         <div id="student-content-container"></div>
@@ -168,9 +227,9 @@
     </div>
     <div id="gpa-info-popup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
         <div class="card p-8 max-w-md w-full fade-in">
-            <h3 class="text-2xl font-bold mb-4 text-gray-800">GPA换算规则</h3>
-            <p class="mb-6 text-gray-600">本计算器采用常见的4.0制标准。</p>
-            <ul class="space-y-2 text-gray-700">
+            <h3 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">GPA换算规则</h3>
+            <p class="mb-6 text-gray-600 dark:text-gray-300">本计算器采用常见的4.0制标准。</p>
+            <ul class="space-y-2 text-gray-700 dark:text-gray-300">
                 <li class="flex justify-between"><span>90-100分</span><span class="font-semibold text-blue-600">4.0 绩点</span></li>
                 <li class="flex justify-between"><span>85-89分</span><span class="font-semibold text-blue-600">3.7 绩点</span></li>
                 <li class="flex justify-between"><span>82-84分</span><span class="font-semibold text-blue-600">3.3 绩点</span></li>
@@ -187,12 +246,23 @@
     </div>
     <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
         <div class="card p-8 max-w-md w-full fade-in">
-            <h3 id="confirm-modal-title" class="text-xl font-bold mb-4 text-gray-800">确认操作</h3>
-            <p id="confirm-modal-body" class="mb-8 text-gray-600">您确定要继续吗？此操作无法撤销。</p>
+            <h3 id="confirm-modal-title" class="text-xl font-bold mb-4 text-gray-800 dark:text-white">确认操作</h3>
+            <p id="confirm-modal-body" class="mb-8 text-gray-600 dark:text-gray-300">您确定要继续吗？此操作无法撤销。</p>
             <div class="flex justify-end space-x-4">
-                <!-- === 用户友好性：将取消按钮放在左边，确认按钮放在右边 === -->
                 <button id="confirm-modal-cancel-btn" class="btn btn-secondary">取消</button>
                 <button id="confirm-modal-confirm-btn" class="btn btn-danger">确认删除</button>
+            </div>
+        </div>
+    </div>
+    <!-- === 新增：数据恢复模态框 === -->
+    <div id="backup-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div class="card p-8 max-w-md w-full fade-in">
+            <h3 id="backup-modal-title" class="text-xl font-bold mb-4 text-gray-800 dark:text-white">数据恢复</h3>
+            <p id="backup-modal-body" class="mb-4 text-gray-600 dark:text-gray-300">请选择您之前导出的JSON备份文件。</p>
+            <input type="file" id="backup-file-input" accept=".json" class="form-input w-full p-2 mb-4" />
+            <div class="flex justify-end space-x-4">
+                <button id="backup-modal-cancel-btn" class="btn btn-secondary">取消</button>
+                <button id="backup-modal-confirm-btn" class="btn btn-primary">恢复数据</button>
             </div>
         </div>
     </div>
@@ -203,7 +273,7 @@
         <template id="semester-template">
             <div class="semester-section card p-6">
                 <div class="flex flex-col md:flex-row justify-between md:items-center mb-6">
-                    <input type="text" class="semester-name-input text-3xl font-bold text-gray-700 border-l-4 border-blue-500 pl-4 mb-4 md:mb-0 bg-transparent focus:border-blue-400 outline-none w-full md:w-auto" value="学期名称">
+                    <input type="text" class="semester-name-input text-3xl font-bold text-gray-700 dark:text-white border-l-4 border-blue-500 pl-4 mb-4 md:mb-0 bg-transparent focus:border-blue-400 outline-none w-full md:w-auto" value="学期名称">
                     <div class="flex items-center space-x-2">
                         <button class="add-course-btn btn btn-primary">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -217,11 +287,11 @@
                     </div>
                 </div>
                 <div class="courses-container grid grid-cols-1 lg:grid-cols-2 gap-8"></div>
-                <div class="mt-8 p-6 bg-gray-50 rounded-lg">
-                     <h3 class="text-xl font-bold text-gray-800 mb-4">学期总结</h3>
+                <div class="mt-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                     <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">学期总结</h3>
                      <div class="space-y-4">
                         <div class="flex justify-between items-center">
-                            <div class="font-semibold text-gray-600 flex items-center">学期 GPA
+                            <div class="font-semibold text-gray-600 dark:text-gray-300 flex items-center">学期 GPA
                                 <span class="ml-2 text-blue-500 cursor-pointer" onclick="document.getElementById('gpa-info-popup').style.display='flex'">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
@@ -231,7 +301,7 @@
                             <span class="semester-gpa-display text-3xl font-extrabold text-green-600">N/A</span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <div class="font-semibold text-gray-600">学期加权总分 (百分制)</div>
+                            <div class="font-semibold text-gray-600 dark:text-gray-300">学期加权总分 (百分制)</div>
                             <span class="semester-weighted-score-display text-3xl font-extrabold text-blue-600">N/A</span>
                         </div>
                      </div>
@@ -241,7 +311,7 @@
         <template id="course-template">
             <div class="card p-6 course-card fade-in">
                 <div class="flex justify-between items-start mb-5">
-                    <input type="text" class="course-name-input text-2xl font-bold text-gray-800 bg-transparent border-b-2 border-transparent focus:border-blue-500 outline-none w-2/3 p-0" placeholder="输入课程名称...">
+                    <input type="text" class="course-name-input text-2xl font-bold text-gray-800 dark:text-white bg-transparent border-b-2 border-transparent focus:border-blue-500 outline-none w-2/3 p-0" placeholder="输入课程名称...">
                     <button class="remove-course-btn text-gray-400 hover:text-red-500 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -250,43 +320,51 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div>
-                        <label class="text-sm font-medium text-gray-500">学期总分权重</label>
+                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">学期总分权重</label>
                         <input type="number" min="0" step="0.5" placeholder="3" class="course-credits-input form-input w-full p-2 mt-1 rounded-md">
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-500">目标分</label>
+                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">目标分</label>
                         <input type="number" min="0" max="100" placeholder="90" class="target-grade-input form-input w-full p-2 mt-1 rounded-md">
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-500">权重和</label>
+                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">权重和</label>
                         <span class="total-weight-display font-bold text-lg p-2 block mt-1">0%</span>
                     </div>
                 </div>
+                <!-- === 新增：课程优先级选择框 === -->
+                <div class="mb-4">
+                    <label class="text-sm font-medium text-gray-500 dark:text-gray-400">课程优先级</label>
+                    <select class="course-priority-input form-input w-full p-2 mt-1 rounded-md">
+                        <option value="normal">普通</option>
+                        <option value="important">重要</option>
+                        <option value="critical">核心/必过</option>
+                    </select>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
-                        <thead class="border-b-2 border-gray-200">
+                        <thead class="border-b-2 border-gray-200 dark:border-gray-700">
                             <tr>
-                                <th class="p-3 text-sm font-semibold text-gray-500">评分项目</th>
-                                <!-- === 新增：为评分项目添加“类型”表头 === -->
-                                <th class="p-3 text-sm font-semibold text-gray-500">类型</th>
-                                <th class="p-3 text-sm font-semibold text-gray-500">权重(%)</th>
-                                <th class="p-3 text-sm font-semibold text-gray-500">得分</th>
-                                <th class="p-3 text-sm font-semibold text-gray-500">满分</th>
-                                <th class="p-3 text-sm font-semibold text-gray-500 text-center"></th>
+                                <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">评分项目</th>
+                                <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">类型</th>
+                                <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">权重(%)</th>
+                                <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">得分</th>
+                                <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">满分</th>
+                                <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400 text-center"></th>
                             </tr>
                         </thead>
                         <tbody class="assignments-container"></tbody>
                     </table>
                 </div>
                 <button class="add-assignment-btn mt-4 w-full btn btn-secondary">+ 添加作业/考试</button>
-                <div class="mt-6 p-4 bg-gray-50 rounded-lg space-y-3">
+                <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-md font-semibold text-gray-600">当前总分:</h3>
+                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">当前总分:</h3>
                         <p class="current-grade-display text-2xl font-bold text-blue-600">N/A</p>
                     </div>
                     <div class="flex justify-between items-center">
-                        <h3 class="text-md font-semibold text-gray-600">目标达成分析:</h3>
-                        <p class="target-analysis-display text-sm font-semibold text-gray-500 text-right">输入目标分以分析</p>
+                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">目标达成分析:</h3>
+                        <p class="target-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-300 text-right">输入目标分以分析</p>
                     </div>
                 </div>
             </div>
@@ -296,7 +374,6 @@
                 <td class="p-2">
                     <input type="text" placeholder="例如: 期中论文" class="assignment-name-input w-full bg-transparent outline-none p-1">
                 </td>
-                <!-- === 新增：为评分项目添加“类型”选择框 === -->
                 <td class="p-2">
                     <select class="assignment-type-input w-full bg-transparent outline-none p-1">
                         <option value="">请选择</option>
@@ -344,23 +421,23 @@
                 errorDiv.remove();
             }, 6000);
         }
-        // === 新增：成功提示函数 ===
         function showSuccess(message) {
             const errorContainer = document.getElementById('error-container');
             const successId = `success-${Date.now()}`;
             const successDiv = document.createElement('div');
             successDiv.id = successId;
-            successDiv.className = 'fade-in p-4 mb-2 rounded-lg bg-green-50 border border-green-200 text-green-800';
+            // === 新增：为成功提示添加 dark mode 样式 ===
+            successDiv.className = 'fade-in p-4 mb-2 rounded-lg bg-green-50 dark:bg-green-900 dark:bg-opacity-30 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200';
             successDiv.innerHTML = `
                 <div class="flex justify-between items-center">
                     <span><strong>成功:</strong> ${message}</span>
-                    <button onclick="document.getElementById('${successId}').remove()" class="text-lg font-bold text-green-600">&times;</button>
+                    <button onclick="document.getElementById('${successId}').remove()" class="text-lg font-bold text-green-600 dark:text-green-400">&times;</button>
                 </div>
             `;
             errorContainer.appendChild(successDiv);
             setTimeout(() => {
                 successDiv.remove();
-            }, 3000); // 3秒后自动消失
+            }, 3000);
         }
         function updateStatus(message) {
             document.getElementById('status-message').textContent = message;
@@ -368,11 +445,9 @@
         // === Firebase 配置和初始化 ===
         updateStatus('正在初始化 Firebase...');
         try {
-            // 导入 Firebase 模块
             const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
             const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
-            const { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, query, orderBy } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-            // Firebase 配置 (请替换为您自己的配置)
+            const { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, getDocs, query, orderBy } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
             const firebaseConfig = {
                 apiKey: "AIzaSyBgYSM_HCYqUSvIN5VifHbX-j9p6IjhVJs",
                 authDomain: "sample-firebase-ai-app-87f8f.firebaseapp.com",
@@ -381,7 +456,6 @@
                 messagingSenderId: "887928734431",
                 appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"
             };
-            // 初始化 Firebase
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
@@ -409,6 +483,14 @@
                     confirmBtn: document.getElementById('confirm-modal-confirm-btn'),
                     cancelBtn: document.getElementById('confirm-modal-cancel-btn'),
                 },
+                backupModal: {
+                    el: document.getElementById('backup-modal'),
+                    title: document.getElementById('backup-modal-title'),
+                    body: document.getElementById('backup-modal-body'),
+                    confirmBtn: document.getElementById('backup-modal-confirm-btn'),
+                    cancelBtn: document.getElementById('backup-modal-cancel-btn'),
+                    fileInput: document.getElementById('backup-file-input'),
+                },
                 overall: {
                     gpa: document.getElementById('overall-gpa-display'),
                     score: document.getElementById('overall-weighted-score-display'),
@@ -416,6 +498,10 @@
                 exportMenu: {
                     btn: document.getElementById('export-menu-btn'),
                     options: document.getElementById('export-menu-options'),
+                },
+                suggestions: {
+                    container: document.getElementById('suggestions-container'),
+                    list: document.getElementById('suggestions-list'),
                 }
             };
             // === 确认模态框逻辑 ===
@@ -437,6 +523,25 @@
                 hideConfirmModal();
             });
             ui.confirmModal.cancelBtn.addEventListener('click', hideConfirmModal);
+
+            // === 新增：备份/恢复模态框逻辑 ===
+            let backupCallback = null;
+            const showBackupModal = (onConfirm) => {
+                ui.backupModal.fileInput.value = '';
+                backupCallback = onConfirm;
+                ui.backupModal.el.style.display = 'flex';
+            };
+            const hideBackupModal = () => {
+                ui.backupModal.el.style.display = 'none';
+                backupCallback = null;
+            };
+            ui.backupModal.confirmBtn.addEventListener('click', () => {
+                if (typeof backupCallback === 'function') {
+                    backupCallback();
+                }
+            });
+            ui.backupModal.cancelBtn.addEventListener('click', hideBackupModal);
+
             // === 认证状态管理 ===
             onAuthStateChanged(auth, (user) => {
                 ui.loadingOverlay.style.display = 'flex';
@@ -446,6 +551,11 @@
                     ui.appView.style.display = 'block';
                     ui.userName.textContent = user.displayName;
                     ui.userAvatar.src = user.photoURL;
+                    // === 新增：加载深色模式偏好 ===
+                    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+                    if (isDarkMode) {
+                        document.body.classList.add('dark');
+                    }
                     setupStudentListener();
                 } else {
                     currentUser = null;
@@ -501,12 +611,11 @@
                 }
             }
             function renderStudentContent() {
-                // 保存当前焦点
                 const activeEl = document.activeElement;
                 const activeElPath = getElementPath(activeEl);
                 ui.studentContentContainer.innerHTML = '';
                 if (!selectedStudentId) {
-                    updateAllCalculations(); // 清空总览数据
+                    updateAllCalculations();
                     return;
                 };
                 const student = localStudentsData.find(s => s.id === selectedStudentId);
@@ -521,12 +630,10 @@
                 }
                 ui.studentContentContainer.appendChild(studentContent);
                 updateAllCalculations();
-                // 恢复焦点
                 if (activeElPath) {
                     const newActiveEl = findElementByPath(activeElPath);
                     if (newActiveEl) {
                         newActiveEl.focus();
-                        // 如果是输入框，恢复光标位置
                         if (activeEl.tagName === 'INPUT' && typeof activeEl.selectionStart === 'number') {
                             newActiveEl.selectionStart = activeEl.selectionStart;
                             newActiveEl.selectionEnd = activeEl.selectionEnd;
@@ -546,7 +653,7 @@
                     const part = {
                         tag: current.tagName,
                         index: index,
-                        className: current.className, // 使用className作为更可靠的标识
+                        className: current.className,
                         dataset: { ...current.dataset }
                     };
                     path.unshift(part);
@@ -562,7 +669,6 @@
                     let found = false;
                     for(let i = 0; i < children.length; i++) {
                         const child = children[i];
-                        // 匹配更具体的标识
                         if(child.tagName === part.tag && child.className === part.className && JSON.stringify(child.dataset) === JSON.stringify(part.dataset)){
                             current = child;
                             found = true;
@@ -570,7 +676,6 @@
                         }
                     }
                     if(!found) {
-                        // 如果精确匹配失败，退回到按索引匹配
                         current = children[part.index];
                     }
                 }
@@ -580,7 +685,6 @@
                  const semesterTemplate = document.getElementById('semester-template').content.cloneNode(true);
                  const semesterEl = semesterTemplate.querySelector('.semester-section');
                  semesterEl.dataset.semesterIndex = semesterIndex;
-                 // === 新增：智能生成学期名称 ===
                  if (!semesterData.name) {
                     let nextYear = new Date().getFullYear();
                     let semesterNum = 1;
@@ -628,6 +732,12 @@
                 courseEl.querySelector('.course-name-input').value = courseData.name;
                 courseEl.querySelector('.course-credits-input').value = courseData.credits;
                 courseEl.querySelector('.target-grade-input').value = courseData.targetGrade;
+                // === 新增：设置课程优先级并更新卡片样式 ===
+                const prioritySelect = courseEl.querySelector('.course-priority-input');
+                const priority = courseData.priority || 'normal';
+                prioritySelect.value = priority;
+                courseEl.dataset.priority = priority; // 更新 data-priority 属性
+
                 const assignmentsContainer = courseEl.querySelector('.assignments-container');
                 if(Array.isArray(courseData.assignments)) {
                     courseData.assignments.forEach((assignmentData, assignmentIndex) => {
@@ -637,7 +747,6 @@
                 }
                 return courseEl;
             }
-            // === 新增：createAssignmentElement 中处理 type 字段 ===
             function createAssignmentElement(assignmentData, semesterIndex, courseIndex, assignmentIndex) {
                 const assignmentTemplate = document.getElementById('assignment-template').content.cloneNode(true);
                 const assignmentEl = assignmentTemplate.querySelector('.assignment-row');
@@ -645,7 +754,6 @@
                 assignmentEl.dataset.courseIndex = courseIndex;
                 assignmentEl.dataset.assignmentIndex = assignmentIndex;
                 assignmentEl.querySelector('.assignment-name-input').value = assignmentData.name;
-                // === 新增：设置类型选择框的值 ===
                 const typeSelect = assignmentEl.querySelector('.assignment-type-input');
                 if (assignmentData.type) {
                     typeSelect.value = assignmentData.type;
@@ -665,7 +773,6 @@
                     showError('数据更新失败', error.message);
                 }
             }
-            // === 新增：允许在添加学生输入框中按 Enter 键 ===
             document.getElementById('new-student-name').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     document.getElementById('add-student-btn').click();
@@ -681,7 +788,7 @@
                     const docRef = await addDoc(collection(db, 'users', currentUser.uid, 'students'), newStudent);
                     selectedStudentId = docRef.id;
                     nameInput.value = '';
-                    showSuccess('学生添加成功！'); // === 新增：显示成功提示 ===
+                    showSuccess('学生添加成功！');
                 } catch (e) { showError('添加学生失败', e.message); }
             });
             document.getElementById('remove-student-btn').addEventListener('click', () => {
@@ -694,23 +801,18 @@
                         try {
                             await deleteDoc(doc(db, 'users', currentUser.uid, 'students', selectedStudentId));
                             selectedStudentId = null;
-                            showSuccess('学生删除成功！'); // === 新增：显示成功提示 ===
+                            showSuccess('学生删除成功！');
                         } catch (e) { showError('删除学生失败', e.message); }
                     }
                 );
             });
             document.getElementById('add-semester-btn').addEventListener('click', () => {
-                if (!selectedStudentId || !currentUser) { showError('请先选择或添加一个学生。'); return; }
+                if (!selectedStudentId|| !currentUser) { showError('请先选择或添加一个学生。'); return; }
                 let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
                 if (!studentData) return;
-                // === 新增：使用智能生成的名称，而不是简单的 "新学期 X" ===
-                // const newSemesterName = `新学期 ${studentData.semesters.length + 1}`;
-                // studentData.semesters.push({ name: newSemesterName, courses: [] });
-                // updateStudentData(studentData.semesters);
-                // === 改为：直接创建一个空对象，createSemesterElement 会负责生成名称 ===
                 studentData.semesters.push({ courses: [] });
                 updateStudentData(studentData.semesters);
-                showSuccess('新学期已添加！'); // === 新增：显示成功提示 ===
+                showSuccess('新学期已添加！');
             });
             ui.studentSelector.addEventListener('change', (e) => {
                 selectedStudentId = e.target.value;
@@ -732,32 +834,31 @@
                         () => {
                             studentData.semesters.splice(semesterIndex, 1);
                             updateStudentData(studentData.semesters);
-                            showSuccess('学期删除成功！'); // === 新增：显示成功提示 ===
+                            showSuccess('学期删除成功！');
                         }
                     );
                 } else if (target.classList.contains('add-course-btn')) {
                     const { semesterIndex } = semesterSection.dataset;
-                    studentData.semesters[semesterIndex].courses.push({ name: '', credits: '3', targetGrade: '90', assignments: [{ name: '', weight: '', score: '', maxScore: 100 }]});
+                    studentData.semesters[semesterIndex].courses.push({ name: '', credits: '3', targetGrade: '90', priority: 'normal', assignments: [{ name: '', weight: '', score: '', maxScore: 100 }]});
                     updateStudentData(studentData.semesters);
-                    showSuccess('课程已添加！'); // === 新增：显示成功提示 ===
+                    showSuccess('课程已添加！');
                 } else if (target.classList.contains('remove-course-btn')) {
                     const { semesterIndex, courseIndex } = courseCard.dataset;
                     studentData.semesters[semesterIndex].courses.splice(courseIndex, 1);
                     updateStudentData(studentData.semesters);
-                    showSuccess('课程删除成功！'); // === 新增：显示成功提示 ===
+                    showSuccess('课程删除成功！');
                 } else if (target.classList.contains('add-assignment-btn')) {
                     const { semesterIndex, courseIndex } = courseCard.dataset;
                     studentData.semesters[semesterIndex].courses[courseIndex].assignments.push({ name: '', weight: '', score: '', maxScore: 100 });
                     updateStudentData(studentData.semesters);
-                    showSuccess('评分项目已添加！'); // === 新增：显示成功提示 ===
+                    showSuccess('评分项目已添加！');
                 } else if (target.classList.contains('remove-assignment-btn')) {
                     const { semesterIndex, courseIndex, assignmentIndex } = target.closest('.assignment-row').dataset;
                     studentData.semesters[semesterIndex].courses[courseIndex].assignments.splice(assignmentIndex, 1);
                     updateStudentData(studentData.semesters);
-                    showSuccess('评分项目删除成功！'); // === 新增：显示成功提示 ===
+                    showSuccess('评分项目删除成功！');
                 }
             });
-            // === 数据保存事件监听 (修复输入打断问题) ===
             ui.studentContentContainer.addEventListener('change', (e) => {
                 if (!selectedStudentId || !currentUser) return;
                 const target = e.target;
@@ -777,7 +878,6 @@
                         const { assignmentIndex } = assignmentRow.dataset;
                         const assignmentData = courseData.assignments[assignmentIndex];
                         if (target.classList.contains('assignment-name-input')) assignmentData.name = target.value;
-                        // === 新增：保存类型字段 ===
                         if (target.classList.contains('assignment-type-input')) assignmentData.type = target.value;
                         if (target.classList.contains('assignment-weight-input')) assignmentData.weight = target.value;
                         if (target.classList.contains('assignment-score-input')) assignmentData.score = target.value;
@@ -786,6 +886,12 @@
                         if (target.classList.contains('course-name-input')) courseData.name = target.value;
                         if (target.classList.contains('course-credits-input')) courseData.credits = target.value;
                         if (target.classList.contains('target-grade-input')) courseData.targetGrade = target.value;
+                        // === 新增：保存课程优先级并更新样式 ===
+                        if (target.classList.contains('course-priority-input')) {
+                            courseData.priority = target.value;
+                            const courseEl = courseCard;
+                            courseEl.dataset.priority = target.value;
+                        }
                     }
                 }
                 updateStudentData(studentData.semesters);
@@ -794,13 +900,17 @@
             function updateAllCalculations() {
                 if (!selectedStudentId) {
                     ui.overall.gpa.textContent = 'N/A';
-                    ui.overall.gpa.className = 'text-4xl font-extrabold text-gray-500'; // === 新增：重置样式 ===
+                    ui.overall.gpa.className = 'text-4xl font-extrabold text-gray-500';
                     ui.overall.score.textContent = 'N/A';
+                    // === 新增：清空建议列表 ===
+                    ui.suggestions.list.innerHTML = '';
                     return;
                 }
                 document.querySelectorAll('.course-card').forEach(updateCourseCalculations);
                 document.querySelectorAll('.semester-section').forEach(updateSemesterCalculations);
                 updateOverallCalculations();
+                // === 新增：生成并显示智能建议 ===
+                generateSuggestions();
             }
             function updateCourseCalculations(courseEl) {
                 const { semesterIndex, courseIndex } = courseEl.dataset;
@@ -828,7 +938,7 @@
                 } else {
                     courseEl.querySelector('.current-grade-display').textContent = 'N/A';
                 }
-                courseData.finalGrade = finalGrade; 
+                courseData.finalGrade = finalGrade;
                 const targetAnalysisDisplay = courseEl.querySelector('.target-analysis-display');
                 const targetGrade = parseFloat(courseData.targetGrade);
                 if (!isNaN(targetGrade)) {
@@ -900,7 +1010,6 @@
                 if(overallTotalCredits > 0) {
                     const gpaValue = (overallTotalQualityPoints / overallTotalCredits).toFixed(2);
                     ui.overall.gpa.textContent = gpaValue;
-                    // === 新增：根据 GPA 值动态着色 ===
                     ui.overall.gpa.className = 'text-4xl font-extrabold';
                     if (gpaValue >= 3.7) ui.overall.gpa.classList.add('score-excellent');
                     else if (gpaValue >= 3.0) ui.overall.gpa.classList.add('score-good');
@@ -920,7 +1029,6 @@
                 return 0.0;
             }
             // === EXPORT LOGIC ===
-            // --- Dropdown Menu Control ---
             ui.exportMenu.btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const isHidden = ui.exportMenu.options.classList.contains('hidden');
@@ -945,8 +1053,6 @@
                 URL.revokeObjectURL(url);
             }
             const getFilename = () => `grade_report_${new Date().toISOString().slice(0, 10)}`;
-            // --- Core Data Preparation ---
-            // Defines the complete and fixed structure for exports.
             const EXPORT_HEADERS = [
                 "学生姓名", "学期", "课程名称", "学期总分权重",
                 "目标分", "课程总分", "评分项目", "类型",
@@ -1010,7 +1116,6 @@
                                             dataRows.push({
                                                 ...courseRow,
                                                 [HEADER_KEYS.assignmentName]: assignment.name,
-                                                // === 新增：导出类型字段 ===
                                                 [HEADER_KEYS.assignmentType]: assignment.type || '',
                                                 [HEADER_KEYS.assignmentWeight]: assignment.weight,
                                                 [HEADER_KEYS.assignmentScore]: (assignment.score === null || assignment.score === undefined) ? "" : assignment.score,
@@ -1025,7 +1130,6 @@
                 });
                 return dataRows;
             }
-            // --- Export Implementations ---
             document.getElementById('export-txt').addEventListener('click', (e) => {
                 e.preventDefault();
                 const data = getExportData();
@@ -1058,14 +1162,13 @@
 `;
                     }
                     if (row[HEADER_KEYS.assignmentName]) {
-                        // === 新增：在文本导出中包含类型 ===
                         textContent += `    - (${row[HEADER_KEYS.assignmentType] || '未知'}) ${row[HEADER_KEYS.assignmentName]}: 得分 ${row[HEADER_KEYS.assignmentScore]}/${row[HEADER_KEYS.assignmentMaxScore]} (权重: ${row[HEADER_KEYS.assignmentWeight]}%)
 `;
                     }
                 });
                 const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
                 downloadFile(blob, `${getFilename()}.txt`);
-                showSuccess('文本文件导出成功！'); // === 新增：显示成功提示 ===
+                showSuccess('文本文件导出成功！');
             });
             document.getElementById('export-doc').addEventListener('click', (e) => {
                 e.preventDefault();
@@ -1089,7 +1192,7 @@
                 htmlContent += `</tbody></table></body></html>`;
                 const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
                 downloadFile(blob, `${getFilename()}.doc`);
-                showSuccess('Word文档导出成功！'); // === 新增：显示成功提示 ===
+                showSuccess('Word文档导出成功！');
             });
             document.getElementById('export-xlsx').addEventListener('click', (e) => {
                 e.preventDefault();
@@ -1106,7 +1209,56 @@
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "成绩单");
                 XLSX.writeFile(workbook, `${getFilename()}.xlsx`);
-                showSuccess('Excel文件导出成功！'); // === 新增：显示成功提示 ===
+                showSuccess('Excel文件导出成功！');
+            });
+            // === 新增：数据备份与恢复功能 ===
+            document.getElementById('export-json').addEventListener('click', (e) => {
+                e.preventDefault();
+                if (!localStudentsData || localStudentsData.length === 0) {
+                    showError("没有可导出的数据。");
+                    return;
+                }
+                const jsonData = JSON.stringify(localStudentsData, null, 2);
+                const blob = new Blob([jsonData], { type: 'application/json' });
+                downloadFile(blob, `grades_backup_${new Date().toISOString().slice(0, 10)}.json`);
+                showSuccess('JSON备份导出成功！');
+            });
+            document.getElementById('import-json').addEventListener('click', (e) => {
+                e.preventDefault();
+                showBackupModal(async () => {
+                    const file = ui.backupModal.fileInput.files[0];
+                    if (!file) {
+                        showError('请选择一个JSON文件。');
+                        return;
+                    }
+                    try {
+                        const text = await file.text();
+                        const data = JSON.parse(text);
+                        // 验证数据结构
+                        if (!Array.isArray(data) || data.length === 0 || !data[0].hasOwnProperty('name') || !data[0].hasOwnProperty('semesters')) {
+                            throw new Error('文件格式不正确，无法恢复。');
+                        }
+                        // 执行恢复：清空当前用户下的所有学生数据，然后批量添加新数据
+                        const studentsColRef = collection(db, 'users', currentUser.uid, 'students');
+                        const snapshot = await getDocs(studentsColRef);
+                        const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+                        await Promise.all(deletePromises);
+                        const addPromises = data.map(student => addDoc(collection(db, 'users', currentUser.uid, 'students'), student));
+                        await Promise.all(addPromises);
+                        hideBackupModal();
+                        showSuccess('数据恢复成功！');
+                    } catch (e) {
+                        showError('数据恢复失败', e.message);
+                    }
+                });
+            });
+            // === 新增：深色模式切换功能 ===
+            document.getElementById('toggle-dark-mode').addEventListener('click', (e) => {
+                e.preventDefault();
+                const isDarkMode = document.body.classList.toggle('dark');
+                // 保存用户偏好
+                localStorage.setItem('darkMode', isDarkMode);
+                showSuccess(isDarkMode ? '已切换到深色模式' : '已切换到亮色模式');
             });
             // === 新增：清空所有数据功能 ===
             document.getElementById('clear-all-data').addEventListener('click', (e) => {
@@ -1128,6 +1280,138 @@
                     }
                 );
             });
+            // === 新增：智能学习建议生成函数 ===
+            function generateSuggestions() {
+                const suggestionsList = ui.suggestions.list;
+                suggestionsList.innerHTML = '';
+                if (!selectedStudentId) return;
+
+                const studentData = localStudentsData.find(s => s.id === selectedStudentId);
+                if (!studentData || !studentData.semesters || studentData.semesters.length === 0) {
+                    return;
+                }
+
+                const suggestions = [];
+
+                // 1. 遍历所有课程，检查目标达成情况
+                studentData.semesters.forEach(semester => {
+                    semester.courses.forEach(course => {
+                        const targetGrade = parseFloat(course.targetGrade);
+                        if (isNaN(targetGrade)) return;
+
+                        let totalWeight = 0, gradedWeight = 0, currentWeightedScore = 0;
+                        course.assignments.forEach(a => {
+                            const weight = parseFloat(a.weight) || 0;
+                            totalWeight += weight;
+                            if (a.score !== '' && a.score !== null) {
+                                const score = parseFloat(a.score) || 0;
+                                const maxScore = parseFloat(a.maxScore) || 100;
+                                gradedWeight += weight;
+                                currentWeightedScore += (score / maxScore) * weight;
+                            }
+                        });
+
+                        const remainingWeight = totalWeight - gradedWeight;
+                        if (remainingWeight > 0.01 && totalWeight <= 100.01) {
+                            const pointsNeeded = (targetGrade * totalWeight / 100) - currentWeightedScore;
+                            if (pointsNeeded > 0) {
+                                const requiredAvg = (pointsNeeded / remainingWeight) * 100;
+                                if (requiredAvg > 100.01) {
+                                    suggestions.push({
+                                        type: 'warning',
+                                        text: `⚠️ 课程 "${course.name}" 需要剩余项目平均达到 ${requiredAvg.toFixed(2)} 分才能达成 ${targetGrade} 分的目标，难度较高。`
+                                    });
+                                } else if (requiredAvg > 90) {
+                                    suggestions.push({
+                                        type: 'info',
+                                        text: `ℹ️ 课程 "${course.name}" 需要剩余项目平均达到 ${requiredAvg.toFixed(2)} 分才能达成目标，需重点关注。`
+                                    });
+                                }
+                            } else if (pointsNeeded <= 0) {
+                                suggestions.push({
+                                    type: 'success',
+                                    text: `✅ 恭喜！课程 "${course.name}" 已经达成 ${targetGrade} 分的目标！`
+                                });
+                            }
+                        }
+                    });
+                });
+
+                // 2. 检查高权重未评分项目
+                studentData.semesters.forEach(semester => {
+                    semester.courses.forEach(course => {
+                        course.assignments.forEach(assignment => {
+                            const weight = parseFloat(assignment.weight) || 0;
+                            if (weight >= 20 && (assignment.score === '' || assignment.score === null)) {
+                                suggestions.push({
+                                    type: 'warning',
+                                    text: `⚠️ 评分项目 "${assignment.name}" (课程: ${course.name}) 权重高达 ${weight}% 且尚未录入成绩，请优先完成。`
+                                });
+                            }
+                        });
+                    });
+                });
+
+                // 3. GPA 提升建议 (简化版)
+                const overallTotalCredits = 0;
+                let overallTotalQualityPoints = 0;
+                studentData.semesters.forEach(semester => {
+                    semester.courses.forEach(course => {
+                        const credits = parseFloat(course.credits) || 0;
+                        if (course.finalGrade !== undefined && course.finalGrade > 0 && credits > 0) {
+                            overallTotalQualityPoints += scoreToGpaPoint(course.finalGrade) * credits;
+                        }
+                    });
+                });
+                if (overallTotalCredits > 0) {
+                    const currentGpa = overallTotalQualityPoints / overallTotalCredits;
+                    // 假设用户想提升0.1 GPA
+                    const gpaIncrease = 0.1;
+                    const pointsNeeded = gpaIncrease * overallTotalCredits;
+                    // 找到一个3学分的课程，计算需要提升多少分
+                    const courseToImprove = studentData.semesters[0]?.courses.find(c => (parseFloat(c.credits) || 0) >= 3);
+                    if (courseToImprove && courseToImprove.finalGrade > 0) {
+                        const credits = parseFloat(courseToImprove.credits) || 3;
+                        const currentPoints = scoreToGpaPoint(courseToImprove.finalGrade) * credits;
+                        const newPoints = currentPoints + pointsNeeded;
+                        const newGpaPoint = newPoints / credits;
+                        const newScore = gpaPointToScore(newGpaPoint);
+                        suggestions.push({
+                            type: 'info',
+                            text: `💡 如果您能在 "${courseToImprove.name}" 这门${credits}学分的课程中多拿 ${Math.max(0, newScore - courseToImprove.finalGrade).toFixed(1)} 分，您的总体GPA就能提升 ${gpaIncrease}。`
+                        });
+                    }
+                }
+
+                // 如果没有建议，显示一条默认消息
+                if (suggestions.length === 0) {
+                    const defaultSuggestion = document.createElement('p');
+                    defaultSuggestion.className = 'text-gray-500 dark:text-gray-400 text-sm';
+                    defaultSuggestion.textContent = '一切顺利！继续保持。';
+                    suggestionsList.appendChild(defaultSuggestion);
+                } else {
+                    // 将建议渲染到页面
+                    suggestions.forEach(s => {
+                        const item = document.createElement('div');
+                        item.className = `suggestion-item suggestion-${s.type}`;
+                        item.textContent = s.text;
+                        suggestionsList.appendChild(item);
+                    });
+                }
+            }
+
+            // 辅助函数：将GPA绩点换算回分数（用于建议）
+            function gpaPointToScore(point) {
+                if (point >= 3.7) return 85;
+                if (point >= 3.3) return 82;
+                if (point >= 3.0) return 78;
+                if (point >= 2.7) return 75;
+                if (point >= 2.3) return 72;
+                if (point >= 2.0) return 68;
+                if (point >= 1.7) return 65;
+                if (point >= 1.0) return 60;
+                return 0;
+            }
         } catch (error) {
             console.error("初始化失败:", error);
             showError('应用初始化失败', error.message);
@@ -1136,3 +1420,6 @@
     </script>
 </body>
 </html>
+```
+
+这个集成后的版本是一个功能非常完善的个人学习管理系统。您可以直接使用此代码文件。
