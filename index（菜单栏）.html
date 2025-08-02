@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多用户成绩与GPA计算器 (全新视图)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #1f2937;
+            --card-bg: white;
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --input-border: #d1d5db;
+            --input-focus-border: #3b82f6;
+            --primary-btn-bg: #2563eb;
+            --primary-btn-hover-bg: #1d4ed8;
+            --secondary-btn-bg: #e5e7eb;
+            --secondary-btn-text: #374151;
+            --secondary-btn-hover-bg: #d1d5db;
+            --header-text: #1f2937;
+            --muted-text: #6b7280;
+            --tab-active-border: #3b82f6;
+            --tab-inactive-text: #6b7280;
+        }
+        html.dark {
+            --bg-color: #111827;
+            --text-color: #e5e7eb;
+            --card-bg: #1f2937;
+            --card-shadow: 0 4px 6px -1px rgb(255 255 255 / 0.05), 0 2px 4px -2px rgb(255 255 255 / 0.05);
+            --input-border: #4b5563;
+            --input-focus-border: #60a5fa;
+            --primary-btn-bg: #3b82f6;
+            --primary-btn-hover-bg: #2563eb;
+            --secondary-btn-bg: #374151;
+            --secondary-btn-text: #e5e7eb;
+            --secondary-btn-hover-bg: #4b5563;
+            --header-text: #f9fafb;
+            --muted-text: #9ca3af;
+            --tab-active-border: #60a5fa;
+            --tab-inactive-text: #9ca3af;
+        }
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Arial', 'sans-serif';
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease-in-out;
+        }
+        .form-input, .tag-input-container, .form-select {
+            border: 1px solid var(--input-border);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+        }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s ease-in-out; border: 1px solid transparent; cursor: pointer; }
+        .btn-primary { background-color: var(--primary-btn-bg); color: white; }
+        .btn-primary:hover { background-color: var(--primary-btn-hover-bg); }
+        .btn-secondary { background-color: var(--secondary-btn-bg); color: var(--secondary-btn-text); }
+        .btn-secondary:hover { background-color: var(--secondary-btn-hover-bg); }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-danger-outline { background-color: transparent; color: #ef4444; border-color: #ef4444; }
+        .btn-danger-outline:hover { background-color: #fef2f2; color: #dc2626; }
+        html.dark .btn-danger-outline:hover { background-color: rgba(239, 68, 68, 0.1); }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        [v-cloak] { display: none; }
+        .tab-button {
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            color: var(--tab-inactive-text);
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-button.active {
+            color: var(--text-color);
+            border-bottom-color: var(--tab-active-border);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .empty-state-container {
+            text-align: center;
+            padding: 4rem 2rem;
+            margin-top: 2rem;
+            border: 2px dashed var(--input-border);
+            border-radius: 0.75rem;
+            background-color: rgba(128,128,128,0.05);
+        }
+        .assignment-toggle-icon { transition: transform 0.3s ease; }
+        .assignments-collapsed .assignment-toggle-icon { transform: rotate(-90deg); }
+        .assignments-table-container { max-height: 1000px; transition: max-height 0.5s ease-in-out, opacity 0.5s ease; opacity: 1; overflow: hidden; }
+        .assignments-collapsed .assignments-table-container { max-height: 0; opacity: 0; }
+        .shepherd-button { background-color: var(--primary-btn-bg); }
+        .shepherd-button:hover { background-color: var(--primary-btn-hover-bg); }
+        .shepherd-header { background-color: var(--secondary-btn-bg); }
+        .shepherd-title { color: var(--secondary-btn-text); }
+        .shepherd-text { color: var(--text-color); }
+        .shepherd-content { background-color: var(--card-bg); }
+        .shepherd-arrow::before { background-color: var(--card-bg); }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <!-- Loading & Notifications -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-80 dark:bg-gray-900 dark:bg-opacity-80 flex items-center justify-center z-50">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+    </div>
+    <div id="error-container" class="fixed top-5 right-5 z-50 w-full max-w-sm"></div>
+    <!-- Login View -->
+    <div id="login-view" class="max-w-md mx-auto text-center mt-20 fade-in">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 dark:text-gray-100">GRADESC</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-3 text-lg mb-8">您的私人成绩与GPA智能管家</p>
+        <div class="card p-8">
+            <h2 class="text-xl font-bold text-gray-700 dark:text-gray-200 mb-2">欢迎使用</h2>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">请登录以在云端安全地同步您的所有数据。</p>
+            <button id="login-btn" class="btn btn-primary w-full">
+                <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.28,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+                使用 Google 登录
+            </button>
+            <div id="status-message" class="mt-4 text-sm text-gray-600 dark:text-gray-400"></div>
+        </div>
+    </div>
+    <!-- Main App View -->
+    <div id="app-view" class="max-w-7xl mx-auto" v-cloak>
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100">GRADESC</h1>
+            <div id="user-profile" class="flex items-center space-x-2 md:space-x-4">
+                <!-- Student Selector Dropdown -->
+                <div class="relative inline-block text-left">
+                    <button type="button" id="student-menu-btn" class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-200 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600" aria-expanded="false" aria-haspopup="true">
+                        <span id="current-student-name-display">选择学生</span>
+                        <svg class="-mr-1 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="student-menu-options" class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="student-menu-btn">
+                        <div id="student-options-list" class="py-1" role="none">
+                            <!-- Student options will be populated here -->
+                        </div>
+                        <div class="border-t border-gray-200 dark:border-gray-700 py-1">
+                            <a href="#" id="add-student-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">添加新学生...</a>
+                            <a href="#" id="manage-students-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">管理学生...</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <input type="search" id="course-search-input" placeholder="搜索课程..." class="form-input w-32 md:w-48 p-2 pl-8 rounded-md text-sm">
+                    <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <div class="theme-switch-wrapper flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /></svg>
+                    <label class="relative inline-block w-12 h-6">
+                        <input type="checkbox" id="theme-checkbox" class="opacity-0 w-0 h-0" />
+                        <span class="absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 dark:bg-gray-600 rounded-full transition-colors duration-300 before:absolute before:content-[''] before:h-4 before:w-4 before:left-1 before:bottom-1 before:bg-white before:rounded-full before:transition-transform before:duration-300 checked:before:translate-x-6"></span>
+                    </label>
+                </div>
+                <!-- User Profile Dropdown -->
+                <div class="relative inline-block text-left">
+                    <button type="button" id="user-menu-btn" class="flex items-center gap-2">
+                        <img id="user-avatar" class="w-10 h-10 rounded-full" src="" alt="User Avatar">
+                        <span id="user-name" class="font-semibold text-gray-700 dark:text-gray-200 hidden md:block"></span>
+                    </button>
+                    <div id="user-menu-options" class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden">
+                        <div class="py-1">
+                            <a href="#" id="start-tour-btn" class="flex items-center gap-2 text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                                新手引导
+                            </a>
+                        </div>
+                        <div class="border-t border-gray-200 dark:border-gray-700 py-1">
+                             <a href="#" id="import-data-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">从 Excel 导入...</a>
+                            <a href="#" id="import-json-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">从 JSON 还原...</a>
+                        </div>
+                        <div class="border-t border-gray-200 dark:border-gray-700 py-1">
+                            <a href="#" id="export-json-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">备份为 JSON</a>
+                            <a href="#" id="export-xlsx" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">导出为 Excel (.xlsx)</a>
+                        </div>
+                        <div class="border-t border-gray-200 dark:border-gray-700 py-1">
+                            <a href="#" id="logout-btn" class="text-red-600 block w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20">登出</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-8">
+            <nav id="tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
+                <button class="tab-button active" data-tab="dashboard">学业总览</button>
+                <button class="tab-button" data-tab="courses">课程与成绩</button>
+                <button class="tab-button" data-tab="analytics">图表分析</button>
+            </nav>
+        </div>
+        <!-- Tab Content -->
+        <main id="main-content">
+            <!-- Dashboard Tab -->
+            <div id="tab-content-dashboard" class="tab-content active fade-in">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    <div id="overall-summary-card" class="card p-6 xl:col-span-2">
+                        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">学业总览</h2>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div class="space-y-8">
+                                <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <div class="font-semibold text-gray-600 dark:text-gray-300">累计总 GPA</div>
+                                    <span id="overall-gpa-display" class="text-4xl font-extrabold text-green-600">N/A</span>
+                                </div>
+                                <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <div class="font-semibold text-gray-600 dark:text-gray-300">总加权平均分</div>
+                                    <span id="overall-weighted-score-display" class="text-4xl font-extrabold text-blue-600">N/A</span>
+                                </div>
+                            </div>
+                            <div id="suggestions-container" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                <h3 class="font-semibold text-gray-600 dark:text-gray-300 mb-3">智能学习建议</h3>
+                                <div id="suggestions-list" class="space-y-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="upcoming-deadlines-card" class="card p-6 xl:col-span-1">
+                        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">近期日程</h2>
+                        <div id="deadlines-list" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Courses & Grades Tab -->
+            <div id="tab-content-courses" class="tab-content">
+                <div id="student-content-container" class="space-y-12">
+                    <!-- Semesters will be rendered here -->
+                </div>
+                <div id="courses-empty-state" class="hidden"></div>
+                <div class="mt-10 text-center">
+                    <button id="add-semester-btn" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" /></svg>
+                        添加新学期 (Ctrl+A)
+                    </button>
+                </div>
+            </div>
+            <!-- Analytics Tab -->
+            <div id="tab-content-analytics" class="tab-content">
+                 <div id="analytics-empty-state" class="hidden"></div>
+                 <div id="analytics-content" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="card p-6 min-h-[400px]">
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">GPA 趋势图</h3>
+                        <div class="relative h-96">
+                            <canvas id="gpa-trend-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card p-6 min-h-[400px]">
+                         <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">课程标签表现 (待开发)</h3>
+                         <div class="relative h-96 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                            <p>未来将支持按课程标签分析成绩...</p>
+                         </div>
+                    </div>
+                 </div>
+            </div>
+        </main>
+    </div>
+    <!-- Modals -->
+    <div id="gpa-info-popup" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div class="card p-8 max-w-md w-full fade-in">
+            <h3 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">GPA换算规则</h3>
+            <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+                <li class="flex justify-between"><span>90-100分</span><span class="font-semibold text-blue-600">4.0 绩点</span></li>
+                <li class="flex justify-between"><span>85-89分</span><span class="font-semibold text-blue-600">3.7 绩点</span></li>
+                 <li class="flex justify-between"><span>82-84分</span><span class="font-semibold text-blue-600">3.3 绩点</span></li>
+                <li class="flex justify-between"><span>78-81分</span><span class="font-semibold text-blue-600">3.0 绩点</span></li>
+                <li class="flex justify-between"><span>75-77分</span><span class="font-semibold text-blue-600">2.7 绩点</span></li>
+                <li class="flex justify-between"><span>72-74分</span><span class="font-semibold text-blue-600">2.3 绩点</span></li>
+                <li class="flex justify-between"><span>68-71分</span><span class="font-semibold text-blue-600">2.0 绩点</span></li>
+                <li class="flex justify-between"><span>65-67分</span><span class="font-semibold text-blue-600">1.7 绩点</span></li>
+                <li class="flex justify-between"><span>60-64分</span><span class="font-semibold text-blue-600">1.0 绩点</span></li>
+                <li class="flex justify-between"><span>60分以下</span><span class="font-semibold text-red-600">0.0 绩点</span></li>
+            </ul>
+            <button onclick="document.getElementById('gpa-info-popup').style.display='none'" class="btn btn-primary w-full mt-8">我明白了</button>
+        </div>
+    </div>
+    <div id="confirm-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div class="card p-8 max-w-md w-full fade-in">
+            <h3 id="confirm-modal-title" class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">确认操作</h3>
+            <p id="confirm-modal-body" class="mb-8 text-gray-600 dark:text-gray-400">您确定要继续吗？</p>
+            <div class="flex justify-end space-x-4">
+                <button id="confirm-modal-cancel-btn" class="btn btn-secondary">取消</button>
+                <button id="confirm-modal-confirm-btn" class="btn btn-danger">确认</button>
+            </div>
+        </div>
+    </div>
+    <div id="import-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+         <div class="card p-8 max-w-2xl w-full fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100">从 Excel 导入数据</h3>
+                <button id="import-modal-close-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="download-template-btn" class="btn btn-secondary w-full sm:w-auto">下载模板</button>
+                <input type="file" id="import-file-input" class="hidden" accept=".xlsx">
+                <label for="import-file-input" class="btn btn-primary w-full sm:w-auto">选择文件并上传</label>
+            </div>
+            <div id="import-status" class="mt-4 text-sm"></div>
+        </div>
+    </div>
+    <div id="manage-students-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div class="card p-8 max-w-md w-full fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100">管理学生</h3>
+                <button id="manage-students-modal-close-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
+            </div>
+            <div class="mb-4">
+                <label for="new-student-name" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">添加新学生</label>
+                <div class="flex">
+                    <input type="text" id="new-student-name-modal" placeholder="输入学生姓名..." class="form-input w-full p-2 rounded-l-md">
+                    <button id="add-student-modal-btn" class="btn btn-primary rounded-l-none px-4">+</button>
+                </div>
+            </div>
+            <div id="student-management-list" class="space-y-2">
+                <!-- List of students for deletion will be populated here -->
+            </div>
+        </div>
+    </div>
+    <!-- Templates -->
+    <div class="hidden">
+        <template id="semester-template">
+            <div class="semester-section card p-6">
+                <div class="flex flex-col md:flex-row justify-between md:items-center mb-6">
+                    <div class="flex items-center gap-4">
+                        <span class="drag-handle cursor-move text-gray-400 hover:text-gray-600" title="拖拽排序"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg></span>
+                        <input type="text" class="semester-name-input text-3xl font-bold text-gray-700 dark:text-gray-200 bg-transparent focus:border-b-2 focus:border-blue-500 outline-none w-full md:w-auto">
+                    </div>
+                    <div class="flex items-center space-x-2 mt-4 md:mt-0">
+                        <button class="add-course-btn btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>添加课程</button>
+                        <button class="copy-semester-btn btn btn-secondary px-3" title="复制学期"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" /><path d="M4 3a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V5a2 2 0 00-2-2H4z" /></svg></button>
+                        <button class="remove-semester-btn btn btn-danger-outline px-3" title="删除学期"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
+                    </div>
+                </div>
+                <div class="courses-container grid grid-cols-1 lg:grid-cols-1 gap-8"></div>
+                <div class="semester-courses-empty-state hidden"></div>
+                <div class="mt-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">学期总结</h3>
+                        <div class="flex justify-between items-center">
+                            <div class="font-semibold text-gray-600 dark:text-gray-300 flex items-center">学期 GPA <span class="ml-2 text-blue-500 cursor-pointer" onclick="document.getElementById('gpa-info-popup').style.display='flex'"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg></span></div>
+                            <span class="semester-gpa-display text-3xl font-extrabold text-green-600">N/A</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="font-semibold text-gray-600 dark:text-gray-300">学期加权总分</div>
+                            <span class="semester-weighted-score-display text-3xl font-extrabold text-blue-600">N/A</span>
+                        </div>
+                        <!-- 新增：目标学期加权总分 -->
+                        <div class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+                            <div class="font-semibold text-gray-600 dark:text-gray-300">目标总分</div>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" min="0" max="100" placeholder="90" class="target-semester-score-input form-input w-20 p-1 text-center text-sm" style="font-size: 0.875rem;">
+                                <span class="target-semester-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400">输入目标以分析</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative h-48">
+                        <canvas class="grade-distribution-chart"></canvas>
+                        <p class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm chart-placeholder">无数据</p>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template id="course-template">
+            <div class="card p-6 course-card fade-in">
+                <div class="flex justify-between items-start mb-5">
+                    <div class="flex items-center gap-2 w-full">
+                        <span class="drag-handle cursor-move text-gray-400 hover:text-gray-600" title="拖拽排序"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg></span>
+                        <input type="text" class="course-name-input text-2xl font-bold text-gray-800 dark:text-gray-200 bg-transparent border-b-2 border-transparent focus:border-blue-500 outline-none w-2/3 p-0" placeholder="输入课程名称...">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="copy-course-btn text-gray-400 hover:text-blue-500 transition" title="复制课程"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
+                        <button class="remove-course-btn text-gray-400 hover:text-red-500 transition" title="删除课程"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                    </div>
+                </div>
+                <!-- Course Details -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 items-center">
+                    <div>
+                        <!-- 修改：将“学分”改为“学期总分权重占比” -->
+                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">学期总分权重占比 (%)</label>
+                        <input type="number" min="0" max="100" step="0.5" placeholder="20" class="course-weight-input form-input w-full p-2 mt-1 rounded-md">
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">目标分</label>
+                        <input type="number" min="0" max="100" placeholder="90" class="target-grade-input form-input w-full p-2 mt-1 rounded-md">
+                    </div>
+                    <div class="relative h-24">
+                        <canvas class="weight-distribution-chart"></canvas>
+                        <p class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm chart-placeholder">无数据</p>
+                    </div>
+                </div>
+                <!-- Assignments Section -->
+                <div class="assignments-section">
+                    <button class="assignments-toggle-btn flex justify-between items-center w-full py-2 text-left font-semibold">
+                        <span>评分项目</span>
+                        <svg class="assignment-toggle-icon h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div class="assignments-table-container">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="border-b-2 border-gray-200 dark:border-gray-700">
+                                    <tr>
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">项目</th>
+                                        <!-- 新增：作业标签列 -->
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">标签</th>
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">权重(%)</th>
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">得分</th>
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">满分</th>
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">截止</th>
+                                        <th class="p-3"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="assignments-container"></tbody>
+                            </table>
+                        </div>
+                        <button class="add-assignment-btn mt-4 w-full btn btn-secondary">+ 添加项目 (Ctrl+Enter)</button>
+                    </div>
+                </div>
+                <!-- Course Footer -->
+                <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">当前总分:</h3>
+                        <p class="current-grade-display text-2xl font-bold text-blue-600">N/A</p>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">目标达成分析:</h3>
+                        <p class="target-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400 text-right">输入目标分以分析</p>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template id="assignment-template">
+            <tr class="assignment-row border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                <td class="p-2"><input type="text" placeholder="期中论文" class="assignment-name-input w-full bg-transparent outline-none p-1"></td>
+                <!-- 新增：作业标签单元格，使用下拉菜单 -->
+                <td class="p-2">
+                    <select class="assignment-tag-select form-select w-full bg-transparent outline-none p-1">
+                        <option value="">选择标签...</option>
+                        <option value="测试">测试</option>
+                        <option value="期末论文">期末论文</option>
+                        <option value="作业">作业</option>
+                        <option value="项目">项目</option>
+                        <option value="出勤">出勤</option>
+                        <option value="自定义">自定义</option>
+                    </select>
+                    <input type="text" placeholder="自定义标签" class="assignment-custom-tag-input w-full bg-transparent outline-none p-1 mt-1" style="display: none;">
+                </td>
+                <td class="p-2"><input type="number" min="0" placeholder="20" class="assignment-weight-input w-20 bg-transparent outline-none p-1 text-center"></td>
+                <td class="p-2"><input type="number" min="0" placeholder="-" class="assignment-score-input w-20 bg-transparent outline-none p-1 text-center"></td>
+                <td class="p-2"><input type="number" min="0" value="100" class="assignment-max-score-input w-20 bg-transparent outline-none p-1 text-center"></td>
+                <td class="p-2"><input type="date" class="assignment-due-date-input w-full bg-transparent outline-none p-1"></td>
+                <td class="p-2 text-center"><button class="remove-assignment-btn text-gray-400 hover:text-red-500 transition">×</button></td>
+            </tr>
+        </template>
+        <template id="empty-state-template">
+            <div class="empty-state-container">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200 empty-state-title"></h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 empty-state-message"></p>
+                <div class="mt-6">
+                    <button type="button" class="btn btn-primary empty-state-action-btn"></button>
+                </div>
+            </div>
+        </template>
+    </div>
+    <input type="file" id="import-json-file-input" class="hidden" accept=".json">
+    <script type="module">
+        // === App State ===
+        let currentUser = null;
+        let studentsUnsubscribe = null;
+        let localStudentsData = [];
+        let selectedStudentId = null;
+        let chartInstances = {};
+        const tour = new Shepherd.Tour({ useModalOverlay: true, defaultStepOptions: { classes: 'shadow-lg bg-white dark:bg-gray-800', cancelButton: { text: '跳过', type: 'button' }, nextButton: { text: '下一步' }, doneButton: { text: '完成' } } });
+        let confirmCallback = null;
+        // === UI Elements ===
+        const ui = {
+            loginView: document.getElementById('login-view'),
+            appView: document.getElementById('app-view'),
+            loadingOverlay: document.getElementById('loading-overlay'),
+            errorContainer: document.getElementById('error-container'),
+            statusMessage: document.getElementById('status-message'),
+            userName: document.getElementById('user-name'),
+            userAvatar: document.getElementById('user-avatar'),
+            studentContentContainer: document.getElementById('student-content-container'),
+            confirmModal: { el: document.getElementById('confirm-modal'), title: document.getElementById('confirm-modal-title'), body: document.getElementById('confirm-modal-body'), confirmBtn: document.getElementById('confirm-modal-confirm-btn'), cancelBtn: document.getElementById('confirm-modal-cancel-btn') },
+            importModal: { el: document.getElementById('import-modal'), closeBtn: document.getElementById('import-modal-close-btn'), downloadBtn: document.getElementById('download-template-btn'), fileInput: document.getElementById('import-file-input'), status: document.getElementById('import-status') },
+            manageStudentsModal: { el: document.getElementById('manage-students-modal'), closeBtn: document.getElementById('manage-students-modal-close-btn'), list: document.getElementById('student-management-list'), newNameInput: document.getElementById('new-student-name-modal'), addBtn: document.getElementById('add-student-modal-btn') },
+            overall: { gpa: document.getElementById('overall-gpa-display'), score: document.getElementById('overall-weighted-score-display') },
+            studentMenu: { btn: document.getElementById('student-menu-btn'), options: document.getElementById('student-menu-options'), list: document.getElementById('student-options-list'), currentName: document.getElementById('current-student-name-display'), addBtn: document.getElementById('add-student-btn'), manageBtn: document.getElementById('manage-students-btn') },
+            userMenu: { btn: document.getElementById('user-menu-btn'), options: document.getElementById('user-menu-options') },
+            importJsonFileInput: document.getElementById('import-json-file-input'),
+            suggestions: { list: document.getElementById('suggestions-list') },
+            deadlines: { list: document.getElementById('deadlines-list') },
+            themeToggle: document.getElementById('theme-checkbox'),
+            courseSearchInput: document.getElementById('course-search-input'),
+            startTourBtn: document.getElementById('start-tour-btn'),
+            addSemesterBtn: document.getElementById('add-semester-btn'),
+            tabNav: document.getElementById('tab-nav'),
+            mainContent: document.getElementById('main-content'),
+            coursesEmptyState: document.getElementById('courses-empty-state'),
+            analyticsEmptyState: document.getElementById('analytics-empty-state'),
+            analyticsContent: document.getElementById('analytics-content'),
+            gpaTrendChart: document.getElementById('gpa-trend-chart'),
+        };
+        // === Utility Functions ===
+        function showError(message, details = null) {
+            const errorId = `err-${Date.now()}`;
+            const errorDiv = document.createElement('div');
+            errorDiv.id = errorId;
+            errorDiv.className = 'error-message mb-2 fade-in bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative';
+            errorDiv.innerHTML = `<strong class="font-bold">错误:</strong><span class="block sm:inline"> ${message}</span>${details ? `<div class="mt-2 text-sm">${details}</div>` : ''}<span class="absolute top-0 bottom-0 right-0 px-4 py-3"><svg onclick="document.getElementById('${errorId}').remove()" class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.818l-2.651 3.031a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg></span>`;
+            ui.errorContainer.appendChild(errorDiv);
+            setTimeout(() => { errorDiv.remove(); }, 6000);
+        }
+        function showSuccess(message) {
+            const successId = `success-${Date.now()}`;
+            const successDiv = document.createElement('div');
+            successDiv.id = successId;
+            successDiv.className = 'fade-in p-4 mb-2 rounded-lg bg-green-50 border border-green-200 text-green-800 dark:bg-green-900/30 dark:border-green-700 dark:text-green-300';
+            successDiv.innerHTML = `<div class="flex justify-between items-center"><span><strong>成功:</strong> ${message}</span><button onclick="document.getElementById('${successId}').remove()" class="text-lg font-bold text-green-600">&times;</button></div>`;
+            ui.errorContainer.appendChild(successDiv);
+            setTimeout(() => { successDiv.remove(); }, 3000);
+        }
+        function scoreToGpaPoint(score) {
+            if (score >= 90) return 4.0; if (score >= 85) return 3.7; if (score >= 82) return 3.3;
+            if (score >= 78) return 3.0; if (score >= 75) return 2.7; if (score >= 72) return 2.3;
+            if (score >= 68) return 2.0; if (score >= 65) return 1.7; if (score >= 60) return 1.0;
+            return 0.0;
+        }
+        function scoreToGrade(score) {
+            if (score >= 90) return 'A'; if (score >= 80) return 'B';
+            if (score >= 70) return 'C'; if (score >= 60) return 'D';
+            if (score >= 0) return 'F';
+            return null;
+        }
+        function destroyAllCharts() {
+            Object.values(chartInstances).forEach(chart => {
+                if (chart && typeof chart.destroy === 'function') {
+                    chart.destroy();
+                }
+            });
+            chartInstances = {};
+        }
+        // === Firebase & App Initialization ===
+        try {
+            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+            const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+            const { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, query, writeBatch } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+            const firebaseConfig = {
+                apiKey: "AIzaSyBgYSM_HCYqUSvIN5VifHbX-j9p6IjhVJs",
+                authDomain: "sample-firebase-ai-app-87f8f.firebaseapp.com",
+                projectId: "sample-firebase-ai-app-87f8f",
+                storageBucket: "sample-firebase-ai-app-87f8f.firebasestorage.app",
+                messagingSenderId: "887928734431",
+                appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"
+            };
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            const provider = new GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            onAuthStateChanged(auth, (user) => {
+                ui.loadingOverlay.style.display = 'flex';
+                if (user) {
+                    currentUser = user;
+                    ui.loginView.style.display = 'none';
+                    ui.appView.style.display = 'block';
+                    ui.userName.textContent = user.displayName;
+                    ui.userAvatar.src = user.photoURL;
+                    setupStudentListener();
+                } else {
+                    currentUser = null;
+                    if (studentsUnsubscribe) studentsUnsubscribe();
+                    ui.appView.style.display = 'none';
+                    ui.loginView.style.display = 'block';
+                    ui.loadingOverlay.style.display = 'none';
+                }
+            });
+            function setupStudentListener() {
+                if (!currentUser) return;
+                const studentsColRef = collection(db, 'users', currentUser.uid, 'students');
+                const q = query(studentsColRef);
+                if (studentsUnsubscribe) studentsUnsubscribe();
+                studentsUnsubscribe = onSnapshot(q, (snapshot) => {
+                    localStudentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    localStudentsData.sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
+                    if (!selectedStudentId || !localStudentsData.some(s => s.id === selectedStudentId)) {
+                        selectedStudentId = localStudentsData[0]?.id || null;
+                    }
+                    renderApp();
+                    ui.loadingOverlay.style.display = 'none';
+                }, (error) => {
+                    showError('数据加载失败', error.message);
+                    ui.loadingOverlay.style.display = 'none';
+                });
+            }
+            function renderApp(searchTerm = '') {
+                const student = localStudentsData.find(s => s.id === selectedStudentId);
+                renderStudentSelector();
+                renderEmptyStates(student);
+                if (student) {
+                    renderStudentContent(student, searchTerm);
+                    updateAllCalculations(student);
+                } else {
+                    ui.studentContentContainer.innerHTML = '';
+                    updateAllCalculations(null);
+                }
+            }
+            function renderStudentContent(student, searchTerm = '') {
+                ui.studentContentContainer.innerHTML = '';
+                if (!student || !Array.isArray(student.semesters)) return;
+                let filteredSemesters = JSON.parse(JSON.stringify(student.semesters));
+                if (searchTerm) {
+                     filteredSemesters = filteredSemesters.map(semester => {
+                        semester.courses = (semester.courses || []).filter(course =>
+                            course.name.toLowerCase().includes(searchTerm)
+                        );
+                        return semester;
+                    }).filter(semester => semester.courses.length > 0);
+                }
+                filteredSemesters.forEach((semesterData) => {
+                    const originalIndex = student.semesters.findIndex(s => s.name === semesterData.name);
+                    if (originalIndex === -1) return;
+                    const semesterEl = createSemesterElement(semesterData, originalIndex);
+                    ui.studentContentContainer.appendChild(semesterEl);
+                });
+                initSortable();
+            }
+            function createSemesterElement(semesterData, semesterIndex) {
+                const template = document.getElementById('semester-template').content.cloneNode(true);
+                const semesterEl = template.querySelector('.semester-section');
+                semesterEl.dataset.semesterIndex = semesterIndex;
+                semesterEl.querySelector('.semester-name-input').value = semesterData.name || `学期 ${semesterIndex + 1}`;
+                const coursesContainer = semesterEl.querySelector('.courses-container');
+                const emptyStateContainer = semesterEl.querySelector('.semester-courses-empty-state');
+                if (!semesterData.courses || semesterData.courses.length === 0) {
+                    showEmptyState(emptyStateContainer, {
+                        title: '没有课程',
+                        message: '请为此学期添加第一门课程。',
+                        actionText: '添加课程',
+                        action: (e) => {
+                            e.target.closest('.semester-section').querySelector('.add-course-btn').click();
+                        }
+                    });
+                } else {
+                    (semesterData.courses || []).forEach((courseData, courseIndex) => {
+                        const courseEl = createCourseElement(courseData, semesterIndex, courseIndex);
+                        coursesContainer.appendChild(courseEl);
+                    });
+                }
+                // === 新增：为学期目标分设置事件监听器 ===
+                const targetScoreInput = semesterEl.querySelector('.target-semester-score-input');
+                targetScoreInput.value = semesterData.targetWeightedScore || '';
+                targetScoreInput.addEventListener('change', (e) => {
+                    let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
+                    if (!studentData) return;
+                    studentData.semesters[semesterIndex].targetWeightedScore = parseFloat(e.target.value) || 0;
+                    updateStudentData(studentData.semesters);
+                });
+                return semesterEl;
+            }
+            function createCourseElement(courseData, semesterIndex, courseIndex) {
+                 const template = document.getElementById('course-template').content.cloneNode(true);
+                 const courseEl = template.querySelector('.course-card');
+                 courseEl.dataset.semesterIndex = semesterIndex;
+                 courseEl.dataset.courseIndex = courseIndex;
+                 courseEl.querySelector('.course-name-input').value = courseData.name;
+                 // === 修改：将 credits 改为 courseWeight，并更新输入框值 ===
+                 courseEl.querySelector('.course-weight-input').value = courseData.courseWeight || '';
+                 courseEl.querySelector('.target-grade-input').value = courseData.targetGrade;
+                 const assignmentsContainer = courseEl.querySelector('.assignments-container');
+                 (courseData.assignments || []).forEach((assignmentData, assignmentIndex) => {
+                    const assignmentEl = createAssignmentElement(assignmentData, semesterIndex, courseIndex, assignmentIndex);
+                    assignmentsContainer.appendChild(assignmentEl);
+                 });
+                 return courseEl;
+            }
+            function createAssignmentElement(assignmentData, semesterIndex, courseIndex, assignmentIndex) {
+                const template = document.getElementById('assignment-template').content.cloneNode(true);
+                const assignmentEl = template.querySelector('.assignment-row');
+                assignmentEl.dataset.semesterIndex = semesterIndex;
+                assignmentEl.dataset.courseIndex = courseIndex;
+                assignmentEl.dataset.assignmentIndex = assignmentIndex;
+                assignmentEl.querySelector('.assignment-name-input').value = assignmentData.name;
+                // === 新增：设置作业标签的值和逻辑 ===
+                const tagSelect = assignmentEl.querySelector('.assignment-tag-select');
+                const customTagInput = assignmentEl.querySelector('.assignment-custom-tag-input');
+                tagSelect.value = assignmentData.tag || '';
+                customTagInput.value = assignmentData.customTag || '';
+                if (assignmentData.tag === '自定义' && assignmentData.customTag) {
+                    customTagInput.style.display = 'block';
+                }
+                tagSelect.addEventListener('change', (e) => {
+                    if (e.target.value === '自定义') {
+                        customTagInput.style.display = 'block';
+                    } else {
+                        customTagInput.style.display = 'none';
+                        customTagInput.value = '';
+                    }
+                });
+                assignmentEl.querySelector('.assignment-weight-input').value = assignmentData.weight;
+                assignmentEl.querySelector('.assignment-score-input').value = assignmentData.score;
+                assignmentEl.querySelector('.assignment-max-score-input').value = assignmentData.maxScore;
+                assignmentEl.querySelector('.assignment-due-date-input').value = assignmentData.dueDate || '';
+                return assignmentEl;
+            }
+            function renderEmptyStates(student) {
+                const addSemesterBtnContainer = ui.addSemesterBtn.parentElement;
+                if (!student) {
+                    showEmptyState(ui.coursesEmptyState, {
+                        title: '欢迎使用 GRADESC',
+                        message: '您还没有任何学生数据。请从右上角的学生菜单中添加一个新学生以开始使用。',
+                        actionText: '管理学生',
+                        action: () => {
+                            renderManageStudentsModal();
+                            ui.manageStudentsModal.el.style.display = 'flex';
+                        }
+                    });
+                    addSemesterBtnContainer.classList.add('hidden');
+                    ui.analyticsContent.classList.add('hidden');
+                    showEmptyState(ui.analyticsEmptyState, { title: '无数据可供分析', message: '请先添加学生和课程成绩。' });
+                    return;
+                }
+                if (!student.semesters || student.semesters.length === 0) {
+                    showEmptyState(ui.coursesEmptyState, {
+                        title: '开始您的第一学期',
+                        message: `为 "${student.name}" 添加您的第一个学期来记录课程和成绩。`,
+                        actionText: '添加新学期',
+                        action: handleAddSemester
+                    });
+                    addSemesterBtnContainer.classList.add('hidden');
+                } else {
+                    ui.coursesEmptyState.classList.add('hidden');
+                    ui.coursesEmptyState.innerHTML = '';
+                    addSemesterBtnContainer.classList.remove('hidden');
+                }
+                ui.analyticsContent.classList.remove('hidden');
+                ui.analyticsEmptyState.classList.add('hidden');
+            }
+            function showEmptyState(container, { title, message, actionText, action }) {
+                const template = document.getElementById('empty-state-template').content.cloneNode(true);
+                template.querySelector('.empty-state-title').textContent = title;
+                template.querySelector('.empty-state-message').textContent = message;
+                const actionBtn = template.querySelector('.empty-state-action-btn');
+                if (actionText && action) {
+                    actionBtn.textContent = actionText;
+                    actionBtn.onclick = action;
+                    actionBtn.style.display = 'inline-flex';
+                } else {
+                    actionBtn.style.display = 'none';
+                }
+                container.innerHTML = '';
+                container.appendChild(template);
+                container.classList.remove('hidden');
+            }
+            function renderStudentSelector() {
+                ui.studentMenu.list.innerHTML = '';
+                const student = localStudentsData.find(s => s.id === selectedStudentId);
+                ui.studentMenu.currentName.textContent = student ? student.name : '没有学生';
+                if (localStudentsData.length > 0) {
+                    localStudentsData.forEach(s => {
+                        const a = document.createElement('a');
+                        a.href = '#';
+                        a.dataset.studentId = s.id;
+                        a.className = `student-select-item block px-4 py-2 text-sm ${s.id === selectedStudentId ? 'bg-blue-50 dark:bg-blue-900/50 font-bold text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
+                        a.textContent = s.name;
+                        a.onclick = (e) => {
+                            e.preventDefault();
+                            selectedStudentId = s.id;
+                            renderApp();
+                            ui.studentMenu.options.classList.add('hidden');
+                        };
+                        ui.studentMenu.list.appendChild(a);
+                    });
+                } else {
+                    ui.studentMenu.list.innerHTML = `<p class="px-4 py-2 text-sm text-gray-500">请先添加学生</p>`;
+                }
+            }
+            function renderManageStudentsModal() {
+                ui.manageStudentsModal.list.innerHTML = '';
+                if(localStudentsData.length === 0) {
+                    ui.manageStudentsModal.list.innerHTML = `<p class="text-sm text-center text-gray-500 dark:text-gray-400 py-4">没有学生可管理。</p>`;
+                    return;
+                }
+                localStudentsData.forEach(student => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-md';
+                    div.innerHTML = `
+                        <span class="font-medium">${student.name}</span>
+                        <button data-student-id="${student.id}" class="remove-student-btn btn btn-danger-outline p-2 text-xs">删除</button>
+                    `;
+                    div.querySelector('.remove-student-btn').onclick = () => handleRemoveStudent(student.id, student.name);
+                    ui.manageStudentsModal.list.appendChild(div);
+                });
+            }
+            // === Calculation Logic (Updated) ===
+            function updateAllCalculations(student) {
+                destroyAllCharts();
+                if (!student) {
+                    ui.overall.gpa.textContent = 'N/A';
+                    ui.overall.score.textContent = 'N/A';
+                    ui.suggestions.list.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 text-sm p-4">请先选择或添加学生。</p>`;
+                    ui.deadlines.list.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 text-sm p-4">无日程安排。</p>`;
+                    renderCumulativeGpaChart(null);
+                    return;
+                }
+                // Recalculate data directly from the student object
+                (student.semesters || []).forEach(semester => {
+                    (semester.courses || []).forEach(course => {
+                        let totalWeight = 0, gradedWeight = 0, currentWeightedScore = 0;
+                        (course.assignments || []).forEach(a => {
+                            const weight = parseFloat(a.weight) || 0;
+                            totalWeight += weight;
+                            if (a.score !== '' && a.score !== null && a.score !== undefined) {
+                                const score = parseFloat(a.score) || 0;
+                                const maxScore = parseFloat(a.maxScore) || 100;
+                                gradedWeight += weight;
+                                currentWeightedScore += (score / maxScore) * weight;
+                            }
+                        });
+                        course.finalGrade = gradedWeight > 0 ? (currentWeightedScore / gradedWeight) * 100 : 0;
+                    });
+                     let semesterTotalWeight = 0, semesterTotalQualityPoints = 0, semesterWeightedScoreSum = 0;
+                    (semester.courses || []).forEach(course => {
+                        const courseWeight = parseFloat(course.courseWeight) || 0;
+                        if (course.finalGrade > 0 && courseWeight > 0) {
+                            semesterTotalWeight += courseWeight;
+                            semesterTotalQualityPoints += scoreToGpaPoint(course.finalGrade) * courseWeight;
+                            semesterWeightedScoreSum += course.finalGrade * courseWeight;
+                        }
+                    });
+                    // 确保学期权重总和为100%
+                    if (semesterTotalWeight > 0 && Math.abs(semesterTotalWeight - 100) > 0.01) {
+                        console.warn(`学期 "${semester.name}" 的课程权重总和不为100% (${semesterTotalWeight}%)，已自动归一化。`);
+                        // 归一化
+                        const scale = 100 / semesterTotalWeight;
+                        semesterTotalQualityPoints *= scale;
+                        semesterWeightedScoreSum *= scale;
+                        semesterTotalWeight = 100;
+                    }
+                    semester.gpa = semesterTotalWeight > 0 ? (semesterTotalQualityPoints / semesterTotalWeight) : 0;
+                    semester.weightedScore = semesterTotalWeight > 0 ? (semesterWeightedScoreSum / semesterTotalWeight) : 0;
+                });
+                // Now render the calculations on the UI
+                document.querySelectorAll('.course-card').forEach(el => updateCourseCalculationsUI(el, student));
+                document.querySelectorAll('.semester-section').forEach(el => updateSemesterCalculationsUI(el, student));
+                updateOverallCalculationsUI(student);
+                generateSuggestions(student);
+                renderUpcomingDeadlines(student);
+            }
+            function updateCourseCalculationsUI(courseEl, student) {
+                const { semesterIndex, courseIndex } = courseEl.dataset;
+                const courseData = student.semesters[semesterIndex]?.courses[courseIndex];
+                if(!courseData) return;
+                courseEl.querySelector('.current-grade-display').textContent = courseData.finalGrade > 0 ? courseData.finalGrade.toFixed(2) : 'N/A';
+                const targetAnalysisDisplay = courseEl.querySelector('.target-analysis-display');
+                const targetGrade = parseFloat(courseData.targetGrade);
+                if (!isNaN(targetGrade)) {
+                    let totalWeight = 0, gradedWeight = 0, currentWeightedScore = 0;
+                    const assignmentWeights = [];
+                    (courseData.assignments || []).forEach(a => {
+                        const weight = parseFloat(a.weight) || 0;
+                        totalWeight += weight;
+                        if(weight > 0) assignmentWeights.push({ name: a.name || '未命名项目', weight: weight });
+                        if (a.score !== '' && a.score !== null) {
+                            const score = parseFloat(a.score) || 0;
+                            const maxScore = parseFloat(a.maxScore) || 100;
+                            gradedWeight += weight;
+                            currentWeightedScore += (score / maxScore) * weight;
+                        }
+                    });
+                    const remainingWeight = totalWeight - gradedWeight;
+                    if (remainingWeight > 0.01) {
+                        const pointsNeeded = (targetGrade * totalWeight / 100) - currentWeightedScore;
+                        if (pointsNeeded <= 0) targetAnalysisDisplay.innerHTML = `已达到目标!`;
+                        else {
+                            const requiredAvg = (pointsNeeded / remainingWeight) * 100;
+                            targetAnalysisDisplay.innerHTML = `剩余项目需 <span class="font-bold ${requiredAvg > 100.01 ? 'text-red-500' : 'text-blue-600'}">${requiredAvg.toFixed(2)}%</span>`;
+                        }
+                    } else if (totalWeight > 0) {
+                        targetAnalysisDisplay.textContent = courseData.finalGrade >= targetGrade ? '恭喜！已达到目标！' : '很遗憾，未达到目标。';
+                    } else {
+                        targetAnalysisDisplay.textContent = '请输入权重以分析';
+                    }
+                    renderWeightDistributionChart(courseEl.querySelector('.weight-distribution-chart'), assignmentWeights, totalWeight);
+                } else {
+                    targetAnalysisDisplay.textContent = '输入目标分以分析';
+                }
+            }
+            function updateSemesterCalculationsUI(semesterEl, student) {
+                const { semesterIndex } = semesterEl.dataset;
+                const semesterData = student.semesters[semesterIndex];
+                if(!semesterData) return;
+                const gradeDistribution = { 'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0 };
+                (semesterData.courses || []).forEach(course => {
+                    const courseWeight = parseFloat(course.courseWeight) || 0;
+                    if (course.finalGrade > 0 && courseWeight > 0) {
+                        const grade = scoreToGrade(course.finalGrade);
+                        if(grade) gradeDistribution[grade]++;
+                    }
+                });
+                semesterEl.querySelector('.semester-gpa-display').textContent = semesterData.gpa > 0 ? semesterData.gpa.toFixed(2) : 'N/A';
+                semesterEl.querySelector('.semester-weighted-score-display').textContent = semesterData.weightedScore > 0 ? semesterData.weightedScore.toFixed(2) : 'N/A';
+                renderGradeDistributionChart(semesterEl.querySelector('.grade-distribution-chart'), gradeDistribution);
+                // === 新增：更新学期目标分分析 ===
+                const targetScoreInput = semesterEl.querySelector('.target-semester-score-input');
+                const analysisDisplay = semesterEl.querySelector('.target-semester-analysis-display');
+                const targetScore = parseFloat(targetScoreInput.value);
+                if (!isNaN(targetScore)) {
+                    if (semesterData.weightedScore >= targetScore) {
+                        analysisDisplay.textContent = '已达到目标！';
+                        analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-green-600';
+                    } else {
+                        const diff = targetScore - semesterData.weightedScore;
+                        analysisDisplay.textContent = `差 ${diff.toFixed(2)} 分`;
+                        analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-red-500';
+                    }
+                } else {
+                    analysisDisplay.textContent = '输入目标以分析';
+                    analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400';
+                }
+            }
+            function updateOverallCalculationsUI(student) {
+                let overallTotalWeight = 0, overallTotalQualityPoints = 0, totalScoreTimesWeight = 0, totalWeightForScore = 0;
+                const cumulativeData = { labels: [], gpas: [], cumulativeGpas: [] };
+                student.semesters.forEach(semester => {
+                    let semesterTotalWeightForGpa = 0;
+                    (semester.courses || []).forEach(course => {
+                        const courseWeight = parseFloat(course.courseWeight) || 0;
+                        if (course.finalGrade > 0 && courseWeight > 0) {
+                            totalScoreTimesWeight += course.finalGrade * courseWeight;
+                            totalWeightForScore += courseWeight;
+                            semesterTotalWeightForGpa += courseWeight;
+                        }
+                    });
+                    if (semester.gpa > 0 && semesterTotalWeightForGpa > 0) {
+                        overallTotalWeight += semesterTotalWeightForGpa;
+                        overallTotalQualityPoints += semester.gpa * semesterTotalWeightForGpa;
+                        cumulativeData.labels.push(semester.name || '未命名学期');
+                        cumulativeData.gpas.push(semester.gpa);
+                        cumulativeData.cumulativeGpas.push(overallTotalQualityPoints / overallTotalWeight);
+                    }
+                });
+                if(overallTotalWeight > 0) {
+                    ui.overall.gpa.textContent = (overallTotalQualityPoints / overallTotalWeight).toFixed(2);
+                    ui.overall.score.textContent = (totalScoreTimesWeight / totalWeightForScore).toFixed(2);
+                } else {
+                    ui.overall.gpa.textContent = 'N/A';
+                    ui.overall.score.textContent = 'N/A';
+                }
+                renderCumulativeGpaChart(cumulativeData);
+            }
+            function renderCumulativeGpaChart(data) {
+                const chartId = 'gpa-trend-chart';
+                if (chartInstances[chartId]) chartInstances[chartId].destroy();
+                const ctx = ui.gpaTrendChart?.getContext('2d');
+                if (!ctx) return;
+                if (!data || data.labels.length === 0) {
+                    showEmptyState(ui.analyticsEmptyState, { title: '图表数据不足', message: '请添加更多学期和成绩来生成GPA趋势图。' });
+                    ui.analyticsContent.classList.add('hidden');
+                    return;
+                }
+                ui.analyticsContent.classList.remove('hidden');
+                ui.analyticsEmptyState.classList.add('hidden');
+                const isDark = document.documentElement.classList.contains('dark');
+                const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                const textColor = isDark ? '#e5e7eb' : '#6b7280';
+                chartInstances[chartId] = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: data.labels, datasets: [ { label: '学期 GPA', data: data.gpas, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.3 }, { label: '累计 GPA', data: data.cumulativeGpas, borderColor: '#10b981', fill: false, tension: 0.3, borderDash: [5, 5] } ] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 4.0, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } }, plugins: { legend: { labels: { color: textColor } }, tooltip: { mode: 'index', intersect: false } } }
+                });
+            }
+            function renderGradeDistributionChart(canvas, data) {
+                const ctx = canvas.getContext('2d');
+                const placeholder = canvas.nextElementSibling;
+
+                // 销毁旧的图表实例
+                const chartId = `grade-${canvas.dataset.chartId || ''}`;
+                if (chartInstances[chartId]) chartInstances[chartId].destroy();
+
+                // 检查是否有数据
+                const hasData = Object.values(data).some(value => value > 0);
+                if (!hasData) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    placeholder.style.display = 'flex';
+                    return;
+                }
+                placeholder.style.display = 'none';
+
+                // 准备数据
+                const labels = Object.keys(data);
+                const values = Object.values(data);
+                const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280'];
+
+                chartInstances[chartId] = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: colors,
+                            borderWidth: 2,
+                            borderColor: canvas.closest('.card')?.style.backgroundColor || '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value} 门 (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function renderWeightDistributionChart(canvas, data, totalWeight) {
+                const ctx = canvas.getContext('2d');
+                const placeholder = canvas.nextElementSibling;
+
+                // 销毁旧的图表实例
+                const chartId = `weight-${canvas.dataset.chartId || ''}`;
+                if (chartInstances[chartId]) chartInstances[chartId].destroy();
+
+                // 检查是否有数据
+                if (!data || data.length === 0) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    placeholder.style.display = 'flex';
+                    return;
+                }
+                placeholder.style.display = 'none';
+
+                // 准备数据
+                const labels = data.map(d => d.name);
+                const values = data.map(d => d.weight);
+                const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#eab308'];
+
+                chartInstances[chartId] = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: colors,
+                            borderWidth: 2,
+                            borderColor: canvas.closest('.card')?.style.backgroundColor || '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const percentage = ((value / totalWeight) * 100).toFixed(1);
+                                        return `${label}: ${value}% (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            function generateSuggestions(student) { /* ... same as original ... */ }
+            function renderUpcomingDeadlines(student) { /* ... same as original ... */ }
+            // === Event Handlers ===
+            function setupEventListeners() {
+                const setupDropdown = (btn, options) => {
+                    btn.addEventListener('click', (e) => { e.stopPropagation(); options.classList.toggle('hidden'); });
+                };
+                setupDropdown(ui.studentMenu.btn, ui.studentMenu.options);
+                setupDropdown(ui.userMenu.btn, ui.userMenu.options);
+                window.addEventListener('click', () => { ui.studentMenu.options.classList.add('hidden'); ui.userMenu.options.classList.add('hidden'); });
+                ui.tabNav.addEventListener('click', (e) => {
+                    const button = e.target.closest('.tab-button');
+                    if (!button) return;
+                    const tab = button.dataset.tab;
+                    ui.tabNav.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    ui.mainContent.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                    document.getElementById(`tab-content-${tab}`).classList.add('active');
+                    if (tab === 'analytics') renderApp();
+                });
+                ui.studentMenu.addBtn.addEventListener('click', (e) => { e.preventDefault(); renderManageStudentsModal(); ui.manageStudentsModal.el.style.display = 'flex'; ui.studentMenu.options.classList.add('hidden'); });
+                ui.studentMenu.manageBtn.addEventListener('click', (e) => { e.preventDefault(); renderManageStudentsModal(); ui.manageStudentsModal.el.style.display = 'flex'; ui.studentMenu.options.classList.add('hidden'); });
+                ui.manageStudentsModal.closeBtn.addEventListener('click', () => ui.manageStudentsModal.el.style.display = 'none');
+                ui.manageStudentsModal.addBtn.addEventListener('click', handleAddStudent);
+                ui.manageStudentsModal.newNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleAddStudent(); });
+                ui.confirmModal.confirmBtn.addEventListener('click', () => { if (typeof confirmCallback === 'function') confirmCallback(); hideConfirmModal(); });
+                ui.confirmModal.cancelBtn.addEventListener('click', hideConfirmModal);
+                document.getElementById('login-btn').addEventListener('click', () => signInWithPopup(auth, provider).catch(err => showError('登录失败', err.message)));
+                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).catch(err => showError('登出失败', err.message)));
+                ui.addSemesterBtn.addEventListener('click', handleAddSemester);
+                ui.courseSearchInput.addEventListener('input', (e) => renderApp(e.target.value.trim().toLowerCase()));
+                ui.studentContentContainer.addEventListener('click', (e) => {
+                    const target = e.target.closest('button');
+                    if (!target) return;
+                    let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
+                    if (!studentData) return;
+                    const semesterSection = target.closest('.semester-section');
+                    const courseCard = target.closest('.course-card');
+                    if (target.classList.contains('add-course-btn')) {
+                        const { semesterIndex } = semesterSection.dataset;
+                        if(!studentData.semesters[semesterIndex].courses) studentData.semesters[semesterIndex].courses = [];
+                        studentData.semesters[semesterIndex].courses.push({ name: '新课程', courseWeight: '20', targetGrade: '90', assignments: []});
+                        updateStudentData(studentData.semesters);
+                    } else if (target.classList.contains('remove-semester-btn')) {
+                        const { semesterIndex } = semesterSection.dataset;
+                        showConfirmModal('删除学期', '确定删除该学期及其所有课程吗?', () => {
+                            studentData.semesters.splice(semesterIndex, 1);
+                            updateStudentData(studentData.semesters);
+                        });
+                    } else if (target.classList.contains('remove-course-btn')) {
+                         const { semesterIndex, courseIndex } = courseCard.dataset;
+                         studentData.semesters[semesterIndex].courses.splice(courseIndex, 1);
+                         updateStudentData(studentData.semesters);
+                    } else if (target.classList.contains('add-assignment-btn')) {
+                        const { semesterIndex, courseIndex } = courseCard.dataset;
+                        if(!studentData.semesters[semesterIndex].courses[courseIndex].assignments) studentData.semesters[semesterIndex].courses[courseIndex].assignments = [];
+                        studentData.semesters[semesterIndex].courses[courseIndex].assignments.push({ name: '', tag: '', customTag: '', weight: '', score: '', maxScore: 100 });
+                        updateStudentData(studentData.semesters);
+                    } else if (target.classList.contains('remove-assignment-btn')) {
+                        const { semesterIndex, courseIndex, assignmentIndex } = target.closest('.assignment-row').dataset;
+                        studentData.semesters[semesterIndex].courses[courseIndex].assignments.splice(assignmentIndex, 1);
+                        updateStudentData(studentData.semesters);
+                    } else if (target.classList.contains('assignments-toggle-btn')) {
+                        target.closest('.assignments-section').classList.toggle('assignments-collapsed');
+                    }
+                });
+                ui.studentContentContainer.addEventListener('change', (e) => {
+                    if (!selectedStudentId || !currentUser) return;
+                    const target = e.target;
+                    let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
+                    if (!studentData) return;
+                    const semesterSection = target.closest('.semester-section');
+                    const courseCard = target.closest('.course-card');
+                    const assignmentRow = target.closest('.assignment-row');
+                    const { semesterIndex } = semesterSection.dataset;
+                    if (target.classList.contains('semester-name-input')) {
+                        studentData.semesters[semesterIndex].name = target.value;
+                    } else if (courseCard) {
+                        const { courseIndex } = courseCard.dataset;
+                        const courseData = studentData.semesters[semesterIndex].courses[courseIndex];
+                        if (assignmentRow) {
+                            const { assignmentIndex } = assignmentRow.dataset;
+                            const assignmentData = courseData.assignments[assignmentIndex];
+                            if (target.classList.contains('assignment-name-input')) assignmentData.name = target.value;
+                            if (target.classList.contains('assignment-tag-select')) {
+                                assignmentData.tag = target.value;
+                                if (target.value !== '自定义') {
+                                    assignmentData.customTag = '';
+                                }
+                            }
+                            if (target.classList.contains('assignment-custom-tag-input')) {
+                                assignmentData.customTag = target.value;
+                                if (target.value) {
+                                    assignmentData.tag = '自定义';
+                                }
+                            }
+                            if (target.classList.contains('assignment-weight-input')) assignmentData.weight = target.value;
+                            if (target.classList.contains('assignment-score-input')) assignmentData.score = target.value;
+                            if (target.classList.contains('assignment-max-score-input')) assignmentData.maxScore = target.value;
+                            if (target.classList.contains('assignment-due-date-input')) assignmentData.dueDate = target.value;
+                        } else {
+                            if (target.classList.contains('course-name-input')) courseData.name = target.value;
+                            // === 修改：将 credits 改为 courseWeight ===
+                            if (target.classList.contains('course-weight-input')) courseData.courseWeight = target.value;
+                            if (target.classList.contains('target-grade-input')) courseData.targetGrade = target.value;
+                        }
+                    }
+                    updateStudentData(studentData.semesters);
+                });
+            }
+            function showConfirmModal(title, body, onConfirm, confirmText = '确认') {
+                ui.confirmModal.title.textContent = title;
+                ui.confirmModal.body.textContent = body;
+                ui.confirmModal.confirmBtn.textContent = confirmText;
+                confirmCallback = onConfirm;
+                ui.confirmModal.el.style.display = 'flex';
+            };
+            const hideConfirmModal = () => { ui.confirmModal.el.style.display = 'none'; confirmCallback = null; };
+            async function handleAddStudent() {
+                const name = ui.manageStudentsModal.newNameInput.value.trim();
+                if (!name || !currentUser) return;
+                const newStudent = { name: name, semesters: [], order: localStudentsData.length };
+                try {
+                    const docRef = await addDoc(collection(db, 'users', currentUser.uid, 'students'), newStudent);
+                    selectedStudentId = docRef.id;
+                    ui.manageStudentsModal.newNameInput.value = '';
+                    showSuccess('学生添加成功！');
+                    renderManageStudentsModal(); 
+                } catch (e) { showError('添加学生失败', e.message); }
+            }
+            function handleRemoveStudent(studentId, studentName) {
+                showConfirmModal(`删除学生: ${studentName}`, `您确定要删除学生 "${studentName}" 的所有数据吗？此操作无法撤销。`, async () => {
+                    try {
+                        await deleteDoc(doc(db, 'users', currentUser.uid, 'students', studentId));
+                        showSuccess('学生删除成功！');
+                        if (selectedStudentId === studentId) selectedStudentId = null;
+                        if (ui.manageStudentsModal.el.style.display === 'flex') renderManageStudentsModal();
+                    } catch (e) { showError('删除学生失败', e.message); }
+                }, '确认删除');
+            }
+            async function handleAddSemester() {
+                if (!selectedStudentId|| !currentUser) { showError('请先选择或添加一个学生。'); return; }
+                let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
+                if (!studentData) return;
+                if(!studentData.semesters) studentData.semesters = [];
+                studentData.semesters.push({ name: `新学期 ${studentData.semesters.length + 1}`, courses: [] });
+                await updateStudentData(studentData.semesters);
+                showSuccess('新学期已添加！');
+            }
+            async function updateStudentData(updatedSemesters) {
+                if (!selectedStudentId || !currentUser) return;
+                updatedSemesters.forEach((s, s_idx) => {
+                    s.order = s_idx;
+                    (s.courses || []).forEach((c, c_idx) => { c.order = c_idx; });
+                });
+                const studentDocRef = doc(db, 'users', currentUser.uid, 'students', selectedStudentId);
+                try {
+                    await updateDoc(studentDocRef, { semesters: updatedSemesters });
+                } catch (error) { showError('数据更新失败', error.message); }
+            }
+            function initSortable() { /* ... */ }
+            // Initial setup
+            setupEventListeners();
+        } catch (error) {
+            console.error("初始化失败:", error);
+            showError('应用初始化失败', error.message);
+        }
+    </script>
+</body>
+</html>
