@@ -449,9 +449,10 @@
                         <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">当前总分:</h3>
                         <p class="current-grade-display text-2xl font-bold text-blue-600">N/A</p>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">个人目标达成分析:</h3>
-                        <p class="target-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400 text-right">输入个人目标分以分析</p>
+                    <!-- NEW: Contribution to semester score -->
+                    <div class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">对学期总分贡献:</h3>
+                        <p class="semester-contribution-display text-lg font-bold text-green-600">N/A</p>
                     </div>
                 </div>
             </div>
@@ -865,19 +866,18 @@
 
                     (semester.courses || []).forEach(course => {
                         const credits = parseFloat(course.credits) || 0;
-                        let totalWeight = 0, gradedWeight = 0, currentWeightedScore = 0;
+                        let currentWeightedScore = 0;
                         
+                        // FIX: Course final grade is the sum of weighted points earned
                         (course.assignments || []).forEach(a => {
-                            const weight = parseFloat(a.weight) || 0;
-                            totalWeight += weight;
                             if (a.score !== '' && a.score !== null && a.score !== undefined) {
                                 const score = parseFloat(a.score) || 0;
                                 const maxScore = parseFloat(a.maxScore) || 100;
-                                gradedWeight += weight;
+                                const weight = parseFloat(a.weight) || 0;
                                 currentWeightedScore += (score / maxScore) * weight;
                             }
                         });
-                        course.finalGrade = gradedWeight > 0 ? (currentWeightedScore / gradedWeight) * 100 : 0;
+                        course.finalGrade = currentWeightedScore;
                         
                         if (credits > 0) {
                             totalCredits += credits;
@@ -888,18 +888,17 @@
 
                     semester.weightedScore = totalCredits > 0 ? weightedScoreSum / totalCredits : 0;
                     semester.gpa = totalCredits > 0 ? gpaPointsSum / totalCredits : 0;
+                    semester.totalCredits = totalCredits;
                     
-                    // NEW: Smart target calculation
                     calculateSmartTargetScores(semester);
                 });
                 
                 return studentCopy;
             }
 
-            // NEW: Robust target score calculation with overflow redistribution
             function calculateSmartTargetScores(semester) {
                 const targetScore = parseFloat(semester.targetWeightedScore);
-                semester.targetAnalysis = {}; // Reset analysis object
+                semester.targetAnalysis = {};
 
                 if (isNaN(targetScore)) return;
 
@@ -923,7 +922,7 @@
                                         assignmentIndex,
                                         maxScore: parseFloat(assignment.maxScore) || 100,
                                         effectiveWeight,
-                                        requiredScore: 0, // Initialize
+                                        requiredScore: 0,
                                         isCapped: false
                                     });
                                 }
@@ -942,7 +941,6 @@
                     return;
                 }
                 
-                // Check for impossibility upfront
                 const maxPossiblePoints = ungradedItems.reduce((sum, item) => sum + (100 / item.maxScore) * item.effectiveWeight, 0);
                 if (pointsNeeded > maxPossiblePoints) {
                      semester.targetAnalysis.message = `目标无法达成！即使剩余项目全部满分也无法达到。`;
@@ -950,25 +948,23 @@
                      return;
                 }
                 
-                // Iterative redistribution loop
                 let hasChanged = true;
                 while(hasChanged) {
                     hasChanged = false;
                     const remainingUngradedWeight = ungradedItems.filter(i => !i.isCapped).reduce((sum, i) => sum + i.effectiveWeight, 0);
 
-                    if (remainingUngradedWeight < 0.001) break; // Avoid division by zero
+                    if (remainingUngradedWeight < 0.001) break;
 
-                    const avgPercentNeeded = pointsNeeded / remainingUngradedWeight;
+                    const avgPercentNeeded = (pointsNeeded / remainingUngradedWeight) * 100;
 
                     for (const item of ungradedItems) {
                         if (item.isCapped) continue;
 
-                        const scoreNeeded = avgPercentNeeded * item.maxScore;
+                        const scoreNeeded = (avgPercentNeeded / 100) * item.maxScore;
 
-                        if (scoreNeeded > 100) {
-                            const overflowPoints = (scoreNeeded - 100) / item.maxScore * item.effectiveWeight;
-                            pointsNeeded -= (100 / item.maxScore * item.effectiveWeight); // Reduce points needed by this item's max contribution
-                            item.requiredScore = 100;
+                        if (scoreNeeded > item.maxScore) {
+                            pointsNeeded -= (item.maxScore / item.maxScore) * item.effectiveWeight;
+                            item.requiredScore = item.maxScore;
                             item.isCapped = true;
                             hasChanged = true;
                         } else {
@@ -977,17 +973,18 @@
                     }
                 }
 
-                // Final check and message
                 if (pointsNeeded > 0.01) {
-                     semester.targetAnalysis.message = `目标无法达成！即使剩余项目全部满分也无法达到。`;
+                     semester.targetAnalysis.message = `目标无法达成！请调整目标或提高已得分数。`;
                      semester.targetAnalysis.status = "impossible";
                 } else {
-                    const overallRequiredPercent = ungradedItems.reduce((sum, item) => sum + (item.requiredScore / item.maxScore * item.effectiveWeight), 0) / ungradedItems.reduce((sum, i) => sum + i.effectiveWeight, 0) * 100;
+                    const totalEffectiveWeight = ungradedItems.reduce((sum, i) => sum + i.effectiveWeight, 0);
+                    const overallRequiredPoints = ungradedItems.reduce((sum, item) => sum + (item.requiredScore / item.maxScore * item.effectiveWeight), 0);
+                    const overallRequiredPercent = totalEffectiveWeight > 0 ? (overallRequiredPoints / totalEffectiveWeight) * 100 : 0;
+
                     semester.targetAnalysis.message = `为达目标，剩余项目平均需得 <strong class="${overallRequiredPercent > 90 ? 'text-yellow-500' : 'text-blue-500'}">${overallRequiredPercent.toFixed(2)}%</strong>`;
                     semester.targetAnalysis.status = "possible";
                 }
 
-                // Apply calculated scores back to the semester object
                 ungradedItems.forEach(item => {
                     const course = semester.courses[item.courseIndex];
                     if (!course.assignments[item.assignmentIndex]) return;
@@ -1010,13 +1007,10 @@
                 const cumulativeData = { labels: [], gpas: [], cumulativeGpas: [] };
                 
                 student.semesters.forEach(semester => {
-                    let semesterCredits = 0;
-                    (semester.courses || []).forEach(c => semesterCredits += (parseFloat(c.credits) || 0));
-
-                    if (semesterCredits > 0) {
-                        overallCredits += semesterCredits;
-                        overallGpaPoints += semester.gpa * semesterCredits;
-                        overallScorePoints += semester.weightedScore * semesterCredits;
+                    if (semester.totalCredits > 0) {
+                        overallCredits += semester.totalCredits;
+                        overallGpaPoints += semester.gpa * semester.totalCredits;
+                        overallScorePoints += semester.weightedScore * semester.totalCredits;
 
                         cumulativeData.labels.push(semester.name || '未命名学期');
                         cumulativeData.gpas.push(semester.gpa);
@@ -1072,20 +1066,22 @@
                 }
 
                 semesterEl.querySelectorAll('.course-card').forEach((courseEl, courseIndex) => {
-                    updateCourseCalculationsUI(courseEl, semesterData.courses[courseIndex]);
+                    updateCourseCalculationsUI(courseEl, semesterData.courses[courseIndex], semesterData);
                 });
             }
 
-            function updateCourseCalculationsUI(courseEl, courseData) {
-                if(!courseData) return;
+            function updateCourseCalculationsUI(courseEl, courseData, semesterData) {
+                if(!courseData || !semesterData) return;
                 courseEl.querySelector('.current-grade-display').textContent = courseData.finalGrade > 0 ? courseData.finalGrade.toFixed(2) : 'N/A';
                 
-                const targetAnalysisDisplay = courseEl.querySelector('.target-analysis-display');
-                const targetGrade = parseFloat(courseData.targetGrade);
-                if (!isNaN(targetGrade)) {
-                    // ... existing logic for personal course target
+                // NEW: Update contribution display
+                const contributionDisplay = courseEl.querySelector('.semester-contribution-display');
+                if (semesterData.totalCredits > 0) {
+                    const credits = parseFloat(courseData.credits) || 0;
+                    const contribution = (courseData.finalGrade * credits) / semesterData.totalCredits;
+                    contributionDisplay.textContent = `${contribution.toFixed(2)} 分`;
                 } else {
-                    targetAnalysisDisplay.textContent = '输入个人目标分以分析';
+                    contributionDisplay.textContent = 'N/A';
                 }
 
                 courseEl.querySelectorAll('.assignment-row').forEach((assignEl, assignmentIndex) => {
