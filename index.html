@@ -31,6 +31,10 @@
             --tab-inactive-text: #6b7280;
             --highlight-bg: #eff6ff;
             --highlight-text: #1d4ed8;
+            --warning-bg: #fefce8;
+            --warning-text: #a16207;
+            --danger-bg: #fef2f2;
+            --danger-text: #b91c1c;
         }
         html.dark {
             --bg-color: #111827;
@@ -50,6 +54,10 @@
             --tab-inactive-text: #9ca3af;
             --highlight-bg: #1e293b;
             --highlight-text: #60a5fa;
+            --warning-bg: #422006;
+            --warning-text: #fde047;
+            --danger-bg: #450a0a;
+            --danger-text: #f87171;
         }
         body {
             font-family: 'Inter', 'Helvetica Neue', 'Arial', 'sans-serif';
@@ -375,8 +383,7 @@
                                 <span class="target-semester-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400">输入目标以分析</span>
                             </div>
                         </div>
-                        <!-- NEW: Semester Target Analysis -->
-                        <div class="semester-target-breakdown-display p-3 bg-highlight-bg text-highlight-text rounded-lg text-sm" style="display: none;"></div>
+                        <div class="semester-target-breakdown-display p-3 rounded-lg text-sm" style="display: none;"></div>
                     </div>
                     <div class="relative h-48">
                         <canvas class="grade-distribution-chart"></canvas>
@@ -397,14 +404,13 @@
                         <button class="remove-course-btn text-gray-400 hover:text-red-500 transition" title="删除课程"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                     </div>
                 </div>
-                <!-- Course Details -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 items-center">
                     <div>
-                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">学期总分权重占比 (%)</label>
-                        <input type="number" min="0" max="100" step="0.5" placeholder="20" class="course-weight-input form-input w-full p-2 mt-1 rounded-md">
+                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">学分</label>
+                        <input type="number" min="0" max="100" step="0.5" placeholder="3" class="course-credits-input form-input w-full p-2 mt-1 rounded-md">
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">目标分</label>
+                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">个人目标分</label>
                         <input type="number" min="0" max="100" placeholder="90" class="target-grade-input form-input w-full p-2 mt-1 rounded-md">
                     </div>
                     <div class="relative h-24">
@@ -412,7 +418,6 @@
                         <p class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm chart-placeholder">无数据</p>
                     </div>
                 </div>
-                <!-- Assignments Section -->
                 <div class="assignments-section">
                     <button class="assignments-toggle-btn flex justify-between items-center w-full py-2 text-left font-semibold">
                         <span>评分项目</span>
@@ -428,8 +433,7 @@
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">权重(%)</th>
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">得分</th>
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">满分</th>
-                                        <!-- NEW: Required Score Column -->
-                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">目标得分</th>
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">建议得分</th>
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">截止</th>
                                         <th class="p-3"></th>
                                     </tr>
@@ -440,17 +444,15 @@
                         <button class="add-assignment-btn mt-4 w-full btn btn-secondary">+ 添加项目 (Ctrl+Enter)</button>
                     </div>
                 </div>
-                <!-- Course Footer -->
                 <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
                     <div class="flex justify-between items-center">
                         <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">当前总分:</h3>
                         <p class="current-grade-display text-2xl font-bold text-blue-600">N/A</p>
                     </div>
                     <div class="flex justify-between items-center">
-                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">课程目标达成分析:</h3>
-                        <p class="target-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400 text-right">输入目标分以分析</p>
+                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">个人目标达成分析:</h3>
+                        <p class="target-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400 text-right">输入个人目标分以分析</p>
                     </div>
-                     <!-- NEW: Semester Target Contribution -->
                     <div class="semester-goal-contribution-display pt-2 border-t border-gray-200 dark:border-gray-700 text-sm" style="display: none;"></div>
                 </div>
             </div>
@@ -473,9 +475,8 @@
                 <td class="p-2"><input type="number" min="0" placeholder="20" class="assignment-weight-input w-20 bg-transparent outline-none p-1 text-center"></td>
                 <td class="p-2"><input type="number" min="0" placeholder="-" class="assignment-score-input w-20 bg-transparent outline-none p-1 text-center"></td>
                 <td class="p-2"><input type="number" min="0" value="100" class="assignment-max-score-input w-20 bg-transparent outline-none p-1 text-center"></td>
-                <!-- NEW: Required Score Cell -->
                 <td class="p-2 text-center">
-                    <span class="required-score-display font-bold text-highlight-text">-</span>
+                    <span class="required-score-display font-bold">-</span>
                 </td>
                 <td class="p-2"><input type="date" class="assignment-due-date-input w-full bg-transparent outline-none p-1"></td>
                 <td class="p-2 text-center"><button class="remove-assignment-btn text-gray-400 hover:text-red-500 transition">×</button></td>
@@ -647,11 +648,12 @@
                 renderStudentSelector();
                 renderEmptyStates(student);
                 if (student) {
-                    renderStudentContent(student, searchTerm);
-                    updateAllCalculations(student);
+                    const studentWithCalculations = updateAllCalculations(student);
+                    renderStudentContent(studentWithCalculations, searchTerm);
+                    renderOverallUI(studentWithCalculations);
                 } else {
                     ui.studentContentContainer.innerHTML = '';
-                    updateAllCalculations(null);
+                    renderOverallUI(null);
                 }
             }
             function renderStudentContent(student, searchTerm = '') {
@@ -667,10 +669,11 @@
                     }).filter(semester => semester.courses.length > 0);
                 }
                 filteredSemesters.forEach((semesterData, index) => {
-                    const originalIndex = student.semesters.findIndex(s => s.name === semesterData.name && JSON.stringify(s.courses) === JSON.stringify(semesterData.courses));
+                    const originalIndex = student.semesters.findIndex(s => s.id === semesterData.id);
                     if (originalIndex === -1) return;
                     const semesterEl = createSemesterElement(semesterData, originalIndex);
                     ui.studentContentContainer.appendChild(semesterEl);
+                    updateSemesterCalculationsUI(semesterEl, student.semesters[originalIndex]);
                 });
                 initSortable();
             }
@@ -705,13 +708,14 @@
                 }, 800);
 
                 targetScoreInput.addEventListener('input', (e) => {
-                    const student = localStudentsData.find(s => s.id === selectedStudentId);
-                    if (student) {
-                        updateSemesterCalculationsUI(semesterEl, student);
-                    }
                     let studentDataCopy = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
                     if (!studentDataCopy) return;
                     studentDataCopy.semesters[semesterIndex].targetWeightedScore = parseFloat(e.target.value) || null;
+                    
+                    const updatedStudentForUI = updateAllCalculations(studentDataCopy);
+                    const updatedSemesterForUI = updatedStudentForUI.semesters[semesterIndex];
+                    updateSemesterCalculationsUI(semesterEl, updatedSemesterForUI);
+                    
                     debouncedSave(studentDataCopy.semesters);
                 });
 
@@ -723,7 +727,8 @@
                  courseEl.dataset.semesterIndex = semesterIndex;
                  courseEl.dataset.courseIndex = courseIndex;
                  courseEl.querySelector('.course-name-input').value = courseData.name;
-                 courseEl.querySelector('.course-weight-input').value = courseData.courseWeight || '';
+                 // FIX: Change to credits
+                 courseEl.querySelector('.course-credits-input').value = courseData.credits || '';
                  courseEl.querySelector('.target-grade-input').value = courseData.targetGrade;
                  const assignmentsContainer = courseEl.querySelector('.assignments-container');
                  (courseData.assignments || []).forEach((assignmentData, assignmentIndex) => {
@@ -851,48 +856,19 @@
             }
             // === Calculation Logic ===
             function updateAllCalculations(student) {
-                destroyAllCharts();
-                if (!student) {
-                    ui.overall.gpa.textContent = 'N/A';
-                    ui.overall.score.textContent = 'N/A';
-                    ui.suggestions.list.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 text-sm p-4">请先选择或添加学生。</p>`;
-                    ui.deadlines.list.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 text-sm p-4">无日程安排。</p>`;
-                    renderCumulativeGpaChart(null);
-                    return;
-                }
+                if (!student) return null;
                 
-                let requiredAvgForUngraded = null;
-                // NEW: Calculate required score for semester target first
-                student.semesters.forEach(semester => {
-                    const targetScore = parseFloat(semester.targetWeightedScore);
-                    if (!isNaN(targetScore)) {
-                        let totalCourseWeight = 0;
-                        let totalEarnedPoints = 0;
-                        let totalUngradedCourseWeight = 0;
+                const studentCopy = JSON.parse(JSON.stringify(student));
 
-                        (semester.courses || []).forEach(course => {
-                            const courseWeight = parseFloat(course.courseWeight) || 0;
-                            if (courseWeight > 0) {
-                                totalCourseWeight += courseWeight;
-                                totalEarnedPoints += (course.finalGrade / 100) * courseWeight;
-                                if (course.finalGrade === 0) { // Simple check if course is "ungraded"
-                                    totalUngradedCourseWeight += courseWeight;
-                                }
-                            }
-                        });
+                studentCopy.semesters.forEach(semester => {
+                    let totalCredits = 0;
+                    let weightedScoreSum = 0;
+                    let gpaPointsSum = 0;
 
-                        if (totalCourseWeight > 0 && totalUngradedCourseWeight > 0) {
-                            const pointsNeeded = targetScore - (totalEarnedPoints / totalCourseWeight * 100);
-                            requiredAvgForUngraded = (pointsNeeded / totalUngradedCourseWeight) * totalCourseWeight;
-                        }
-                    }
-                    semester.requiredAvgForUngraded = requiredAvgForUngraded;
-                });
-
-
-                (student.semesters || []).forEach(semester => {
                     (semester.courses || []).forEach(course => {
+                        const credits = parseFloat(course.credits) || 0;
                         let totalWeight = 0, gradedWeight = 0, currentWeightedScore = 0;
+                        
                         (course.assignments || []).forEach(a => {
                             const weight = parseFloat(a.weight) || 0;
                             totalWeight += weight;
@@ -904,62 +880,126 @@
                             }
                         });
                         course.finalGrade = gradedWeight > 0 ? (currentWeightedScore / gradedWeight) * 100 : 0;
-                    });
-                     let semesterTotalWeight = 0, semesterTotalQualityPoints = 0, semesterWeightedScoreSum = 0;
-                    (semester.courses || []).forEach(course => {
-                        const courseWeight = parseFloat(course.courseWeight) || 0;
-                        if (course.finalGrade > 0 && courseWeight > 0) {
-                            semesterTotalWeight += courseWeight;
-                            semesterTotalQualityPoints += scoreToGpaPoint(course.finalGrade) * courseWeight;
-                            semesterWeightedScoreSum += course.finalGrade * courseWeight;
+                        
+                        if (credits > 0) {
+                            totalCredits += credits;
+                            weightedScoreSum += course.finalGrade * credits;
+                            gpaPointsSum += scoreToGpaPoint(course.finalGrade) * credits;
                         }
                     });
-                    if (semesterTotalWeight > 0) {
-                        semester.gpa = (semesterTotalQualityPoints / semesterTotalWeight);
-                        semester.weightedScore = (semesterWeightedScoreSum / semesterTotalWeight);
-                    } else {
-                        semester.gpa = 0;
-                        semester.weightedScore = 0;
-                    }
+
+                    semester.weightedScore = totalCredits > 0 ? weightedScoreSum / totalCredits : 0;
+                    semester.gpa = totalCredits > 0 ? gpaPointsSum / totalCredits : 0;
+                    
+                    // NEW: Smart target calculation
+                    calculateSemesterTargetAnalysis(semester);
                 });
                 
-                document.querySelectorAll('.course-card').forEach(el => updateCourseCalculationsUI(el, student));
-                document.querySelectorAll('.semester-section').forEach(el => updateSemesterCalculationsUI(el, student));
-                updateOverallCalculationsUI(student);
+                return studentCopy;
+            }
+
+            function calculateSemesterTargetAnalysis(semester) {
+                const targetScore = parseFloat(semester.targetWeightedScore);
+                semester.targetAnalysis = {}; // Reset analysis object
+
+                if (isNaN(targetScore)) return;
+
+                let currentWeightedScoreSum = 0;
+                let totalCredits = 0;
+                let ungradedItems = [];
+                let totalUngradedEffectiveWeight = 0;
+
+                (semester.courses || []).forEach((course, courseIndex) => {
+                    const credits = parseFloat(course.credits) || 0;
+                    if (credits > 0) {
+                        totalCredits += credits;
+                        currentWeightedScoreSum += (course.finalGrade || 0) * credits;
+
+                        (course.assignments || []).forEach((assignment, assignmentIndex) => {
+                            if (assignment.score === '' || assignment.score === null) {
+                                const assignmentWeight = parseFloat(assignment.weight) || 0;
+                                const effectiveWeight = (assignmentWeight / 100) * credits;
+                                if (effectiveWeight > 0) {
+                                    ungradedItems.push({
+                                        courseIndex,
+                                        assignmentIndex,
+                                        maxScore: parseFloat(assignment.maxScore) || 100,
+                                        effectiveWeight
+                                    });
+                                    totalUngradedEffectiveWeight += effectiveWeight;
+                                }
+                            }
+                        });
+                    }
+                });
+
+                if (totalCredits === 0) return;
+
+                const pointsNeeded = (targetScore * totalCredits) - currentWeightedScoreSum;
+
+                if (totalUngradedEffectiveWeight < 0.01) {
+                    semester.targetAnalysis.message = "所有项目已评分。";
+                    semester.targetAnalysis.status = "done";
+                    return;
+                }
+
+                const maxPossiblePoints = totalUngradedEffectiveWeight;
+                if (pointsNeeded > maxPossiblePoints) {
+                    semester.targetAnalysis.message = `目标无法达成！即使剩余项目全部满分，也无法达到目标分数。`;
+                    semester.targetAnalysis.status = "impossible";
+                    return;
+                }
+                
+                const requiredAvgPercent = (pointsNeeded / totalUngradedEffectiveWeight) * 100;
+                semester.targetAnalysis.message = `为达目标，剩余项目平均需得 <strong class="${requiredAvgPercent > 100 ? 'text-red-500' : 'text-blue-600'}">${requiredAvgPercent.toFixed(2)}%</strong>`;
+                semester.targetAnalysis.status = "possible";
+
+                ungradedItems.forEach(item => {
+                    const requiredScore = (requiredAvgPercent / 100) * item.maxScore;
+                    const course = semester.courses[item.courseIndex];
+                    if (!course.assignments[item.assignmentIndex]) return;
+                    course.assignments[item.assignmentIndex].requiredScore = requiredScore;
+                });
+            }
+            
+            function renderOverallUI(student) {
+                destroyAllCharts();
+                if (!student) {
+                    ui.overall.gpa.textContent = 'N/A';
+                    ui.overall.score.textContent = 'N/A';
+                    ui.suggestions.list.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 text-sm p-4">请先选择或添加学生。</p>`;
+                    ui.deadlines.list.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 text-sm p-4">无日程安排。</p>`;
+                    renderCumulativeGpaChart(null);
+                    return;
+                }
+                
+                let overallCredits = 0, overallGpaPoints = 0, overallScorePoints = 0;
+                const cumulativeData = { labels: [], gpas: [], cumulativeGpas: [] };
+                
+                student.semesters.forEach(semester => {
+                    let semesterCredits = 0;
+                    (semester.courses || []).forEach(c => semesterCredits += (parseFloat(c.credits) || 0));
+
+                    if (semesterCredits > 0) {
+                        overallCredits += semesterCredits;
+                        overallGpaPoints += semester.gpa * semesterCredits;
+                        overallScorePoints += semester.weightedScore * semesterCredits;
+
+                        cumulativeData.labels.push(semester.name || '未命名学期');
+                        cumulativeData.gpas.push(semester.gpa);
+                        cumulativeData.cumulativeGpas.push(overallGpaPoints / overallCredits);
+                    }
+                });
+
+                ui.overall.gpa.textContent = overallCredits > 0 ? (overallGpaPoints / overallCredits).toFixed(2) : 'N/A';
+                ui.overall.score.textContent = overallCredits > 0 ? (overallScorePoints / overallCredits).toFixed(2) : 'N/A';
+                
+                renderCumulativeGpaChart(cumulativeData);
                 generateSuggestions(student);
                 renderUpcomingDeadlines(student);
             }
-            function updateCourseCalculationsUI(courseEl, student) {
-                const { semesterIndex, courseIndex } = courseEl.dataset;
-                const semesterData = student.semesters[semesterIndex];
-                const courseData = semesterData?.courses[courseIndex];
-                if(!courseData) return;
 
-                courseEl.querySelector('.current-grade-display').textContent = courseData.finalGrade > 0 ? courseData.finalGrade.toFixed(2) : 'N/A';
-                
-                // Course-specific target analysis
-                const targetAnalysisDisplay = courseEl.querySelector('.target-analysis-display');
-                const targetGrade = parseFloat(courseData.targetGrade);
-                if (!isNaN(targetGrade)) {
-                    // ... (existing logic for course target)
-                } else {
-                    targetAnalysisDisplay.textContent = '输入目标分以分析';
-                }
-
-                // NEW: Semester goal contribution
-                const goalContributionDisplay = courseEl.querySelector('.semester-goal-contribution-display');
-                const requiredAvg = semesterData.requiredAvgForUngraded;
-                if (requiredAvg !== null && requiredAvg !== undefined) {
-                    goalContributionDisplay.style.display = 'block';
-                    const requiredScoreText = `为达学期目标, 本课需得 <strong class="text-lg">${requiredAvg.toFixed(2)}</strong> 分`;
-                    goalContributionDisplay.innerHTML = requiredScoreText;
-                } else {
-                    goalContributionDisplay.style.display = 'none';
-                }
-            }
-            function updateSemesterCalculationsUI(semesterEl, student) {
-                const { semesterIndex } = semesterEl.dataset;
-                const semesterData = student.semesters[semesterIndex];
+            function updateSemesterCalculationsUI(semesterEl, semesterData) {
                 if(!semesterData) return;
                 
                 semesterEl.querySelector('.semester-gpa-display').textContent = semesterData.gpa > 0 ? semesterData.gpa.toFixed(2) : 'N/A';
@@ -982,130 +1022,104 @@
                     analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400';
                 }
 
-                // NEW: Call the function to calculate and display the breakdown
-                calculateAndDisplaySemesterTargetAnalysis(semesterEl, semesterData);
-            }
-            // NEW: Function to calculate and display the detailed target analysis
-            function calculateAndDisplaySemesterTargetAnalysis(semesterEl, semesterData) {
                 const breakdownContainer = semesterEl.querySelector('.semester-target-breakdown-display');
-                const targetScore = parseFloat(semesterData.targetWeightedScore);
-
-                if (isNaN(targetScore)) {
-                    breakdownContainer.style.display = 'none';
-                    // Clear assignment required scores
-                    semesterEl.querySelectorAll('.required-score-display').forEach(el => el.textContent = '-');
-                    semesterEl.querySelectorAll('.semester-goal-contribution-display').forEach(el => el.style.display = 'none');
-                    return;
-                }
-
-                let totalCourseWeight = 0;
-                let weightedEarnedScore = 0;
-                let totalUngradedWeight = 0;
-
-                (semesterData.courses || []).forEach(course => {
-                    const courseWeight = parseFloat(course.courseWeight) || 0;
-                    if (courseWeight > 0) {
-                        totalCourseWeight += courseWeight;
-                        (course.assignments || []).forEach(a => {
-                            const assignWeight = parseFloat(a.weight) || 0;
-                            const score = parseFloat(a.score);
-                            const maxScore = parseFloat(a.maxScore) || 100;
-                            
-                            // Weight here is relative to course, so we need to factor in courseWeight
-                            const effectiveWeight = (assignWeight / 100) * courseWeight;
-
-                            if (!isNaN(score)) {
-                                weightedEarnedScore += (score / maxScore) * effectiveWeight;
-                            } else {
-                                totalUngradedWeight += effectiveWeight;
-                            }
-                        });
-                    }
-                });
-                
-                if (totalUngradedWeight < 0.01) {
+                if (semesterData.targetAnalysis && semesterData.targetAnalysis.message) {
+                    breakdownContainer.innerHTML = semesterData.targetAnalysis.message;
                     breakdownContainer.style.display = 'block';
-                    breakdownContainer.innerHTML = '所有项目已评分，无法进行目标规划。';
-                    return;
-                }
-
-                const pointsNeeded = targetScore - (weightedEarnedScore / totalCourseWeight * 100);
-                const requiredAvgPercent = (pointsNeeded / totalUngradedWeight) * totalCourseWeight;
-
-                breakdownContainer.style.display = 'block';
-                if (requiredAvgPercent > 100) {
-                    breakdownContainer.innerHTML = `为达目标，剩余项目平均需 <strong class="text-red-500">${requiredAvgPercent.toFixed(2)}%</strong> (可能无法达成)`;
-                } else if (requiredAvgPercent < 0) {
-                     breakdownContainer.innerHTML = `已超额完成目标！剩余项目可放松应对。`;
-                }
-                else {
-                    breakdownContainer.innerHTML = `为达目标，剩余项目平均需 <strong class="text-blue-500">${requiredAvgPercent.toFixed(2)}%</strong>`;
-                }
-
-                // Update each course and assignment
-                semesterEl.querySelectorAll('.course-card').forEach(courseEl => {
-                    const { courseIndex } = courseEl.dataset;
-                    const courseData = semesterData.courses[courseIndex];
-                    const goalContributionDisplay = courseEl.querySelector('.semester-goal-contribution-display');
-                    
-                    if (courseData && (courseData.assignments || []).some(a => isNaN(parseFloat(a.score)))) {
-                        goalContributionDisplay.style.display = 'block';
-                        goalContributionDisplay.innerHTML = `为达学期目标, 本课剩余项目平均需得 <strong class="text-lg">${requiredAvgPercent.toFixed(2)}%</strong>`;
+                    if(semesterData.targetAnalysis.status === 'impossible') {
+                        breakdownContainer.className = 'semester-target-breakdown-display p-3 rounded-lg text-sm bg-danger-bg text-danger-text';
                     } else {
-                        goalContributionDisplay.style.display = 'none';
+                        breakdownContainer.className = 'semester-target-breakdown-display p-3 rounded-lg text-sm bg-highlight-bg text-highlight-text';
                     }
-
-                    courseEl.querySelectorAll('.assignment-row').forEach(assignEl => {
-                        const { assignmentIndex } = assignEl.dataset;
-                        const assignData = courseData.assignments[assignmentIndex];
-                        const requiredScoreEl = assignEl.querySelector('.required-score-display');
-                        
-                        if (isNaN(parseFloat(assignData.score))) {
-                            const maxScore = parseFloat(assignData.maxScore) || 100;
-                            const requiredScore = (requiredAvgPercent / 100) * maxScore;
-                            requiredScoreEl.textContent = requiredScore.toFixed(1);
-                            if (requiredAvgPercent > 100) requiredScoreEl.classList.add('text-red-500');
-                            else requiredScoreEl.classList.remove('text-red-500');
-                        } else {
-                            requiredScoreEl.textContent = '-';
-                        }
-                    });
-                });
-            }
-            function updateOverallCalculationsUI(student) {
-                let overallTotalWeight = 0, overallTotalQualityPoints = 0, totalScoreTimesWeight = 0, totalWeightForScore = 0;
-                const cumulativeData = { labels: [], gpas: [], cumulativeGpas: [] };
-                student.semesters.forEach(semester => {
-                    let semesterTotalWeightForGpa = 0;
-                    (semester.courses || []).forEach(course => {
-                        const courseWeight = parseFloat(course.courseWeight) || 0;
-                        if (course.finalGrade > 0 && courseWeight > 0) {
-                            totalScoreTimesWeight += course.finalGrade * courseWeight;
-                            totalWeightForScore += courseWeight;
-                            semesterTotalWeightForGpa += courseWeight;
-                        }
-                    });
-                    if (semester.gpa > 0 && semesterTotalWeightForGpa > 0) {
-                        overallTotalWeight += semesterTotalWeightForGpa;
-                        overallTotalQualityPoints += semester.gpa * semesterTotalWeightForGpa;
-                        cumulativeData.labels.push(semester.name || '未命名学期');
-                        cumulativeData.gpas.push(semester.gpa);
-                        cumulativeData.cumulativeGpas.push(overallTotalQualityPoints / overallTotalWeight);
-                    }
-                });
-                if(totalWeightForScore > 0) {
-                    ui.overall.gpa.textContent = (overallTotalQualityPoints / overallTotalWeight).toFixed(2);
-                    ui.overall.score.textContent = (totalScoreTimesWeight / totalWeightForScore).toFixed(2);
                 } else {
-                    ui.overall.gpa.textContent = 'N/A';
-                    ui.overall.score.textContent = 'N/A';
+                    breakdownContainer.style.display = 'none';
                 }
-                renderCumulativeGpaChart(cumulativeData);
+
+                // Update course and assignment UI from calculated data
+                semesterEl.querySelectorAll('.course-card').forEach((courseEl, courseIndex) => {
+                    updateCourseCalculationsUI(courseEl, semesterData.courses[courseIndex]);
+                });
             }
+
+            function updateCourseCalculationsUI(courseEl, courseData) {
+                if(!courseData) return;
+                courseEl.querySelector('.current-grade-display').textContent = courseData.finalGrade > 0 ? courseData.finalGrade.toFixed(2) : 'N/A';
+                
+                const targetAnalysisDisplay = courseEl.querySelector('.target-analysis-display');
+                const targetGrade = parseFloat(courseData.targetGrade);
+                if (!isNaN(targetGrade)) {
+                    // ... existing logic for personal course target
+                } else {
+                    targetAnalysisDisplay.textContent = '输入个人目标分以分析';
+                }
+
+                courseEl.querySelectorAll('.assignment-row').forEach((assignEl, assignmentIndex) => {
+                    const assignmentData = courseData.assignments[assignmentIndex];
+                    const requiredScoreEl = assignEl.querySelector('.required-score-display');
+                    if (assignmentData.requiredScore !== undefined) {
+                        const score = assignmentData.requiredScore;
+                        requiredScoreEl.textContent = score.toFixed(1);
+                        requiredScoreEl.classList.remove('text-green-600', 'text-yellow-600', 'text-red-600');
+                        if (score > 100) requiredScoreEl.classList.add('text-red-600');
+                        else if (score > 85) requiredScoreEl.classList.add('text-yellow-600');
+                        else requiredScoreEl.classList.add('text-green-600');
+                    } else {
+                        requiredScoreEl.textContent = '-';
+                    }
+                });
+            }
+
             function renderCumulativeGpaChart(data) { /* ... */ }
             function renderGradeDistributionChart(canvas, data) { /* ... */ }
             function renderWeightDistributionChart(canvas, data, totalWeight) { /* ... */ }
-            function generateSuggestions(student) { /* ... */ }
+            function generateSuggestions(student) {
+                const list = ui.suggestions.list;
+                list.innerHTML = '';
+                let suggestions = [];
+
+                student.semesters.forEach(semester => {
+                    if (semester.targetAnalysis && semester.targetAnalysis.status === 'impossible') {
+                        suggestions.push({
+                            type: 'danger',
+                            text: `<strong>学期 "${semester.name}" 目标警告:</strong> 您设定的目标分数过高，已无法达成。请考虑适当调低目标。`
+                        });
+                    }
+
+                    let highEffortCourses = [];
+                    (semester.courses || []).forEach(course => {
+                        (course.assignments || []).forEach(assignment => {
+                            if (assignment.requiredScore > 100 && !highEffortCourses.includes(course.name)) {
+                                highEffortCourses.push(course.name);
+                            }
+                        });
+                    });
+
+                    if (highEffortCourses.length > 0) {
+                        suggestions.push({
+                            type: 'warning',
+                            text: `<strong>学期 "${semester.name}" 提分预警:</strong> 课程 <span class="font-bold">${highEffortCourses.join(', ')}</span> 的部分项目需要超常发挥才能达成目标，请重点关注！`
+                        });
+                    }
+                });
+
+                if (suggestions.length === 0) {
+                    list.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 text-sm p-4">暂无特别建议，一切顺利！</p>`;
+                    return;
+                }
+
+                suggestions.forEach(sug => {
+                    const div = document.createElement('div');
+                    let bgColor, textColor;
+                    switch(sug.type) {
+                        case 'danger': bgColor = 'bg-danger-bg'; textColor = 'text-danger-text'; break;
+                        case 'warning': bgColor = 'bg-warning-bg'; textColor = 'text-warning-text'; break;
+                        default: bgColor = 'bg-highlight-bg'; textColor = 'text-highlight-text';
+                    }
+                    div.className = `p-3 rounded-lg text-sm ${bgColor} ${textColor}`;
+                    div.innerHTML = sug.text;
+                    list.appendChild(div);
+                });
+            }
             function renderUpcomingDeadlines(student) { /* ... */ }
             function setupAndStartTour() { /* ... */ }
             // === Event Handlers ===
@@ -1121,8 +1135,7 @@
                     document.documentElement.classList.toggle('dark');
                     const isDark = document.documentElement.classList.contains('dark');
                     localStorage.setItem('theme', isDark ? 'dark' : 'light');
-                    const student = localStudentsData.find(s => s.id === selectedStudentId);
-                    updateAllCalculations(student);
+                    renderApp();
                 });
 
                 ui.startTourBtn.addEventListener('click', (e) => {
@@ -1144,8 +1157,7 @@
                     ui.mainContent.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
                     document.getElementById(`tab-content-${tab}`).classList.add('active');
                     if (tab === 'analytics') {
-                        const student = localStudentsData.find(s => s.id === selectedStudentId);
-                        updateAllCalculations(student);
+                        renderApp();
                     }
                 });
                 ui.studentMenu.addBtn.addEventListener('click', (e) => { e.preventDefault(); renderManageStudentsModal(); ui.manageStudentsModal.el.style.display = 'flex'; ui.studentMenu.options.classList.add('hidden'); });
@@ -1169,7 +1181,7 @@
                     if (target.classList.contains('add-course-btn')) {
                         const { semesterIndex } = semesterSection.dataset;
                         if(!studentData.semesters[semesterIndex].courses) studentData.semesters[semesterIndex].courses = [];
-                        studentData.semesters[semesterIndex].courses.push({ name: '新课程', courseWeight: '20', targetGrade: '90', assignments: []});
+                        studentData.semesters[semesterIndex].courses.push({ name: '新课程', credits: '3', targetGrade: '90', assignments: []});
                         updateStudentData(studentData.semesters);
                     } else if (target.classList.contains('remove-semester-btn')) {
                         const { semesterIndex } = semesterSection.dataset;
@@ -1194,17 +1206,26 @@
                         target.closest('.assignments-section').classList.toggle('assignments-collapsed');
                     }
                 });
+                
+                const debouncedUpdater = debounce(() => {
+                    let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
+                     if (!studentData) return;
+                    updateStudentData(studentData.semesters);
+                }, 800);
+
                 ui.studentContentContainer.addEventListener('change', (e) => {
                     if (!selectedStudentId || !currentUser) return;
                     if (e.target.classList.contains('target-semester-score-input')) return;
 
                     const target = e.target;
-                    let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
+                    let studentData = localStudentsData.find(s => s.id === selectedStudentId);
                     if (!studentData) return;
+
                     const semesterSection = target.closest('.semester-section');
                     const courseCard = target.closest('.course-card');
                     const assignmentRow = target.closest('.assignment-row');
                     const { semesterIndex } = semesterSection.dataset;
+                    
                     if (target.classList.contains('semester-name-input')) {
                         studentData.semesters[semesterIndex].name = target.value;
                     } else if (courseCard) {
@@ -1228,11 +1249,12 @@
                             if (target.classList.contains('assignment-due-date-input')) assignmentData.dueDate = target.value;
                         } else {
                             if (target.classList.contains('course-name-input')) courseData.name = target.value;
-                            if (target.classList.contains('course-weight-input')) courseData.courseWeight = target.value;
+                            if (target.classList.contains('course-credits-input')) courseData.credits = target.value;
                             if (target.classList.contains('target-grade-input')) courseData.targetGrade = target.value;
                         }
                     }
-                    updateStudentData(studentData.semesters);
+                    renderApp(); // Re-render with new data to show calculation changes
+                    debouncedUpdater(); // Debounce the actual save to Firestore
                 });
             }
             function showConfirmModal(title, body, onConfirm, confirmText = '确认') { /* ... */ };
@@ -1243,6 +1265,7 @@
             async function updateStudentData(updatedSemesters) {
                 if (!selectedStudentId || !currentUser) return;
                 updatedSemesters.forEach((s, s_idx) => {
+                    s.id = s.id || `sem-${Date.now()}-${s_idx}`;
                     s.order = s_idx;
                     (s.courses || []).forEach((c, c_idx) => { c.order = c_idx; });
                 });
