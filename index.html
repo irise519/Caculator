@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>  
     <style>
         :root {
             --bg-color: #f9fafb;  
@@ -557,32 +557,37 @@
             return function(...args) {
                 const context = this;
                 clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(context, args), delay);  
+                timeout = setTimeout(() => func.apply(context, args), delay);    
             };
         }
-        // === Firebase & App Initialization ===
-        try {  
-            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");  
-            const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
-const { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, query, writeBatch } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-const { registerables } = await import("https://cdn.jsdelivr.net/npm/chart.js");
-Chart.register(...registerables);
-const firebaseConfig = {
-    apiKey: "AIzaSyBgYSM_HCYqUSvIN5VifHbX-j9p6IjhVJs",  
-    authDomain: "sample-firebase-ai-app-87f8f.firebaseapp.com",
-    projectId: "sample-firebase-ai-app-87f8f",
-    storageBucket: "sample-firebase-ai-app-87f8f.firebasestorage.app",
-    messagingSenderId: "887928734431",  
-    appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"
-};
-const app = initializeApp(firebaseConfig);
+        // === Firebase & App Initialization ===  
+try {
+    // Import required modules
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+    const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");  
+    const { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, query, writeBatch } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+    const { registerables } = await import("https://cdn.jsdelivr.net/npm/chart.js");
+
+    // Register Chart.js components
+    Chart.register(...registerables);
+
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyBgYSM_HCYqUSvIN5VifHbX-j9p6IjhVJs",
+        authDomain: "sample-firebase-ai-app-87f8f.firebaseapp.com",
+        projectId: "sample-firebase-ai-app-87f8f",
+        storageBucket: "sample-firebase-ai-app-87f8f.firebasestorage.app",
+        messagingSenderId: "887928734431",
+        appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"
+    };
+const app = initializeApp(firebaseConfig);  
             };
-            const app = initializeApp(firebaseConfig);
+            const app = initializeApp(firebaseConfig);  
             const auth = getAuth(app);
             const db = getFirestore(app);
-            const provider = new GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
-            onAuthStateChanged(auth, (user) => {
+            const provider = new GoogleAuthProvider();  
+            provider.setCustomParameters({ prompt: 'select_account' });  
+            onAuthStateChanged(auth, (user) => {  
                 ui.loadingOverlay.style.display = 'flex';
                 if (user) {
                     currentUser = user;
@@ -748,7 +753,7 @@ const app = initializeApp(firebaseConfig);
                     ui.coursesEmptyState.innerHTML = '';
                     addSemesterBtnContainer.classList.remove('hidden');
                 }
-                ui.analyticsContent.classList.remove('hidden');
+                ui.analyticsContent.classList.remove('hidden');  
                 ui.analyticsEmptyState.classList.add('hidden');
             }
             function showEmptyState(container, { title, message, actionText, action }) {
