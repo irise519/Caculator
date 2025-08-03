@@ -6,7 +6,7 @@
     <title>GRADESC - 成绩与GPA计算器</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>  
-    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js"></script>  
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
@@ -196,31 +196,24 @@
         </div>
     </div>
 
-    <script type="module">
+    <script type="module">  
         try {
             // Firebase 初始化
-            const firebaseConfig = {  
+            const firebaseConfig = {
                 apiKey: "AIzaSyBgYSM_HCYqUSvIN5VifHbX-j9p6IjhVJs",
                 authDomain: "sample-firebase-ai-app-87f8f.firebaseapp.com",
-                projectId: "sample-firebase-ai-app-87f8f",
+                projectId: "sample-firebase-ai-app-87f8f",  
                 storageBucket: "sample-firebase-ai-app-87f8f.firebasestorage.app",  
                 messagingSenderId: "887928734431",
-                appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"  
+                appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"
             };
             // 初始化 Firebase
             const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);  
+            const auth = getAuth(app);
             const db = getFirestore(app);
             const provider = new GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
             updateStatus('Firebase 初始化成功！');
-            };
-            const app = firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-            const { registerables } = await import("https://cdn.jsdelivr.net/npm/chart.js");
-            Chart.register(...registerables);
-
             // === 状态与UI元素 ===
             let currentUser = null;
             let localStudentsData = [];
