@@ -17,7 +17,7 @@
             --bg-color: #f9fafb;  
             --text-color: #111827;
             --card-bg: #ffffff;
-            --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);  
             --card-border: #e5e7eb;
             --input-border: #d1d5db;  
             --input-focus-border: #4f46e5;  
@@ -557,21 +557,25 @@
             return function(...args) {
                 const context = this;
                 clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(context, args), delay);
+                timeout = setTimeout(() => func.apply(context, args), delay);  
             };
         }
         // === Firebase & App Initialization ===
-        try {
-            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+        try {  
+            const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");  
             const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
-            const { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, query, writeBatch } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-            const firebaseConfig = {
-                apiKey: "AIzaSyBgYSM_HCYqUSvIN5VifHbX-j9p6IjhVJs",
-                authDomain: "sample-firebase-ai-app-87f8f.firebaseapp.com",  
-                projectId: "sample-firebase-ai-app-87f8f",
-                storageBucket: "sample-firebase-ai-app-87f8f.firebasestorage.app",
-                messagingSenderId: "887928734431",
-                appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"
+const { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, query, writeBatch } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+const { registerables } = await import("https://cdn.jsdelivr.net/npm/chart.js");
+Chart.register(...registerables);
+const firebaseConfig = {
+    apiKey: "AIzaSyBgYSM_HCYqUSvIN5VifHbX-j9p6IjhVJs",  
+    authDomain: "sample-firebase-ai-app-87f8f.firebaseapp.com",
+    projectId: "sample-firebase-ai-app-87f8f",
+    storageBucket: "sample-firebase-ai-app-87f8f.firebasestorage.app",
+    messagingSenderId: "887928734431",  
+    appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"
+};
+const app = initializeApp(firebaseConfig);
             };
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
