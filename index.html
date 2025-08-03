@@ -9,51 +9,53 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>  
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
     <style>
         :root {
-            --bg-color: #f8f9fa;
-            --text-color: #1f2937;
-            --card-bg: white;
-            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --bg-color: #f9fafb;
+            --text-color: #111827;
+            --card-bg: #ffffff;
+            --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --card-border: #e5e7eb;
             --input-border: #d1d5db;
-            --input-focus-border: #3b82f6;
-            --primary-btn-bg: #2563eb;
-            --primary-btn-hover-bg: #1d4ed8;
+            --input-focus-border: #4f46e5;
+            --primary-btn-bg: #4f46e5;
+            --primary-btn-hover-bg: #4338ca;
             --secondary-btn-bg: #e5e7eb;
             --secondary-btn-text: #374151;
             --secondary-btn-hover-bg: #d1d5db;
-            --header-text: #1f2937;
+            --header-text: #111827;
             --muted-text: #6b7280;
-            --tab-active-border: #3b82f6;
+            --tab-active-border: #4f46e5;
             --tab-inactive-text: #6b7280;
-            --highlight-bg: #eff6ff;
-            --highlight-text: #1d4ed8;
+            --highlight-bg: #eef2ff;
+            --highlight-text: #4338ca;
             --warning-bg: #fefce8;
             --warning-text: #a16207;
             --danger-bg: #fef2f2;
             --danger-text: #b91c1c;
         }
         html.dark {
-            --bg-color: #111827;
-            --text-color: #e5e7eb;
-            --card-bg: #1f2937;
-            --card-shadow: 0 4px 6px -1px rgb(255 255 255 / 0.05), 0 2px 4px -2px rgb(255 255 255 / 0.05);
-            --input-border: #4b5563;
-            --input-focus-border: #60a5fa;
-            --primary-btn-bg: #3b82f6;
-            --primary-btn-hover-bg: #2563eb;
+            --bg-color: #030712;
+            --text-color: #f9fafb;
+            --card-bg: #111827;
+            --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --card-border: #1f2937;
+            --input-border: #374151;
+            --input-focus-border: #6366f1;
+            --primary-btn-bg: #6366f1;
+            --primary-btn-hover-bg: #4f46e5;
             --secondary-btn-bg: #374151;
             --secondary-btn-text: #e5e7eb;
             --secondary-btn-hover-bg: #4b5563;
             --header-text: #f9fafb;
             --muted-text: #9ca3af;
-            --tab-active-border: #60a5fa;
+            --tab-active-border: #6366f1;
             --tab-inactive-text: #9ca3af;
             --highlight-bg: #1e293b;
-            --highlight-text: #60a5fa;
+            --highlight-text: #818cf8;
             --warning-bg: #422006;
             --warning-text: #fde047;
             --danger-bg: #450a0a;
@@ -69,6 +71,7 @@
             background-color: var(--card-bg);
             border-radius: 0.75rem;
             box-shadow: var(--card-shadow);
+            border: 1px solid var(--card-border);
             transition: all 0.3s ease-in-out;
         }
         .form-input, .tag-input-container, .form-select {
@@ -80,7 +83,7 @@
         .form-input:focus, .form-select:focus {
             outline: none;
             border-color: var(--input-focus-border);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.4);
         }
         .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s ease-in-out; border: 1px solid transparent; cursor: pointer; }
         .btn-primary { background-color: var(--primary-btn-bg); color: white; }
@@ -103,7 +106,7 @@
             transition: all 0.2s ease-in-out;
         }
         .tab-button.active {
-            color: var(--text-color);
+            color: var(--header-text);
             border-bottom-color: var(--tab-active-border);
         }
         .tab-content { display: none; }
@@ -126,7 +129,7 @@
         .shepherd-header { background-color: var(--secondary-btn-bg) !important; padding: 1rem !important; }
         .shepherd-title { color: var(--header-text) !important; font-weight: 700 !important; }
         .shepherd-text { color: var(--text-color) !important; padding: 0 1rem 1rem !important; line-height: 1.6 !important; }
-        .shepherd-content { background-color: var(--card-bg) !important; border-radius: 0.75rem !important; box-shadow: var(--card-shadow) !important; }
+        .shepherd-content { background-color: var(--card-bg) !important; border-radius: 0.75rem !important; box-shadow: var(--card-shadow) !important; border: 1px solid var(--card-border) !important; }
         .shepherd-arrow::before { background-color: var(--card-bg) !important; }
         .shepherd-cancel-icon { color: var(--muted-text) !important; }
         .shepherd-cancel-icon:hover { color: var(--text-color) !important; }
@@ -136,12 +139,11 @@
     </style>
 </head>
 <body class="p-4 md:p-8">
-    <!-- Loading & Notifications -->
     <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-80 dark:bg-gray-900 dark:bg-opacity-80 flex items-center justify-center z-50">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
     </div>
     <div id="error-container" class="fixed top-5 right-5 z-50 w-full max-w-sm"></div>
-    <!-- Login View -->
+
     <div id="login-view" class="max-w-md mx-auto text-center mt-20 fade-in">
         <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 dark:text-gray-100">GRADESC</h1>
         <p class="text-gray-500 dark:text-gray-400 mt-3 text-lg mb-8">您的私人成绩与GPA智能管家</p>
@@ -155,13 +157,11 @@
             <div id="status-message" class="mt-4 text-sm text-gray-600 dark:text-gray-400"></div>
         </div>
     </div>
-    <!-- Main App View -->
-    <div id="app-view" class="max-w-7xl mx-auto" v-cloak>
-        <!-- Header -->
+
+    <div id="app-view" class="max-w-screen-2xl mx-auto" v-cloak>
         <header class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100">GRADESC</h1>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-header-text">GRADESC</h1>
             <div id="user-profile" class="flex items-center space-x-2 md:space-x-4">
-                <!-- Student Selector Dropdown -->
                 <div class="relative inline-block text-left">
                     <button type="button" id="student-menu-btn" class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-200 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600" aria-expanded="false" aria-haspopup="true">
                         <span id="current-student-name-display">选择学生</span>
@@ -169,8 +169,7 @@
                     </button>
                     <div id="student-menu-options" class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="student-menu-btn">
                         <div id="student-options-list" class="py-1" role="none">
-                            <!-- Student options will be populated here -->
-                        </div>
+                            </div>
                         <div class="border-t border-gray-200 dark:border-gray-700 py-1">
                             <a href="#" id="add-student-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">添加新学生...</a>
                             <a href="#" id="manage-students-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">管理学生...</a>
@@ -188,7 +187,6 @@
                         <span class="absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 dark:bg-gray-600 rounded-full transition-colors duration-300 before:absolute before:content-[''] before:h-4 before:w-4 before:left-1 before:bottom-1 before:bg-white before:rounded-full before:transition-transform before:duration-300 checked:before:translate-x-6"></span>
                     </label>
                 </div>
-                <!-- User Profile Dropdown -->
                 <div class="relative inline-block text-left">
                     <button type="button" id="user-menu-btn" class="flex items-center gap-2">
                         <img id="user-avatar" class="w-10 h-10 rounded-full" src="" alt="User Avatar">
@@ -216,7 +214,6 @@
                 </div>
             </div>
         </header>
-        <!-- Tab Navigation -->
         <div class="border-b border-gray-200 dark:border-gray-700 mb-8">
             <nav id="tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
                 <button class="tab-button active" data-tab="dashboard">学业总览</button>
@@ -224,35 +221,31 @@
                 <button class="tab-button" data-tab="analytics">图表分析</button>
             </nav>
         </div>
-        <!-- Tab Content -->
         <main id="main-content">
-            <!-- Dashboard Tab -->
             <div id="tab-content-dashboard" class="tab-content active fade-in">
                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
                     <div id="overall-summary-card" class="card p-6 xl:col-span-2">
-                        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">学业总览</h2>
+                        <h2 class="text-xl font-bold text-header-text mb-4">学业总览</h2>
                         <div class="space-y-8">
-                            <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                <div class="font-semibold text-gray-600 dark:text-gray-300">累计总 GPA</div>
-                                <span id="overall-gpa-display" class="text-4xl font-extrabold text-green-600">N/A</span>
+                            <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                                <div class="font-semibold text-muted-text">累计总 GPA</div>
+                                <span id="overall-gpa-display" class="text-4xl font-extrabold text-green-500">N/A</span>
                             </div>
-                            <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                <div class="font-semibold text-gray-600 dark:text-gray-300">总加权平均分</div>
-                                <span id="overall-weighted-score-display" class="text-4xl font-extrabold text-blue-600">N/A</span>
+                            <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                                <div class="font-semibold text-muted-text">总加权平均分</div>
+                                <span id="overall-weighted-score-display" class="text-4xl font-extrabold text-indigo-500">N/A</span>
                             </div>
                         </div>
                     </div>
                     <div id="upcoming-deadlines-card" class="card p-6 xl:col-span-1">
-                        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">近期日程</h2>
+                        <h2 class="text-xl font-bold text-header-text mb-4">近期日程</h2>
                         <div id="deadlines-list" class="space-y-3 max-h-96 overflow-y-auto"></div>
                     </div>
                 </div>
             </div>
-            <!-- Courses & Grades Tab -->
             <div id="tab-content-courses" class="tab-content">
                 <div id="student-content-container" class="space-y-12">
-                    <!-- Semesters will be rendered here -->
-                </div>
+                    </div>
                 <div id="courses-empty-state" class="hidden"></div>
                 <div class="mt-10 text-center">
                     <button id="add-semester-btn" class="btn btn-primary">
@@ -261,18 +254,17 @@
                     </button>
                 </div>
             </div>
-            <!-- Analytics Tab -->
             <div id="tab-content-analytics" class="tab-content">
                  <div id="analytics-empty-state" class="hidden"></div>
                  <div id="analytics-content" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="card p-6 min-h-[400px]">
-                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">课程表现雷达图</h3>
+                        <h3 class="text-lg font-bold text-header-text mb-4">课程表现雷达图</h3>
                         <div class="relative h-96">
                             <canvas id="course-performance-radar-chart"></canvas>
                         </div>
                     </div>
                     <div class="card p-6 min-h-[400px]">
-                         <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">学分质量分布</h3>
+                         <h3 class="text-lg font-bold text-header-text mb-4">学分质量分布</h3>
                          <div class="relative h-96">
                             <canvas id="grade-credit-distribution-bar-chart"></canvas>
                          </div>
@@ -281,29 +273,28 @@
             </div>
         </main>
     </div>
-    <!-- Modals -->
     <div id="gpa-info-popup" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
         <div class="card p-8 max-w-md w-full fade-in">
-            <h3 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">GPA换算规则</h3>
+            <h3 class="text-2xl font-bold mb-4 text-header-text">GPA换算规则</h3>
             <ul class="space-y-2 text-gray-700 dark:text-gray-300">
-                <li class="flex justify-between"><span>90-100分</span><span class="font-semibold text-blue-600">4.0 绩点</span></li>
-                <li class="flex justify-between"><span>85-89分</span><span class="font-semibold text-blue-600">3.7 绩点</span></li>
-                 <li class="flex justify-between"><span>82-84分</span><span class="font-semibold text-blue-600">3.3 绩点</span></li>
-                <li class="flex justify-between"><span>78-81分</span><span class="font-semibold text-blue-600">3.0 绩点</span></li>
-                <li class="flex justify-between"><span>75-77分</span><span class="font-semibold text-blue-600">2.7 绩点</span></li>
-                <li class="flex justify-between"><span>72-74分</span><span class="font-semibold text-blue-600">2.3 绩点</span></li>
-                <li class="flex justify-between"><span>68-71分</span><span class="font-semibold text-blue-600">2.0 绩点</span></li>
-                <li class="flex justify-between"><span>65-67分</span><span class="font-semibold text-blue-600">1.7 绩点</span></li>
-                <li class="flex justify-between"><span>60-64分</span><span class="font-semibold text-blue-600">1.0 绩点</span></li>
-                <li class="flex justify-between"><span>60分以下</span><span class="font-semibold text-red-600">0.0 绩点</span></li>
+                <li class="flex justify-between"><span>90-100分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">4.0 绩点</span></li>
+                <li class="flex justify-between"><span>85-89分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">3.7 绩点</span></li>
+                 <li class="flex justify-between"><span>82-84分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">3.3 绩点</span></li>
+                <li class="flex justify-between"><span>78-81分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">3.0 绩点</span></li>
+                <li class="flex justify-between"><span>75-77分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">2.7 绩点</span></li>
+                <li class="flex justify-between"><span>72-74分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">2.3 绩点</span></li>
+                <li class="flex justify-between"><span>68-71分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">2.0 绩点</span></li>
+                <li class="flex justify-between"><span>65-67分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">1.7 绩点</span></li>
+                <li class="flex justify-between"><span>60-64分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">1.0 绩点</span></li>
+                <li class="flex justify-between"><span>60分以下</span><span class="font-semibold text-red-600 dark:text-red-400">0.0 绩点</span></li>
             </ul>
             <button onclick="document.getElementById('gpa-info-popup').style.display='none'" class="btn btn-primary w-full mt-8">我明白了</button>
         </div>
     </div>
     <div id="confirm-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
         <div class="card p-8 max-w-md w-full fade-in">
-            <h3 id="confirm-modal-title" class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">确认操作</h3>
-            <p id="confirm-modal-body" class="mb-8 text-gray-600 dark:text-gray-400">您确定要继续吗？</p>
+            <h3 id="confirm-modal-title" class="text-xl font-bold mb-4 text-header-text">确认操作</h3>
+            <p id="confirm-modal-body" class="mb-8 text-muted-text">您确定要继续吗？</p>
             <div class="flex justify-end space-x-4">
                 <button id="confirm-modal-cancel-btn" class="btn btn-secondary">取消</button>
                 <button id="confirm-modal-confirm-btn" class="btn btn-danger">确认</button>
@@ -313,7 +304,7 @@
     <div id="import-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
          <div class="card p-8 max-w-2xl w-full fade-in">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100">从 Excel 导入数据</h3>
+                <h3 class="text-2xl font-bold text-header-text">从 Excel 导入数据</h3>
                 <button id="import-modal-close-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
             </div>
             <div class="flex flex-col sm:flex-row gap-4">
@@ -327,29 +318,27 @@
     <div id="manage-students-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
         <div class="card p-8 max-w-md w-full fade-in">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100">管理学生</h3>
+                <h3 class="text-2xl font-bold text-header-text">管理学生</h3>
                 <button id="manage-students-modal-close-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
             </div>
             <div class="mb-4">
-                <label for="new-student-name" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">添加新学生</label>
+                <label for="new-student-name" class="block text-sm font-medium text-muted-text mb-2">添加新学生</label>
                 <div class="flex">
                     <input type="text" id="new-student-name-modal" placeholder="输入学生姓名..." class="form-input w-full p-2 rounded-l-md">
                     <button id="add-student-modal-btn" class="btn btn-primary rounded-l-none px-4">+</button>
                 </div>
             </div>
             <div id="student-management-list" class="space-y-2">
-                <!-- List of students for deletion will be populated here -->
-            </div>
+                </div>
         </div>
     </div>
-    <!-- Templates -->
     <div class="hidden">
         <template id="semester-template">
             <div class="semester-section card p-6">
                 <div class="flex flex-col md:flex-row justify-between md:items-center mb-6">
                     <div class="flex items-center gap-4">
-                        <span class="drag-handle cursor-move text-gray-400 hover:text-gray-600" title="拖拽排序"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg></span>
-                        <input type="text" class="semester-name-input text-3xl font-bold text-gray-700 dark:text-gray-200 bg-transparent focus:border-b-2 focus:border-blue-500 outline-none w-full md:w-auto">
+                        <span class="drag-handle cursor-move text-muted-text hover:text-text-color" title="拖拽排序"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg></span>
+                        <input type="text" class="semester-name-input text-3xl font-bold text-header-text bg-transparent focus:border-b-2 focus:border-indigo-500 outline-none w-full md:w-auto">
                     </div>
                     <div class="flex items-center space-x-2 mt-4 md:mt-0">
                         <button class="add-course-btn btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>添加课程</button>
@@ -359,16 +348,16 @@
                 </div>
                 <div class="courses-container grid grid-cols-1 lg:grid-cols-1 gap-8"></div>
                 <div class="semester-courses-empty-state hidden"></div>
-                <div class="mt-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="mt-8 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                     <div class="space-y-4">
-                        <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">学期总结</h3>
+                        <h3 class="text-xl font-bold text-header-text mb-4">学期总结</h3>
                         <div class="flex justify-between items-center">
-                            <div class="font-semibold text-gray-600 dark:text-gray-300 flex items-center">学期 GPA <span class="ml-2 text-blue-500 cursor-pointer" onclick="document.getElementById('gpa-info-popup').style.display='flex'"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg></span></div>
-                            <span class="semester-gpa-display text-3xl font-extrabold text-green-600">N/A</span>
+                            <div class="font-semibold text-muted-text flex items-center">学期 GPA <span class="ml-2 text-indigo-500 cursor-pointer" onclick="document.getElementById('gpa-info-popup').style.display='flex'"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg></span></div>
+                            <span class="semester-gpa-display text-3xl font-extrabold text-green-500">N/A</span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <div class="font-semibold text-gray-600 dark:text-gray-300">学期加权总分</div>
-                            <span class="semester-weighted-score-display text-3xl font-extrabold text-blue-600">N/A</span>
+                            <div class="font-semibold text-muted-text">学期加权总分</div>
+                            <span class="semester-weighted-score-display text-3xl font-extrabold text-indigo-500">N/A</span>
                         </div>
                     </div>
                     <div class="relative h-48">
@@ -382,22 +371,22 @@
             <div class="card p-6 course-card fade-in">
                 <div class="flex justify-between items-start mb-5">
                     <div class="flex items-center gap-2 w-full">
-                        <span class="drag-handle cursor-move text-gray-400 hover:text-gray-600" title="拖拽排序"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg></span>
-                        <input type="text" class="course-name-input text-2xl font-bold text-gray-800 dark:text-gray-200 bg-transparent border-b-2 border-transparent focus:border-blue-500 outline-none w-2/3 p-0" placeholder="输入课程名称...">
+                        <span class="drag-handle cursor-move text-muted-text hover:text-text-color" title="拖拽排序"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg></span>
+                        <input type="text" class="course-name-input text-2xl font-bold text-header-text bg-transparent border-b-2 border-transparent focus:border-indigo-500 outline-none w-2/3 p-0" placeholder="输入课程名称...">
                     </div>
                     <div class="flex items-center space-x-2">
-                        <button class="copy-course-btn text-gray-400 hover:text-blue-500 transition" title="复制课程"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
+                        <button class="copy-course-btn text-gray-400 hover:text-indigo-500 transition" title="复制课程"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
                         <button class="remove-course-btn text-gray-400 hover:text-red-500 transition" title="删除课程"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 items-center">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 items-center">
                     <div>
-                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">学分</label>
+                        <label class="text-sm font-medium text-muted-text">学分</label>
                         <input type="number" min="0" max="100" step="0.5" placeholder="3" class="course-credits-input form-input w-full p-2 mt-1 rounded-md">
                     </div>
-                    <div class="md:col-span-2 relative h-24">
-                        <canvas class="course-score-chart"></canvas>
-                        <p class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm chart-placeholder">无数据</p>
+                    <div class="md:col-span-2 relative h-40 md:h-24">
+                        <canvas class="course-assignment-weights-chart"></canvas>
+                        <p class="absolute inset-0 flex items-center justify-center text-muted-text text-sm chart-placeholder">无权重数据</p>
                     </div>
                 </div>
                 <div class="assignments-section">
@@ -410,12 +399,12 @@
                             <table class="w-full text-left">
                                 <thead class="border-b-2 border-gray-200 dark:border-gray-700">
                                     <tr>
-                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">项目</th>
-                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">标签</th>
-                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">权重(%)</th>
-                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">得分</th>
-                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">满分</th>
-                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">截止</th>
+                                        <th class="p-3 text-sm font-semibold text-muted-text">项目</th>
+                                        <th class="p-3 text-sm font-semibold text-muted-text">标签</th>
+                                        <th class="p-3 text-sm font-semibold text-muted-text">权重(%)</th>
+                                        <th class="p-3 text-sm font-semibold text-muted-text">得分</th>
+                                        <th class="p-3 text-sm font-semibold text-muted-text">满分</th>
+                                        <th class="p-3 text-sm font-semibold text-muted-text">截止</th>
                                         <th class="p-3"></th>
                                     </tr>
                                 </thead>
@@ -425,14 +414,14 @@
                         <button class="add-assignment-btn mt-4 w-full btn btn-secondary">+ 添加项目 (Ctrl+Enter)</button>
                     </div>
                 </div>
-                <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
+                <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg space-y-3">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">当前总分:</h3>
-                        <p class="current-grade-display text-2xl font-bold text-blue-600">N/A</p>
+                        <h3 class="text-md font-semibold text-muted-text">当前总分:</h3>
+                        <p class="current-grade-display text-2xl font-bold text-indigo-600 dark:text-indigo-400">N/A</p>
                     </div>
                     <div class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">对学期总分贡献:</h3>
-                        <p class="semester-contribution-display text-lg font-bold text-green-600">N/A</p>
+                        <h3 class="text-md font-semibold text-muted-text">对学期总分贡献:</h3>
+                        <p class="semester-contribution-display text-lg font-bold text-green-600 dark:text-green-400">N/A</p>
                     </div>
                 </div>
             </div>
@@ -521,7 +510,6 @@
             exportXlsxBtn: document.getElementById('export-xlsx'),
             importJsonBtn: document.getElementById('import-json-btn'),
             importDataBtn: document.getElementById('import-data-btn'),
-            // NEW: Add new chart canvases
             radarChart: document.getElementById('course-performance-radar-chart'),
             barChart: document.getElementById('grade-credit-distribution-bar-chart'),
         };
@@ -784,7 +772,7 @@
                         const a = document.createElement('a');
                         a.href = '#';
                         a.dataset.studentId = s.id;
-                        a.className = `student-select-item block px-4 py-2 text-sm ${s.id === selectedStudentId ? 'bg-blue-50 dark:bg-blue-900/50 font-bold text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
+                        a.className = `student-select-item block px-4 py-2 text-sm ${s.id === selectedStudentId ? 'bg-indigo-50 dark:bg-indigo-900/50 font-bold text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
                         a.textContent = s.name;
                         a.onclick = (e) => {
                             e.preventDefault();
@@ -906,7 +894,7 @@
                     contributionDisplay.textContent = 'N/A';
                 }
 
-                renderCourseScoreDistributionChart(courseEl.querySelector('.course-score-chart'), courseData);
+                renderAssignmentWeightDistributionChart(courseEl.querySelector('.course-assignment-weights-chart'), courseData);
             }
 
             function renderAnalyticsCharts(student) {
@@ -920,9 +908,9 @@
                 renderCoursePerformanceRadarChart(ui.radarChart, student);
                 renderGradeCreditDistributionBarChart(ui.barChart, student);
             }
-
-            function renderCourseScoreDistributionChart(canvas, courseData) {
-                const chartId = `course-score-${courseData.name}`;
+            
+            function renderAssignmentWeightDistributionChart(canvas, courseData) {
+                const chartId = `course-weights-${courseData.name}-${Math.random()}`; // Add random to avoid conflicts
                 if (chartInstances[chartId]) chartInstances[chartId].destroy();
 
                 const ctx = canvas.getContext('2d');
@@ -930,45 +918,66 @@
                 
                 const labels = [];
                 const data = [];
-                const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
-                let totalGradedWeight = 0;
+                const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#d946ef'];
+                let totalAssignedWeight = 0;
 
                 (courseData.assignments || []).forEach(a => {
-                    if(a.score !== '' && a.score !== null) {
-                        const weight = parseFloat(a.weight) || 0;
-                        const score = parseFloat(a.score) || 0;
-                        const maxScore = parseFloat(a.maxScore) || 100;
+                    const weight = parseFloat(a.weight);
+                    if (weight > 0) {
                         labels.push(a.name || '未命名项目');
-                        data.push((score / maxScore) * weight);
-                        totalGradedWeight += weight;
+                        data.push(weight);
+                        totalAssignedWeight += weight;
                     }
                 });
 
-                const remainingWeight = 100 - totalGradedWeight;
-                if (remainingWeight > 0) {
-                    labels.push('未评分');
-                    data.push(remainingWeight);
+                const unassignedWeight = 100 - totalAssignedWeight;
+                if (unassignedWeight > 0.1) { // Use a small threshold to avoid floating point issues
+                    labels.push('未分配权重');
+                    data.push(unassignedWeight);
                 }
 
                 if (data.length === 0) {
                     placeholder.style.display = 'flex';
+                    placeholder.textContent = '无权重数据'; // More specific message
                     return;
                 }
                 placeholder.style.display = 'none';
+                
+                const isDark = document.documentElement.classList.contains('dark');
+                const chartBorderColor = isDark ? '#111827' : '#fff';
 
                 chartInstances[chartId] = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
                         labels: labels,
-                        datasets: [{ data: data, backgroundColor: colors.concat(['#9ca3af']), borderWidth: 2, borderColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#fff' }]
+                        datasets: [{ 
+                            label: '权重',
+                            data: data, 
+                            backgroundColor: colors.concat(['#6b7280']), // Gray for unassigned
+                            borderWidth: 3, 
+                            borderColor: chartBorderColor
+                        }]
                     },
                     options: {
-                        responsive: true, maintainAspectRatio: false, cutout: '70%',
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        cutout: '70%',
                         plugins: {
-                            legend: { display: false },
+                            legend: { 
+                                display: false, // Set to false to save space, tooltip is enough
+                            },
                             tooltip: {
                                 callbacks: {
-                                    label: (context) => `${context.label}: ${context.parsed.toFixed(1)}%`
+                                    label: (context) => ` ${context.label}: ${context.parsed.toFixed(1)}%`
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: '作业权重分布',
+                                color: isDark ? '#f9fafb' : '#111827',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
                                 }
                             }
                         }
@@ -990,14 +999,12 @@
                     });
                 });
 
-                if (labels.length < 3) {
-                    // Radar chart needs at least 3 points
-                    return;
-                }
+                if (labels.length < 3) { return; }
 
                 const isDark = document.documentElement.classList.contains('dark');
                 const gridColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
                 const textColor = isDark ? '#e5e7eb' : '#6b7280';
+                const pointLabelColor = isDark ? '#f9fafb' : '#111827';
 
                 chartInstances[chartId] = new Chart(ctx, {
                     type: 'radar',
@@ -1007,12 +1014,12 @@
                             label: '课程最终成绩',
                             data: data,
                             fill: true,
-                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                            borderColor: 'rgb(59, 130, 246)',
-                            pointBackgroundColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                            borderColor: 'rgb(79, 70, 229)',
+                            pointBackgroundColor: 'rgb(79, 70, 229)',
                             pointBorderColor: '#fff',
                             pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgb(59, 130, 246)'
+                            pointHoverBorderColor: 'rgb(79, 70, 229)'
                         }]
                     },
                     options: {
@@ -1021,8 +1028,8 @@
                             r: {
                                 beginAtZero: true, max: 100,
                                 grid: { color: gridColor },
-                                pointLabels: { color: textColor, font: { size: 12 } },
-                                ticks: { backdropColor: isDark ? '#1f2937' : '#fff', color: textColor }
+                                pointLabels: { color: pointLabelColor, font: { size: 12 } },
+                                ticks: { backdropColor: isDark ? '#111827' : '#fff', color: textColor }
                             }
                         },
                         plugins: { legend: { labels: { color: textColor } } }
@@ -1035,20 +1042,23 @@
                 if (chartInstances[chartId]) chartInstances[chartId].destroy();
                 const ctx = canvas.getContext('2d');
 
-                const gradeCredits = { 'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0 };
+                const gradeCredits = { 'A (90+)': 0, 'B (80-89)': 0, 'C (70-79)': 0, 'D (60-69)': 0, 'F (<60)': 0 };
                 studentData.semesters.forEach(s => {
                     (s.courses || []).forEach(c => {
                         const grade = scoreToGrade(c.finalGrade);
-                        if (grade) {
-                            gradeCredits[grade] += parseFloat(c.credits) || 0;
-                        }
+                        if(grade === 'A') gradeCredits['A (90+)'] += parseFloat(c.credits) || 0;
+                        else if(grade === 'B') gradeCredits['B (80-89)'] += parseFloat(c.credits) || 0;
+                        else if(grade === 'C') gradeCredits['C (70-79)'] += parseFloat(c.credits) || 0;
+                        else if(grade === 'D') gradeCredits['D (60-69)'] += parseFloat(c.credits) || 0;
+                        else if(grade === 'F') gradeCredits['F (<60)'] += parseFloat(c.credits) || 0;
                     });
                 });
 
                 const isDark = document.documentElement.classList.contains('dark');
-                const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
                 const textColor = isDark ? '#e5e7eb' : '#6b7280';
-
+                const barColor = isDark ? 'rgba(99, 102, 241, 0.8)' : 'rgba(79, 70, 229, 0.7)';
+                
                 chartInstances[chartId] = new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -1060,14 +1070,16 @@
                                 'rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)',
                                 'rgba(245, 158, 11, 0.7)', 'rgba(239, 68, 68, 0.7)',
                                 'rgba(107, 114, 128, 0.7)'
-                            ]
+                            ],
+                            borderRadius: 4,
                         }]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
+                        indexAxis: 'y',
                         scales: {
-                            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
-                            x: { grid: { display: false }, ticks: { color: textColor } }
+                            y: { grid: { display: false }, ticks: { color: textColor } },
+                            x: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }
                         },
                         plugins: { legend: { display: false } }
                     }
@@ -1144,7 +1156,7 @@
                     if (target.classList.contains('add-course-btn')) {
                         const { semesterIndex } = semesterSection.dataset;
                         if(!studentData.semesters[semesterIndex].courses) studentData.semesters[semesterIndex].courses = [];
-                        studentData.semesters[semesterIndex].courses.push({ name: '新课程', credits: '3', targetGrade: '90', assignments: []});
+                        studentData.semesters[semesterIndex].courses.push({ name: '新课程', credits: '3', assignments: []});
                         updateStudentData(studentData.semesters);
                     } else if (target.classList.contains('remove-semester-btn')) {
                         const { semesterIndex } = semesterSection.dataset;
@@ -1178,7 +1190,6 @@
 
                 ui.studentContentContainer.addEventListener('change', (e) => {
                     if (!selectedStudentId || !currentUser) return;
-                    if (e.target.classList.contains('target-semester-score-input')) return;
 
                     const target = e.target;
                     let studentData = localStudentsData.find(s => s.id === selectedStudentId);
@@ -1213,7 +1224,6 @@
                         } else {
                             if (target.classList.contains('course-name-input')) courseData.name = target.value;
                             if (target.classList.contains('course-credits-input')) courseData.credits = target.value;
-                            if (target.classList.contains('target-grade-input')) courseData.targetGrade = target.value;
                         }
                     }
                     renderApp(); 
