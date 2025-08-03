@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GRADESC - 成绩与GPA计算器</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>  
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/js/shepherd.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.2.0/dist/css/shepherd.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>  
     <style>
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -185,7 +185,7 @@
         <div class="card p-8 max-w-2xl w-full fade-in">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold text-header-text">从 JSON 还原数据</h2>
-                <button onclick="document.getElementById('import-modal').style.display='none'" class="text-muted-text hover:text-header-text">&times;</button>
+                <button onclick="document.getElementById('import-modal').style.display='none'" class="text-muted-text hover:text-header-text">&times;</button>  
             </div>
             <p class="mb-4 text-muted-text">请选择您之前备份的 JSON 文件进行还原。此操作将覆盖当前所有数据，请谨慎操作。</p>
             <input type="file" id="import-json-file-input" accept=".json" class="mb-4">
@@ -199,19 +199,25 @@
     <script type="module">
         try {
             // Firebase 初始化
-            const firebaseConfig = {
+            const firebaseConfig = {  
                 apiKey: "AIzaSyBgYSM_HCYqUSvIN5VifHbX-j9p6IjhVJs",
                 authDomain: "sample-firebase-ai-app-87f8f.firebaseapp.com",
                 projectId: "sample-firebase-ai-app-87f8f",
-                storageBucket: "sample-firebase-ai-app-87f8f.firebasestorage.app",
+                storageBucket: "sample-firebase-ai-app-87f8f.firebasestorage.app",  
                 messagingSenderId: "887928734431",
-                appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"
+                appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"  
+            };
+            // 初始化 Firebase
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);  
+            const db = getFirestore(app);
+            const provider = new GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            updateStatus('Firebase 初始化成功！');
             };
             const app = firebase.initializeApp(firebaseConfig);
             const auth = firebase.auth();
             const db = firebase.firestore();
-
-            // ✅ 修复：添加这两行以注册 Chart.js 的 Doughnut 图表
             const { registerables } = await import("https://cdn.jsdelivr.net/npm/chart.js");
             Chart.register(...registerables);
 
@@ -230,7 +236,7 @@
                 tabContent: document.getElementById('tab-content'),
                 coursesTab: document.getElementById('courses-tab'),
                 analyticsTab: document.getElementById('analytics-tab'),
-                gpaTab: document.getElementById('gpa-tab'),
+                gpaTab: document.getElementById('gpa-tab'),  
                 studentContentContainer: document.getElementById('student-content-container'),
                 searchInput: document.getElementById('search-input'),
                 addSemesterBtn: document.getElementById('add-semester-btn'),
@@ -397,7 +403,7 @@
             function renderEmptyStates(student) {
                 const hasSemesters = student && student.semesters && student.semesters.length > 0;
                 ui.coursesEmptyState.classList.toggle('hidden', hasSemesters);
-                ui.studentContentContainer.classList.toggle('hidden', !hasSemesters);
+                ui.studentContentContainer.classList.toggle('hidden', !hasSemesters);  
             }
 
             function renderStudentContent(student, searchTerm = '') {
