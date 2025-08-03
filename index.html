@@ -1084,7 +1084,7 @@
                     data: {
                         labels: Object.keys(gradeCredits),
                         datasets: [{
-                            label: '学分',
+                            label: '权重',
                             data: Object.values(gradeCredits),
                             backgroundColor: [
                                 'rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)',
@@ -1111,7 +1111,7 @@
             // === Event Handlers ===
             function setupEventListeners() {
                 const setupDropdown = (btn, options) => {
-                    btn.addEventListener('click', (e) => { e.stopPropagation(); options.classList.toggle('hidden'); });
+                    btn.addEventListener('click', (e) => { e.stopPropagation(); options.classList.toggle('hidden'); });  
                 };
                 setupDropdown(ui.studentMenu.btn, ui.studentMenu.options);
                 setupDropdown(ui.userMenu.btn, ui.userMenu.options);
