@@ -2,29 +2,29 @@
 <html lang="zh-CN" class="">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
     <title>多用户成绩与GPA计算器 (全新视图)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>    
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
     <style>
         :root {
-            --bg-color: #f9fafb;
+            --bg-color: #f9fafb;  
             --text-color: #111827;
             --card-bg: #ffffff;
             --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --card-border: #e5e7eb;
-            --input-border: #d1d5db;
-            --input-focus-border: #4f46e5;
+            --input-border: #d1d5db;  
+            --input-focus-border: #4f46e5;  
             --primary-btn-bg: #4f46e5;
             --primary-btn-hover-bg: #4338ca;
             --secondary-btn-bg: #e5e7eb;
-            --secondary-btn-text: #374151;
+            --secondary-btn-text: #374151;  
             --secondary-btn-hover-bg: #d1d5db;
             --header-text: #111827;
             --muted-text: #6b7280;
@@ -38,7 +38,7 @@
             --danger-text: #b91c1c;
         }
         html.dark {
-            --bg-color: #030712;
+            --bg-color: #030712;  
             --text-color: #f9fafb;
             --card-bg: #111827;
             --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -46,7 +46,7 @@
             --input-border: #374151;
             --input-focus-border: #6366f1;
             --primary-btn-bg: #6366f1;
-            --primary-btn-hover-bg: #4f46e5;
+            --primary-btn-hover-bg: #4f46e5;  
             --secondary-btn-bg: #374151;
             --secondary-btn-text: #e5e7eb;
             --secondary-btn-hover-bg: #4b5563;
@@ -67,7 +67,7 @@
             color: var(--text-color);
             transition: background-color 0.3s ease, color 0.3s ease;
         }
-        .card {
+        .card {  
             background-color: var(--card-bg);
             border-radius: 0.75rem;
             box-shadow: var(--card-shadow);
@@ -85,14 +85,14 @@
             border-color: var(--input-focus-border);
             box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.4);
         }
-        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s ease-in-out; border: 1px solid transparent; cursor: pointer; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s ease-in-out; border: 1px solid transparent; cursor: pointer; }  
         .btn-primary { background-color: var(--primary-btn-bg); color: white; }
         .btn-primary:hover { background-color: var(--primary-btn-hover-bg); }
         .btn-secondary { background-color: var(--secondary-btn-bg); color: var(--secondary-btn-text); }
         .btn-secondary:hover { background-color: var(--secondary-btn-hover-bg); }
         .btn-danger { background-color: #ef4444; color: white; }
         .btn-danger:hover { background-color: #dc2626; }
-        .btn-danger-outline { background-color: transparent; color: #ef4444; border-color: #ef4444; }
+        .btn-danger-outline { background-color: transparent; color: #ef4444; border-color: #ef4444; }  
         .btn-danger-outline:hover { background-color: #fef2f2; color: #dc2626; }
         html.dark .btn-danger-outline:hover { background-color: rgba(239, 68, 68, 0.1); }
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
@@ -125,7 +125,7 @@
         .assignments-collapsed .assignments-table-container { max-height: 0; opacity: 0; }
         /* Shepherd Tour Styles */
         .shepherd-button { background: var(--primary-btn-bg) !important; color: white !important; }
-        .shepherd-button:hover { background: var(--primary-btn-hover-bg) !important; }
+        .shepherd-button:hover { background: var(--primary-btn-hover-bg) !important; }  
         .shepherd-header { background-color: var(--secondary-btn-bg) !important; padding: 1rem !important; }
         .shepherd-title { color: var(--header-text) !important; font-weight: 700 !important; }
         .shepherd-text { color: var(--text-color) !important; padding: 0 1rem 1rem !important; line-height: 1.6 !important; }
@@ -133,8 +133,8 @@
         .shepherd-arrow::before { background-color: var(--card-bg) !important; }
         .shepherd-cancel-icon { color: var(--muted-text) !important; }
         .shepherd-cancel-icon:hover { color: var(--text-color) !important; }
-        .shepherd-footer { padding: 0 1rem 1rem !important; }
-        .shepherd-button.shepherd-button-secondary { background: var(--secondary-btn-bg) !important; color: var(--secondary-btn-text) !important; }
+        .shepherd-footer { padding: 0 1rem 1rem !important; }  
+        .shepherd-button.shepherd-button-secondary { background: var(--secondary-btn-bg) !important; color: var(--secondary-btn-text) !important; }  
         .shepherd-button.shepherd-button-secondary:hover { background: var(--secondary-btn-hover-bg) !important; }
     </style>
 </head>
@@ -218,7 +218,7 @@
             <nav id="tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
                 <button class="tab-button active" data-tab="dashboard">学业总览</button>
                 <button class="tab-button" data-tab="courses">课程与成绩</button>
-                <button class="tab-button" data-tab="analytics">图表分析</button>
+                <button class="tab-button" data-tab="analytics">图表分析</button>  
             </nav>
         </div>
         <main id="main-content">
@@ -240,7 +240,7 @@
                     <div id="upcoming-deadlines-card" class="card p-6 xl:col-span-1">
                         <h2 class="text-xl font-bold text-header-text mb-4">近期日程</h2>
                         <div id="deadlines-list" class="space-y-3 max-h-96 overflow-y-auto"></div>
-                    </div>
+                    </div>  
                 </div>
             </div>
             <div id="tab-content-courses" class="tab-content">
@@ -303,7 +303,7 @@
     </div>
     <div id="import-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
          <div class="card p-8 max-w-2xl w-full fade-in">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center mb-4">  
                 <h3 class="text-2xl font-bold text-header-text">从 Excel 导入数据</h3>
                 <button id="import-modal-close-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
             </div>
@@ -472,7 +472,7 @@
             defaultStepOptions: {
                 classes: 'shadow-lg',
                 cancelIcon: { enabled: true },
-                buttons: [
+                buttons: [  
                     { text: '上一步', action: function() { return this.back(); }, classes: 'shepherd-button-secondary' },
                     { text: '下一步', action: function() { return this.next(); } }
                 ]
@@ -567,7 +567,7 @@
             const { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, query, writeBatch } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
             const firebaseConfig = {
                 apiKey: "AIzaSyBgYSM_HCYqUSvIN5VifHbX-j9p6IjhVJs",
-                authDomain: "sample-firebase-ai-app-87f8f.firebaseapp.com",
+                authDomain: "sample-firebase-ai-app-87f8f.firebaseapp.com",  
                 projectId: "sample-firebase-ai-app-87f8f",
                 storageBucket: "sample-firebase-ai-app-87f8f.firebasestorage.app",
                 messagingSenderId: "887928734431",
@@ -704,7 +704,7 @@
                     if (e.target.value === '自定义') {
                         customTagInput.style.display = 'block';
                     } else {
-                        customTagInput.style.display = 'none';
+                        customTagInput.style.display = 'none';  
                         customTagInput.value = '';
                     }
                 });
@@ -1101,7 +1101,7 @@
                             y: { grid: { display: false }, ticks: { color: textColor } },
                             x: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }
                         },
-                        plugins: { legend: { display: false } }
+                        plugins: { legend: { display: false } }  
                     }
                 });
             }
@@ -1431,12 +1431,12 @@
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {
                 document.documentElement.classList.add('dark');
-                ui.themeToggle.checked = true;
+                ui.themeToggle.checked = true;  
             } else {
                 document.documentElement.classList.remove('dark');
                 ui.themeToggle.checked = false;
             }
-            setupEventListeners();
+            setupEventListeners();  
         } catch (error) {
             console.error("初始化失败:", error);
             showError('应用初始化失败', error.message);
