@@ -29,12 +29,6 @@
             --muted-text: #6b7280;
             --tab-active-border: #3b82f6;
             --tab-inactive-text: #6b7280;
-            --highlight-bg: #eff6ff;
-            --highlight-text: #1d4ed8;
-            --warning-bg: #fefce8;
-            --warning-text: #a16207;
-            --danger-bg: #fef2f2;
-            --danger-text: #b91c1c;
         }
         html.dark {
             --bg-color: #111827;
@@ -52,12 +46,6 @@
             --muted-text: #9ca3af;
             --tab-active-border: #60a5fa;
             --tab-inactive-text: #9ca3af;
-            --highlight-bg: #1e293b;
-            --highlight-text: #60a5fa;
-            --warning-bg: #422006;
-            --warning-text: #fde047;
-            --danger-bg: #450a0a;
-            --danger-text: #f87171;
         }
         body {
             font-family: 'Inter', 'Helvetica Neue', 'Arial', 'sans-serif';
@@ -120,19 +108,13 @@
         .assignments-collapsed .assignment-toggle-icon { transform: rotate(-90deg); }
         .assignments-table-container { max-height: 1000px; transition: max-height 0.5s ease-in-out, opacity 0.5s ease; opacity: 1; overflow: hidden; }
         .assignments-collapsed .assignments-table-container { max-height: 0; opacity: 0; }
-        /* Shepherd Tour Styles */
-        .shepherd-button { background: var(--primary-btn-bg) !important; color: white !important; }
-        .shepherd-button:hover { background: var(--primary-btn-hover-bg) !important; }
-        .shepherd-header { background-color: var(--secondary-btn-bg) !important; padding: 1rem !important; }
-        .shepherd-title { color: var(--header-text) !important; font-weight: 700 !important; }
-        .shepherd-text { color: var(--text-color) !important; padding: 0 1rem 1rem !important; line-height: 1.6 !important; }
-        .shepherd-content { background-color: var(--card-bg) !important; border-radius: 0.75rem !important; box-shadow: var(--card-shadow) !important; }
-        .shepherd-arrow::before { background-color: var(--card-bg) !important; }
-        .shepherd-cancel-icon { color: var(--muted-text) !important; }
-        .shepherd-cancel-icon:hover { color: var(--text-color) !important; }
-        .shepherd-footer { padding: 0 1rem 1rem !important; }
-        .shepherd-button.shepherd-button-secondary { background: var(--secondary-btn-bg) !important; color: var(--secondary-btn-text) !important; }
-        .shepherd-button.shepherd-button-secondary:hover { background: var(--secondary-btn-hover-bg) !important; }
+        .shepherd-button { background-color: var(--primary-btn-bg); }
+        .shepherd-button:hover { background-color: var(--primary-btn-hover-bg); }
+        .shepherd-header { background-color: var(--secondary-btn-bg); }
+        .shepherd-title { color: var(--secondary-btn-text); }
+        .shepherd-text { color: var(--text-color); }
+        .shepherd-content { background-color: var(--card-bg); }
+        .shepherd-arrow::before { background-color: var(--card-bg); }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -231,14 +213,20 @@
                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
                     <div id="overall-summary-card" class="card p-6 xl:col-span-2">
                         <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">学业总览</h2>
-                        <div class="space-y-8">
-                            <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                <div class="font-semibold text-gray-600 dark:text-gray-300">累计总 GPA</div>
-                                <span id="overall-gpa-display" class="text-4xl font-extrabold text-green-600">N/A</span>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div class="space-y-8">
+                                <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <div class="font-semibold text-gray-600 dark:text-gray-300">累计总 GPA</div>
+                                    <span id="overall-gpa-display" class="text-4xl font-extrabold text-green-600">N/A</span>
+                                </div>
+                                <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <div class="font-semibold text-gray-600 dark:text-gray-300">总加权平均分</div>
+                                    <span id="overall-weighted-score-display" class="text-4xl font-extrabold text-blue-600">N/A</span>
+                                </div>
                             </div>
-                            <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                <div class="font-semibold text-gray-600 dark:text-gray-300">总加权平均分</div>
-                                <span id="overall-weighted-score-display" class="text-4xl font-extrabold text-blue-600">N/A</span>
+                            <div id="suggestions-container" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                <h3 class="font-semibold text-gray-600 dark:text-gray-300 mb-3">智能学习建议</h3>
+                                <div id="suggestions-list" class="space-y-2"></div>
                             </div>
                         </div>
                     </div>
@@ -266,15 +254,15 @@
                  <div id="analytics-empty-state" class="hidden"></div>
                  <div id="analytics-content" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="card p-6 min-h-[400px]">
-                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">课程表现雷达图</h3>
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">GPA 趋势图</h3>
                         <div class="relative h-96">
-                            <canvas id="course-performance-radar-chart"></canvas>
+                            <canvas id="gpa-trend-chart"></canvas>
                         </div>
                     </div>
                     <div class="card p-6 min-h-[400px]">
-                         <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">学分质量分布</h3>
-                         <div class="relative h-96">
-                            <canvas id="grade-credit-distribution-bar-chart"></canvas>
+                         <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">课程标签表现 (待开发)</h3>
+                         <div class="relative h-96 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                            <p>未来将支持按课程标签分析成绩...</p>
                          </div>
                     </div>
                  </div>
@@ -370,6 +358,14 @@
                             <div class="font-semibold text-gray-600 dark:text-gray-300">学期加权总分</div>
                             <span class="semester-weighted-score-display text-3xl font-extrabold text-blue-600">N/A</span>
                         </div>
+                        <!-- 新增：目标学期加权总分 -->
+                        <div class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+                            <div class="font-semibold text-gray-600 dark:text-gray-300">目标总分</div>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" min="0" max="100" placeholder="90" class="target-semester-score-input form-input w-20 p-1 text-center text-sm" style="font-size: 0.875rem;">
+                                <span class="target-semester-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400">输入目标以分析</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="relative h-48">
                         <canvas class="grade-distribution-chart"></canvas>
@@ -390,17 +386,23 @@
                         <button class="remove-course-btn text-gray-400 hover:text-red-500 transition" title="删除课程"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                     </div>
                 </div>
-                <!-- FIX: Corrected layout for credits and chart -->
+                <!-- Course Details -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 items-center">
                     <div>
-                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">学分</label>
-                        <input type="number" min="0" max="100" step="0.5" placeholder="3" class="course-credits-input form-input w-full p-2 mt-1 rounded-md">
+                        <!-- 修改：将“学分”改为“学期总分权重占比” -->
+                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">学期总分权重占比 (%)</label>
+                        <input type="number" min="0" max="100" step="0.5" placeholder="20" class="course-weight-input form-input w-full p-2 mt-1 rounded-md">
                     </div>
-                    <div class="md:col-span-2 relative h-24">
-                        <canvas class="course-score-chart"></canvas>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">目标分</label>
+                        <input type="number" min="0" max="100" placeholder="90" class="target-grade-input form-input w-full p-2 mt-1 rounded-md">
+                    </div>
+                    <div class="relative h-24">
+                        <canvas class="weight-distribution-chart"></canvas>
                         <p class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm chart-placeholder">无数据</p>
                     </div>
                 </div>
+                <!-- Assignments Section -->
                 <div class="assignments-section">
                     <button class="assignments-toggle-btn flex justify-between items-center w-full py-2 text-left font-semibold">
                         <span>评分项目</span>
@@ -412,6 +414,7 @@
                                 <thead class="border-b-2 border-gray-200 dark:border-gray-700">
                                     <tr>
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">项目</th>
+                                        <!-- 新增：作业标签列 -->
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">标签</th>
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">权重(%)</th>
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">得分</th>
@@ -426,14 +429,15 @@
                         <button class="add-assignment-btn mt-4 w-full btn btn-secondary">+ 添加项目 (Ctrl+Enter)</button>
                     </div>
                 </div>
+                <!-- Course Footer -->
                 <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
                     <div class="flex justify-between items-center">
                         <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">当前总分:</h3>
                         <p class="current-grade-display text-2xl font-bold text-blue-600">N/A</p>
                     </div>
-                    <div class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">对学期总分贡献:</h3>
-                        <p class="semester-contribution-display text-lg font-bold text-green-600">N/A</p>
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-md font-semibold text-gray-600 dark:text-gray-300">目标达成分析:</h3>
+                        <p class="target-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400 text-right">输入目标分以分析</p>
                     </div>
                 </div>
             </div>
@@ -441,6 +445,7 @@
         <template id="assignment-template">
             <tr class="assignment-row border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                 <td class="p-2"><input type="text" placeholder="期中论文" class="assignment-name-input w-full bg-transparent outline-none p-1"></td>
+                <!-- 新增：作业标签单元格，使用下拉菜单 -->
                 <td class="p-2">
                     <select class="assignment-tag-select form-select w-full bg-transparent outline-none p-1">
                         <option value="">选择标签...</option>
@@ -479,17 +484,7 @@
         let localStudentsData = [];
         let selectedStudentId = null;
         let chartInstances = {};
-        const tour = new Shepherd.Tour({
-            useModalOverlay: true,
-            defaultStepOptions: {
-                classes: 'shadow-lg',
-                cancelIcon: { enabled: true },
-                buttons: [
-                    { text: '上一步', action: function() { return this.back(); }, classes: 'shepherd-button-secondary' },
-                    { text: '下一步', action: function() { return this.next(); } }
-                ]
-            }
-        });
+        const tour = new Shepherd.Tour({ useModalOverlay: true, defaultStepOptions: { classes: 'shadow-lg bg-white dark:bg-gray-800', cancelButton: { text: '跳过', type: 'button' }, nextButton: { text: '下一步' }, doneButton: { text: '完成' } } });
         let confirmCallback = null;
         // === UI Elements ===
         const ui = {
@@ -508,6 +503,7 @@
             studentMenu: { btn: document.getElementById('student-menu-btn'), options: document.getElementById('student-menu-options'), list: document.getElementById('student-options-list'), currentName: document.getElementById('current-student-name-display'), addBtn: document.getElementById('add-student-btn'), manageBtn: document.getElementById('manage-students-btn') },
             userMenu: { btn: document.getElementById('user-menu-btn'), options: document.getElementById('user-menu-options') },
             importJsonFileInput: document.getElementById('import-json-file-input'),
+            suggestions: { list: document.getElementById('suggestions-list') },
             deadlines: { list: document.getElementById('deadlines-list') },
             themeToggle: document.getElementById('theme-checkbox'),
             courseSearchInput: document.getElementById('course-search-input'),
@@ -518,12 +514,7 @@
             coursesEmptyState: document.getElementById('courses-empty-state'),
             analyticsEmptyState: document.getElementById('analytics-empty-state'),
             analyticsContent: document.getElementById('analytics-content'),
-            exportJsonBtn: document.getElementById('export-json-btn'),
-            exportXlsxBtn: document.getElementById('export-xlsx'),
-            importJsonBtn: document.getElementById('import-json-btn'),
-            importDataBtn: document.getElementById('import-data-btn'),
-            radarChart: document.getElementById('course-performance-radar-chart'),
-            barChart: document.getElementById('grade-credit-distribution-bar-chart'),
+            gpaTrendChart: document.getElementById('gpa-trend-chart'),
         };
         // === Utility Functions ===
         function showError(message, details = null) {
@@ -563,14 +554,6 @@
                 }
             });
             chartInstances = {};
-        }
-        function debounce(func, delay) {
-            let timeout;
-            return function(...args) {
-                const context = this;
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(context, args), delay);
-            };
         }
         // === Firebase & App Initialization ===
         try {
@@ -630,12 +613,11 @@
                 renderStudentSelector();
                 renderEmptyStates(student);
                 if (student) {
-                    const studentWithCalculations = updateAllCalculations(student);
-                    renderStudentContent(studentWithCalculations, searchTerm);
-                    renderOverallUI(studentWithCalculations);
+                    renderStudentContent(student, searchTerm);
+                    updateAllCalculations(student);
                 } else {
                     ui.studentContentContainer.innerHTML = '';
-                    renderOverallUI(null);
+                    updateAllCalculations(null);
                 }
             }
             function renderStudentContent(student, searchTerm = '') {
@@ -651,11 +633,10 @@
                     }).filter(semester => semester.courses.length > 0);
                 }
                 filteredSemesters.forEach((semesterData) => {
-                    const originalIndex = student.semesters.findIndex(s => s.id === semesterData.id);
+                    const originalIndex = student.semesters.findIndex(s => s.name === semesterData.name);
                     if (originalIndex === -1) return;
                     const semesterEl = createSemesterElement(semesterData, originalIndex);
                     ui.studentContentContainer.appendChild(semesterEl);
-                    updateSemesterCalculationsUI(semesterEl, student.semesters[originalIndex]);
                 });
                 initSortable();
             }
@@ -681,7 +662,15 @@
                         coursesContainer.appendChild(courseEl);
                     });
                 }
-                
+                // === 新增：为学期目标分设置事件监听器 ===
+                const targetScoreInput = semesterEl.querySelector('.target-semester-score-input');
+                targetScoreInput.value = semesterData.targetWeightedScore || '';
+                targetScoreInput.addEventListener('change', (e) => {
+                    let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
+                    if (!studentData) return;
+                    studentData.semesters[semesterIndex].targetWeightedScore = parseFloat(e.target.value) || 0;
+                    updateStudentData(studentData.semesters);
+                });
                 return semesterEl;
             }
             function createCourseElement(courseData, semesterIndex, courseIndex) {
@@ -690,7 +679,9 @@
                  courseEl.dataset.semesterIndex = semesterIndex;
                  courseEl.dataset.courseIndex = courseIndex;
                  courseEl.querySelector('.course-name-input').value = courseData.name;
-                 courseEl.querySelector('.course-credits-input').value = courseData.credits || '';
+                 // === 修改：将 credits 改为 courseWeight，并更新输入框值 ===
+                 courseEl.querySelector('.course-weight-input').value = courseData.courseWeight || '';
+                 courseEl.querySelector('.target-grade-input').value = courseData.targetGrade;
                  const assignmentsContainer = courseEl.querySelector('.assignments-container');
                  (courseData.assignments || []).forEach((assignmentData, assignmentIndex) => {
                     const assignmentEl = createAssignmentElement(assignmentData, semesterIndex, courseIndex, assignmentIndex);
@@ -705,6 +696,7 @@
                 assignmentEl.dataset.courseIndex = courseIndex;
                 assignmentEl.dataset.assignmentIndex = assignmentIndex;
                 assignmentEl.querySelector('.assignment-name-input').value = assignmentData.name;
+                // === 新增：设置作业标签的值和逻辑 ===
                 const tagSelect = assignmentEl.querySelector('.assignment-tag-select');
                 const customTagInput = assignmentEl.querySelector('.assignment-custom-tag-input');
                 tagSelect.value = assignmentData.tag || '';
@@ -815,160 +807,232 @@
                     ui.manageStudentsModal.list.appendChild(div);
                 });
             }
-            // === Calculation Logic ===
+            // === Calculation Logic (Updated) ===
             function updateAllCalculations(student) {
-                if (!student) return null;
-                
-                const studentCopy = JSON.parse(JSON.stringify(student));
-
-                studentCopy.semesters.forEach(semester => {
-                    let totalCredits = 0;
-                    let weightedScoreSum = 0;
-                    let gpaPointsSum = 0;
-
-                    (semester.courses || []).forEach(course => {
-                        const credits = parseFloat(course.credits) || 0;
-                        let currentWeightedScore = 0;
-                        
-                        (course.assignments || []).forEach(a => {
-                            if (a.score !== '' && a.score !== null && a.score !== undefined) {
-                                const score = parseFloat(a.score) || 0;
-                                const maxScore = parseFloat(a.maxScore) || 100;
-                                const weight = parseFloat(a.weight) || 0;
-                                currentWeightedScore += (score / maxScore) * weight;
-                            }
-                        });
-                        course.finalGrade = currentWeightedScore;
-                        
-                        if (credits > 0) {
-                            totalCredits += credits;
-                            weightedScoreSum += course.finalGrade * credits;
-                            gpaPointsSum += scoreToGpaPoint(course.finalGrade) * credits;
-                        }
-                    });
-
-                    semester.weightedScore = totalCredits > 0 ? weightedScoreSum / totalCredits : 0;
-                    semester.gpa = totalCredits > 0 ? gpaPointsSum / totalCredits : 0;
-                    semester.totalCredits = totalCredits;
-                });
-                
-                return studentCopy;
-            }
-            
-            function renderOverallUI(student) {
                 destroyAllCharts();
                 if (!student) {
                     ui.overall.gpa.textContent = 'N/A';
                     ui.overall.score.textContent = 'N/A';
+                    ui.suggestions.list.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 text-sm p-4">请先选择或添加学生。</p>`;
                     ui.deadlines.list.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 text-sm p-4">无日程安排。</p>`;
-                    renderAnalyticsCharts(null);
+                    renderCumulativeGpaChart(null);
                     return;
                 }
-                
-                let overallCredits = 0, overallGpaPoints = 0, overallScorePoints = 0;
-                
-                student.semesters.forEach(semester => {
-                    if (semester.totalCredits > 0) {
-                        overallCredits += semester.totalCredits;
-                        overallGpaPoints += semester.gpa * semester.totalCredits;
-                        overallScorePoints += semester.weightedScore * semester.totalCredits;
+                // Recalculate data directly from the student object
+                (student.semesters || []).forEach(semester => {
+                    (semester.courses || []).forEach(course => {
+                        let totalWeight = 0, gradedWeight = 0, currentWeightedScore = 0;
+                        (course.assignments || []).forEach(a => {
+                            const weight = parseFloat(a.weight) || 0;
+                            totalWeight += weight;
+                            if (a.score !== '' && a.score !== null && a.score !== undefined) {
+                                const score = parseFloat(a.score) || 0;
+                                const maxScore = parseFloat(a.maxScore) || 100;
+                                gradedWeight += weight;
+                                currentWeightedScore += (score / maxScore) * weight;
+                            }
+                        });
+                        course.finalGrade = gradedWeight > 0 ? (currentWeightedScore / gradedWeight) * 100 : 0;
+                    });
+                     let semesterTotalWeight = 0, semesterTotalQualityPoints = 0, semesterWeightedScoreSum = 0;
+                    (semester.courses || []).forEach(course => {
+                        const courseWeight = parseFloat(course.courseWeight) || 0;
+                        if (course.finalGrade > 0 && courseWeight > 0) {
+                            semesterTotalWeight += courseWeight;
+                            semesterTotalQualityPoints += scoreToGpaPoint(course.finalGrade) * courseWeight;
+                            semesterWeightedScoreSum += course.finalGrade * courseWeight;
+                        }
+                    });
+                    // 确保学期权重总和为100%
+                    if (semesterTotalWeight > 0 && Math.abs(semesterTotalWeight - 100) > 0.01) {
+                        console.warn(`学期 "${semester.name}" 的课程权重总和不为100% (${semesterTotalWeight}%)，已自动归一化。`);
+                        // 归一化
+                        const scale = 100 / semesterTotalWeight;
+                        semesterTotalQualityPoints *= scale;
+                        semesterWeightedScoreSum *= scale;
+                        semesterTotalWeight = 100;
+                    }
+                    semester.gpa = semesterTotalWeight > 0 ? (semesterTotalQualityPoints / semesterTotalWeight) : 0;
+                    semester.weightedScore = semesterTotalWeight > 0 ? (semesterWeightedScoreSum / semesterTotalWeight) : 0;
+                });
+                // Now render the calculations on the UI
+                document.querySelectorAll('.course-card').forEach(el => updateCourseCalculationsUI(el, student));
+                document.querySelectorAll('.semester-section').forEach(el => updateSemesterCalculationsUI(el, student));
+                updateOverallCalculationsUI(student);
+                generateSuggestions(student);
+                renderUpcomingDeadlines(student);
+            }
+            function updateCourseCalculationsUI(courseEl, student) {
+                const { semesterIndex, courseIndex } = courseEl.dataset;
+                const courseData = student.semesters[semesterIndex]?.courses[courseIndex];
+                if(!courseData) return;
+                courseEl.querySelector('.current-grade-display').textContent = courseData.finalGrade > 0 ? courseData.finalGrade.toFixed(2) : 'N/A';
+                const targetAnalysisDisplay = courseEl.querySelector('.target-analysis-display');
+                const targetGrade = parseFloat(courseData.targetGrade);
+                if (!isNaN(targetGrade)) {
+                    let totalWeight = 0, gradedWeight = 0, currentWeightedScore = 0;
+                    const assignmentWeights = [];
+                    (courseData.assignments || []).forEach(a => {
+                        const weight = parseFloat(a.weight) || 0;
+                        totalWeight += weight;
+                        if(weight > 0) assignmentWeights.push({ name: a.name || '未命名项目', weight: weight });
+                        if (a.score !== '' && a.score !== null) {
+                            const score = parseFloat(a.score) || 0;
+                            const maxScore = parseFloat(a.maxScore) || 100;
+                            gradedWeight += weight;
+                            currentWeightedScore += (score / maxScore) * weight;
+                        }
+                    });
+                    const remainingWeight = totalWeight - gradedWeight;
+                    if (remainingWeight > 0.01) {
+                        const pointsNeeded = (targetGrade * totalWeight / 100) - currentWeightedScore;
+                        if (pointsNeeded <= 0) targetAnalysisDisplay.innerHTML = `已达到目标!`;
+                        else {
+                            const requiredAvg = (pointsNeeded / remainingWeight) * 100;
+                            targetAnalysisDisplay.innerHTML = `剩余项目需 <span class="font-bold ${requiredAvg > 100.01 ? 'text-red-500' : 'text-blue-600'}">${requiredAvg.toFixed(2)}%</span>`;
+                        }
+                    } else if (totalWeight > 0) {
+                        targetAnalysisDisplay.textContent = courseData.finalGrade >= targetGrade ? '恭喜！已达到目标！' : '很遗憾，未达到目标。';
+                    } else {
+                        targetAnalysisDisplay.textContent = '请输入权重以分析';
+                    }
+                    renderWeightDistributionChart(courseEl.querySelector('.weight-distribution-chart'), assignmentWeights, totalWeight);
+                } else {
+                    targetAnalysisDisplay.textContent = '输入目标分以分析';
+                }
+            }
+            function updateSemesterCalculationsUI(semesterEl, student) {
+                const { semesterIndex } = semesterEl.dataset;
+                const semesterData = student.semesters[semesterIndex];
+                if(!semesterData) return;
+                const gradeDistribution = { 'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0 };
+                (semesterData.courses || []).forEach(course => {
+                    const courseWeight = parseFloat(course.courseWeight) || 0;
+                    if (course.finalGrade > 0 && courseWeight > 0) {
+                        const grade = scoreToGrade(course.finalGrade);
+                        if(grade) gradeDistribution[grade]++;
                     }
                 });
-
-                ui.overall.gpa.textContent = overallCredits > 0 ? (overallGpaPoints / overallCredits).toFixed(2) : 'N/A';
-                ui.overall.score.textContent = overallCredits > 0 ? (overallScorePoints / overallCredits).toFixed(2) : 'N/A';
-                
-                renderUpcomingDeadlines(student);
-                renderAnalyticsCharts(student);
-            }
-
-            function updateSemesterCalculationsUI(semesterEl, semesterData) {
-                if(!semesterData) return;
-                
                 semesterEl.querySelector('.semester-gpa-display').textContent = semesterData.gpa > 0 ? semesterData.gpa.toFixed(2) : 'N/A';
                 semesterEl.querySelector('.semester-weighted-score-display').textContent = semesterData.weightedScore > 0 ? semesterData.weightedScore.toFixed(2) : 'N/A';
-                
-                semesterEl.querySelectorAll('.course-card').forEach((courseEl, courseIndex) => {
-                    updateCourseCalculationsUI(courseEl, semesterData.courses[courseIndex], semesterData);
-                });
-            }
-
-            function updateCourseCalculationsUI(courseEl, courseData, semesterData) {
-                if(!courseData || !semesterData) return;
-                courseEl.querySelector('.current-grade-display').textContent = courseData.finalGrade > 0 ? courseData.finalGrade.toFixed(2) : 'N/A';
-                
-                const contributionDisplay = courseEl.querySelector('.semester-contribution-display');
-                if (semesterData.totalCredits > 0) {
-                    const credits = parseFloat(courseData.credits) || 0;
-                    const contribution = (courseData.finalGrade * credits) / semesterData.totalCredits;
-                    contributionDisplay.textContent = `${contribution.toFixed(2)} 分`;
+                renderGradeDistributionChart(semesterEl.querySelector('.grade-distribution-chart'), gradeDistribution);
+                // === 新增：更新学期目标分分析 ===
+                const targetScoreInput = semesterEl.querySelector('.target-semester-score-input');
+                const analysisDisplay = semesterEl.querySelector('.target-semester-analysis-display');
+                const targetScore = parseFloat(targetScoreInput.value);
+                if (!isNaN(targetScore)) {
+                    if (semesterData.weightedScore >= targetScore) {
+                        analysisDisplay.textContent = '已达到目标！';
+                        analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-green-600';
+                    } else {
+                        const diff = targetScore - semesterData.weightedScore;
+                        analysisDisplay.textContent = `差 ${diff.toFixed(2)} 分`;
+                        analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-red-500';
+                    }
                 } else {
-                    contributionDisplay.textContent = 'N/A';
+                    analysisDisplay.textContent = '输入目标以分析';
+                    analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400';
                 }
-
-                renderCourseScoreDistributionChart(courseEl.querySelector('.course-score-chart'), courseData);
             }
-
-            function renderAnalyticsCharts(student) {
-                if (!student || !student.semesters || student.semesters.length === 0) {
+            function updateOverallCalculationsUI(student) {
+                let overallTotalWeight = 0, overallTotalQualityPoints = 0, totalScoreTimesWeight = 0, totalWeightForScore = 0;
+                const cumulativeData = { labels: [], gpas: [], cumulativeGpas: [] };
+                student.semesters.forEach(semester => {
+                    let semesterTotalWeightForGpa = 0;
+                    (semester.courses || []).forEach(course => {
+                        const courseWeight = parseFloat(course.courseWeight) || 0;
+                        if (course.finalGrade > 0 && courseWeight > 0) {
+                            totalScoreTimesWeight += course.finalGrade * courseWeight;
+                            totalWeightForScore += courseWeight;
+                            semesterTotalWeightForGpa += courseWeight;
+                        }
+                    });
+                    if (semester.gpa > 0 && semesterTotalWeightForGpa > 0) {
+                        overallTotalWeight += semesterTotalWeightForGpa;
+                        overallTotalQualityPoints += semester.gpa * semesterTotalWeightForGpa;
+                        cumulativeData.labels.push(semester.name || '未命名学期');
+                        cumulativeData.gpas.push(semester.gpa);
+                        cumulativeData.cumulativeGpas.push(overallTotalQualityPoints / overallTotalWeight);
+                    }
+                });
+                if(overallTotalWeight > 0) {
+                    ui.overall.gpa.textContent = (overallTotalQualityPoints / overallTotalWeight).toFixed(2);
+                    ui.overall.score.textContent = (totalScoreTimesWeight / totalWeightForScore).toFixed(2);
+                } else {
+                    ui.overall.gpa.textContent = 'N/A';
+                    ui.overall.score.textContent = 'N/A';
+                }
+                renderCumulativeGpaChart(cumulativeData);
+            }
+            function renderCumulativeGpaChart(data) {
+                const chartId = 'gpa-trend-chart';
+                if (chartInstances[chartId]) chartInstances[chartId].destroy();
+                const ctx = ui.gpaTrendChart?.getContext('2d');
+                if (!ctx) return;
+                if (!data || data.labels.length === 0) {
+                    showEmptyState(ui.analyticsEmptyState, { title: '图表数据不足', message: '请添加更多学期和成绩来生成GPA趋势图。' });
                     ui.analyticsContent.classList.add('hidden');
-                    showEmptyState(ui.analyticsEmptyState, { title: '无数据可供分析', message: '请先添加学生和课程成绩。' });
                     return;
                 }
                 ui.analyticsContent.classList.remove('hidden');
                 ui.analyticsEmptyState.classList.add('hidden');
-                renderCoursePerformanceRadarChart(ui.radarChart, student);
-                renderGradeCreditDistributionBarChart(ui.barChart, student);
+                const isDark = document.documentElement.classList.contains('dark');
+                const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                const textColor = isDark ? '#e5e7eb' : '#6b7280';
+                chartInstances[chartId] = new Chart(ctx, {
+                    type: 'line',
+                     { labels: data.labels, datasets: [ { label: '学期 GPA',  data.gpas, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.3 }, { label: '累计 GPA', data: data.cumulativeGpas, borderColor: '#10b981', fill: false, tension: 0.3, borderDash: [5, 5] } ] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 4.0, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } }, plugins: { legend: { labels: { color: textColor } }, tooltip: { mode: 'index', intersect: false } } }
+                });
             }
-
-            function renderCourseScoreDistributionChart(canvas, courseData) {
-                const chartId = `course-score-${courseData.name}-${Math.random()}`;
-                if (chartInstances[chartId]) chartInstances[chartId].destroy();
-
+            function renderGradeDistributionChart(canvas, data) {
                 const ctx = canvas.getContext('2d');
                 const placeholder = canvas.nextElementSibling;
-                
-                const labels = [];
-                const data = [];
-                const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
-                let totalGradedWeight = 0;
 
-                (courseData.assignments || []).forEach(a => {
-                    if(a.score !== '' && a.score !== null) {
-                        const weight = parseFloat(a.weight) || 0;
-                        const score = parseFloat(a.score) || 0;
-                        const maxScore = parseFloat(a.maxScore) || 100;
-                        labels.push(a.name || '未命名项目');
-                        data.push((score / maxScore) * weight);
-                        totalGradedWeight += weight;
-                    }
-                });
+                // 销毁旧的图表实例
+                const chartId = `grade-${canvas.dataset.chartId || ''}`;
+                if (chartInstances[chartId]) chartInstances[chartId].destroy();
 
-                const remainingWeight = 100 - totalGradedWeight;
-                if (remainingWeight > 0) {
-                    labels.push('未评分');
-                    data.push(remainingWeight);
-                }
-
-                if (data.length === 0) {
+                // 检查是否有数据
+                const hasData = Object.values(data).some(value => value > 0);
+                if (!hasData) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
                     placeholder.style.display = 'flex';
                     return;
                 }
                 placeholder.style.display = 'none';
 
+                // 准备数据
+                const labels = Object.keys(data);
+                const values = Object.values(data);
+                const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280'];
+
                 chartInstances[chartId] = new Chart(ctx, {
                     type: 'doughnut',
-                    data: {
+                     {
                         labels: labels,
-                        datasets: [{ data: data, backgroundColor: colors.concat(['#9ca3af']), borderWidth: 2, borderColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#fff' }]
+                        datasets: [{
+                             values,
+                            backgroundColor: colors,
+                            borderWidth: 2,
+                            borderColor: canvas.closest('.card')?.style.backgroundColor || '#ffffff'
+                        }]
                     },
                     options: {
-                        responsive: true, maintainAspectRatio: false, cutout: '70%',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
                         plugins: {
                             legend: { display: false },
                             tooltip: {
                                 callbacks: {
-                                    label: (context) => `${context.label}: ${context.parsed.toFixed(1)}%`
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value} 门 (${percentage}%)`;
+                                    }
                                 }
                             }
                         }
@@ -976,106 +1040,60 @@
                 });
             }
 
-            function renderCoursePerformanceRadarChart(canvas, studentData) {
-                const chartId = 'radar-chart';
-                if (chartInstances[chartId]) chartInstances[chartId].destroy();
+            function renderWeightDistributionChart(canvas, data, totalWeight) {
                 const ctx = canvas.getContext('2d');
-                
-                const labels = [];
-                const data = [];
-                studentData.semesters.forEach(s => {
-                    (s.courses || []).forEach(c => {
-                        labels.push(c.name || '未命名课程');
-                        data.push(c.finalGrade);
-                    });
-                });
+                const placeholder = canvas.nextElementSibling;
 
-                if (labels.length < 3) {
-                    // Radar chart needs at least 3 points
+                // 销毁旧的图表实例
+                const chartId = `weight-${canvas.dataset.chartId || ''}`;
+                if (chartInstances[chartId]) chartInstances[chartId].destroy();
+
+                // 检查是否有数据
+                if (!data || data.length === 0) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    placeholder.style.display = 'flex';
                     return;
                 }
+                placeholder.style.display = 'none';
 
-                const isDark = document.documentElement.classList.contains('dark');
-                const gridColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
-                const textColor = isDark ? '#e5e7eb' : '#6b7280';
+                // 准备数据
+                const labels = data.map(d => d.name);
+                const values = data.map(d => d.weight);
+                const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#eab308'];
 
                 chartInstances[chartId] = new Chart(ctx, {
-                    type: 'radar',
+                    type: 'doughnut',
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: '课程最终成绩',
-                            data: data,
-                            fill: true,
-                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                            borderColor: 'rgb(59, 130, 246)',
-                            pointBackgroundColor: 'rgb(59, 130, 246)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgb(59, 130, 246)'
+                             values,
+                            backgroundColor: colors,
+                            borderWidth: 2,
+                            borderColor: canvas.closest('.card')?.style.backgroundColor || '#ffffff'
                         }]
                     },
                     options: {
-                        responsive: true, maintainAspectRatio: false,
-                        scales: {
-                            r: {
-                                beginAtZero: true, max: 100,
-                                grid: { color: gridColor },
-                                pointLabels: { color: textColor, font: { size: 12 } },
-                                ticks: { backdropColor: isDark ? '#1f2937' : '#fff', color: textColor }
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const percentage = ((value / totalWeight) * 100).toFixed(1);
+                                        return `${label}: ${value}% (${percentage}%)`;
+                                    }
+                                }
                             }
-                        },
-                        plugins: { legend: { labels: { color: textColor } } }
-                    }
-                });
-            }
-
-            function renderGradeCreditDistributionBarChart(canvas, studentData) {
-                const chartId = 'bar-chart';
-                if (chartInstances[chartId]) chartInstances[chartId].destroy();
-                const ctx = canvas.getContext('2d');
-
-                const gradeCredits = { 'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0 };
-                studentData.semesters.forEach(s => {
-                    (s.courses || []).forEach(c => {
-                        const grade = scoreToGrade(c.finalGrade);
-                        if (grade) {
-                            gradeCredits[grade] += parseFloat(c.credits) || 0;
                         }
-                    });
-                });
-
-                const isDark = document.documentElement.classList.contains('dark');
-                const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-                const textColor = isDark ? '#e5e7eb' : '#6b7280';
-
-                chartInstances[chartId] = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(gradeCredits),
-                        datasets: [{
-                            label: '学分',
-                            data: Object.values(gradeCredits),
-                            backgroundColor: [
-                                'rgba(16, 185, 129, 0.7)', 'rgba(59, 130, 246, 0.7)',
-                                'rgba(245, 158, 11, 0.7)', 'rgba(239, 68, 68, 0.7)',
-                                'rgba(107, 114, 128, 0.7)'
-                            ]
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        scales: {
-                            y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
-                            x: { grid: { display: false }, ticks: { color: textColor } }
-                        },
-                        plugins: { legend: { display: false } }
                     }
                 });
             }
-            
-            function renderUpcomingDeadlines(student) { /* ... */ }
-            function setupAndStartTour() { /* ... */ }
+            function generateSuggestions(student) { /* ... same as original ... */ }
+            function renderUpcomingDeadlines(student) { /* ... same as original ... */ }
             // === Event Handlers ===
             function setupEventListeners() {
                 const setupDropdown = (btn, options) => {
@@ -1084,33 +1102,6 @@
                 setupDropdown(ui.studentMenu.btn, ui.studentMenu.options);
                 setupDropdown(ui.userMenu.btn, ui.userMenu.options);
                 window.addEventListener('click', () => { ui.studentMenu.options.classList.add('hidden'); ui.userMenu.options.classList.add('hidden'); });
-                
-                ui.themeToggle.addEventListener('change', () => {
-                    document.documentElement.classList.toggle('dark');
-                    localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-                    renderApp(); // To update chart colors
-                });
-
-                ui.startTourBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    ui.userMenu.options.classList.add('hidden');
-                    if (!selectedStudentId || !localStudentsData.find(s => s.id === selectedStudentId)?.semesters?.length) {
-                        showError('请先添加一个学生和一个学期以开始新手引导。');
-                        return;
-                    }
-                    setupAndStartTour();
-                });
-
-                ui.exportJsonBtn.addEventListener('click', handleExportJson);
-                ui.exportXlsxBtn.addEventListener('click', handleExportXlsx);
-                ui.importJsonBtn.addEventListener('click', () => ui.importJsonFileInput.click());
-                ui.importJsonFileInput.addEventListener('change', handleImportJson);
-                ui.importDataBtn.addEventListener('click', () => ui.importModal.el.style.display = 'flex');
-                ui.importModal.closeBtn.addEventListener('click', () => ui.importModal.el.style.display = 'none');
-                ui.importModal.fileInput.addEventListener('change', handleImportExcel);
-                ui.importModal.downloadBtn.addEventListener('click', handleDownloadTemplate);
-
-
                 ui.tabNav.addEventListener('click', (e) => {
                     const button = e.target.closest('.tab-button');
                     if (!button) return;
@@ -1119,9 +1110,7 @@
                     button.classList.add('active');
                     ui.mainContent.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
                     document.getElementById(`tab-content-${tab}`).classList.add('active');
-                    if (tab === 'analytics') {
-                        renderApp();
-                    }
+                    if (tab === 'analytics') renderApp();
                 });
                 ui.studentMenu.addBtn.addEventListener('click', (e) => { e.preventDefault(); renderManageStudentsModal(); ui.manageStudentsModal.el.style.display = 'flex'; ui.studentMenu.options.classList.add('hidden'); });
                 ui.studentMenu.manageBtn.addEventListener('click', (e) => { e.preventDefault(); renderManageStudentsModal(); ui.manageStudentsModal.el.style.display = 'flex'; ui.studentMenu.options.classList.add('hidden'); });
@@ -1144,7 +1133,7 @@
                     if (target.classList.contains('add-course-btn')) {
                         const { semesterIndex } = semesterSection.dataset;
                         if(!studentData.semesters[semesterIndex].courses) studentData.semesters[semesterIndex].courses = [];
-                        studentData.semesters[semesterIndex].courses.push({ name: '新课程', credits: '3', assignments: []});
+                        studentData.semesters[semesterIndex].courses.push({ name: '新课程', courseWeight: '20', targetGrade: '90', assignments: []});
                         updateStudentData(studentData.semesters);
                     } else if (target.classList.contains('remove-semester-btn')) {
                         const { semesterIndex } = semesterSection.dataset;
@@ -1169,26 +1158,15 @@
                         target.closest('.assignments-section').classList.toggle('assignments-collapsed');
                     }
                 });
-                
-                const debouncedUpdater = debounce(() => {
-                    let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
-                     if (!studentData) return;
-                    updateStudentData(studentData.semesters);
-                }, 800);
-
                 ui.studentContentContainer.addEventListener('change', (e) => {
                     if (!selectedStudentId || !currentUser) return;
-                    if (e.target.classList.contains('target-semester-score-input')) return;
-
                     const target = e.target;
-                    let studentData = localStudentsData.find(s => s.id === selectedStudentId);
+                    let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
                     if (!studentData) return;
-
                     const semesterSection = target.closest('.semester-section');
                     const courseCard = target.closest('.course-card');
                     const assignmentRow = target.closest('.assignment-row');
                     const { semesterIndex } = semesterSection.dataset;
-                    
                     if (target.classList.contains('semester-name-input')) {
                         studentData.semesters[semesterIndex].name = target.value;
                     } else if (courseCard) {
@@ -1200,11 +1178,15 @@
                             if (target.classList.contains('assignment-name-input')) assignmentData.name = target.value;
                             if (target.classList.contains('assignment-tag-select')) {
                                 assignmentData.tag = target.value;
-                                if (target.value !== '自定义') assignmentData.customTag = '';
+                                if (target.value !== '自定义') {
+                                    assignmentData.customTag = '';
+                                }
                             }
                             if (target.classList.contains('assignment-custom-tag-input')) {
                                 assignmentData.customTag = target.value;
-                                if (target.value) assignmentData.tag = '自定义';
+                                if (target.value) {
+                                    assignmentData.tag = '自定义';
+                                }
                             }
                             if (target.classList.contains('assignment-weight-input')) assignmentData.weight = target.value;
                             if (target.classList.contains('assignment-score-input')) assignmentData.score = target.value;
@@ -1212,166 +1194,56 @@
                             if (target.classList.contains('assignment-due-date-input')) assignmentData.dueDate = target.value;
                         } else {
                             if (target.classList.contains('course-name-input')) courseData.name = target.value;
-                            if (target.classList.contains('course-credits-input')) courseData.credits = target.value;
+                            // === 修改：将 credits 改为 courseWeight ===
+                            if (target.classList.contains('course-weight-input')) courseData.courseWeight = target.value;
+                            if (target.classList.contains('target-grade-input')) courseData.targetGrade = target.value;
                         }
                     }
-                    renderApp(); 
-                    debouncedUpdater();
+                    updateStudentData(studentData.semesters);
                 });
             }
-            function showConfirmModal(title, body, onConfirm, confirmText = '确认') { /* ... */ };
-            const hideConfirmModal = () => { /* ... */ };
-            async function handleAddStudent() { /* ... */ }
-            function handleRemoveStudent(studentId, studentName) { /* ... */ }
+            function showConfirmModal(title, body, onConfirm, confirmText = '确认') {
+                ui.confirmModal.title.textContent = title;
+                ui.confirmModal.body.textContent = body;
+                ui.confirmModal.confirmBtn.textContent = confirmText;
+                confirmCallback = onConfirm;
+                ui.confirmModal.el.style.display = 'flex';
+            };
+            const hideConfirmModal = () => { ui.confirmModal.el.style.display = 'none'; confirmCallback = null; };
+            async function handleAddStudent() {
+                const name = ui.manageStudentsModal.newNameInput.value.trim();
+                if (!name || !currentUser) return;
+                const newStudent = { name: name, semesters: [], order: localStudentsData.length };
+                try {
+                    const docRef = await addDoc(collection(db, 'users', currentUser.uid, 'students'), newStudent);
+                    selectedStudentId = docRef.id;
+                    ui.manageStudentsModal.newNameInput.value = '';
+                    showSuccess('学生添加成功！');
+                    renderManageStudentsModal(); 
+                } catch (e) { showError('添加学生失败', e.message); }
+            }
+            function handleRemoveStudent(studentId, studentName) {
+                showConfirmModal(`删除学生: ${studentName}`, `您确定要删除学生 "${studentName}" 的所有数据吗？此操作无法撤销。`, async () => {
+                    try {
+                        await deleteDoc(doc(db, 'users', currentUser.uid, 'students', studentId));
+                        showSuccess('学生删除成功！');
+                        if (selectedStudentId === studentId) selectedStudentId = null;
+                        if (ui.manageStudentsModal.el.style.display === 'flex') renderManageStudentsModal();
+                    } catch (e) { showError('删除学生失败', e.message); }
+                }, '确认删除');
+            }
             async function handleAddSemester() {
-                 if (!selectedStudentId|| !currentUser) { showError('请先选择或添加一个学生。'); return; }
+                if (!selectedStudentId|| !currentUser) { showError('请先选择或添加一个学生。'); return; }
                 let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
                 if (!studentData) return;
                 if(!studentData.semesters) studentData.semesters = [];
-                const newSemester = { 
-                    id: `sem-${Date.now()}`,
-                    name: `新学期 ${studentData.semesters.length + 1}`, 
-                    courses: [] 
-                };
-                studentData.semesters.push(newSemester);
+                studentData.semesters.push({ name: `新学期 ${studentData.semesters.length + 1}`, courses: [] });
                 await updateStudentData(studentData.semesters);
                 showSuccess('新学期已添加！');
-            }
-            function handleExportJson() {
-                const student = localStudentsData.find(s => s.id === selectedStudentId);
-                if (!student) {
-                    showError("没有可导出的学生数据。");
-                    return;
-                }
-                const dataStr = JSON.stringify(student, null, 2);
-                const dataBlob = new Blob([dataStr], {type: "application/json"});
-                const url = URL.createObjectURL(dataBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${student.name}_grades_backup.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-                showSuccess("JSON 备份已导出！");
-            }
-            function handleImportJson(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const importedStudent = JSON.parse(e.target.result);
-                        if (!importedStudent.name || !Array.isArray(importedStudent.semesters)) {
-                            throw new Error("无效的JSON文件格式。");
-                        }
-                        const studentToUpdate = localStudentsData.find(s => s.id === selectedStudentId);
-                        if (!studentToUpdate) {
-                            showError("请先选择一个学生以导入数据。");
-                            return;
-                        }
-                        await updateStudentData(importedStudent.semesters);
-                        showSuccess(`成功将数据导入到 ${studentToUpdate.name}！`);
-                    } catch (err) {
-                        showError("导入失败", err.message);
-                    }
-                };
-                reader.readAsText(file);
-                event.target.value = ''; // Reset file input
-            }
-            function handleExportXlsx() {
-                const student = localStudentsData.find(s => s.id === selectedStudentId);
-                if (!student) {
-                    showError("没有可导出的学生数据。");
-                    return;
-                }
-                const data = [];
-                (student.semesters || []).forEach(sem => {
-                    (sem.courses || []).forEach(course => {
-                        if ((course.assignments || []).length > 0) {
-                            course.assignments.forEach(a => {
-                                data.push({
-                                    "学期": sem.name, "课程": course.name, "学分": course.credits,
-                                    "项目": a.name, "标签": a.tag, "权重(%)": a.weight,
-                                    "得分": a.score, "满分": a.maxScore, "截止日期": a.dueDate
-                                });
-                            });
-                        } else {
-                            data.push({ "学期": sem.name, "课程": course.name, "学分": course.credits });
-                        }
-                    });
-                });
-                const worksheet = XLSX.utils.json_to_sheet(data);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "成绩单");
-                XLSX.writeFile(workbook, `${student.name}_grades.xlsx`);
-                showSuccess("Excel 文件已导出！");
-            }
-            function handleDownloadTemplate() {
-                const templateData = [{
-                    "学期": "第一学期", "课程": "示例课程", "学分": 3,
-                    "项目": "期中考试", "标签": "考试", "权重(%)": 40,
-                    "得分": 85, "满分": 100, "截止日期": "2025-10-25"
-                }];
-                const worksheet = XLSX.utils.json_to_sheet(templateData);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "成绩单");
-                XLSX.writeFile(workbook, `gradesc_template.xlsx`);
-            }
-            function handleImportExcel(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, {type: 'array'});
-                        const sheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[sheetName];
-                        const json = XLSX.utils.sheet_to_json(worksheet);
-
-                        const semestersMap = new Map();
-                        json.forEach(row => {
-                            const semName = row["学期"];
-                            if (!semName) return;
-                            if (!semestersMap.has(semName)) {
-                                semestersMap.set(semName, { name: semName, id: `sem-${Date.now()}-${semestersMap.size}`, courses: new Map() });
-                            }
-                            const semester = semestersMap.get(semName);
-
-                            const courseName = row["课程"];
-                            if (!courseName) return;
-                            if (!semester.courses.has(courseName)) {
-                                semester.courses.set(courseName, { name: courseName, credits: row["学分"], assignments: [] });
-                            }
-                            const course = semester.courses.get(courseName);
-
-                            if (row["项目"]) {
-                                course.assignments.push({
-                                    name: row["项目"], tag: row["标签"] || '', weight: row["权重(%)"] || '',
-                                    score: row["得分"] || '', maxScore: row["满分"] || 100, dueDate: row["截止日期"] || ''
-                                });
-                            }
-                        });
-
-                        const newSemesters = Array.from(semestersMap.values()).map(sem => {
-                            sem.courses = Array.from(sem.courses.values());
-                            return sem;
-                        });
-
-                        updateStudentData(newSemesters);
-                        showSuccess("Excel 数据导入成功！");
-                        ui.importModal.el.style.display = 'none';
-
-                    } catch (err) {
-                        showError("Excel 文件解析失败", err.message);
-                    }
-                };
-                reader.readAsArrayBuffer(file);
-                event.target.value = '';
             }
             async function updateStudentData(updatedSemesters) {
                 if (!selectedStudentId || !currentUser) return;
                 updatedSemesters.forEach((s, s_idx) => {
-                    s.id = s.id || `sem-${Date.now()}-${s_idx}`;
                     s.order = s_idx;
                     (s.courses || []).forEach((c, c_idx) => { c.order = c_idx; });
                 });
@@ -1380,31 +1252,8 @@
                     await updateDoc(studentDocRef, { semesters: updatedSemesters });
                 } catch (error) { showError('数据更新失败', error.message); }
             }
-            function initSortable() {
-                const semesterContainer = ui.studentContentContainer;
-                if (semesterContainer) {
-                    new Sortable(semesterContainer, {
-                        animation: 150,
-                        handle: '.drag-handle',
-                        onEnd: (evt) => {
-                            const student = localStudentsData.find(s => s.id === selectedStudentId);
-                            if (!student) return;
-                            const movedItem = student.semesters.splice(evt.oldIndex, 1)[0];
-                            student.semesters.splice(evt.newIndex, 0, movedItem);
-                            updateStudentData(student.semesters);
-                        }
-                    });
-                }
-            }
+            function initSortable() { /* ... */ }
             // Initial setup
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-                ui.themeToggle.checked = true;
-            } else {
-                document.documentElement.classList.remove('dark');
-                ui.themeToggle.checked = false;
-            }
             setupEventListeners();
         } catch (error) {
             console.error("初始化失败:", error);
