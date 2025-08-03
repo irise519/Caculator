@@ -232,7 +232,7 @@
                                 <span id="overall-gpa-display" class="text-4xl font-extrabold text-green-500">N/A</span>
                             </div>
                             <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                                <div class="font-semibold text-muted-text">总加权平均分</div>
+                                <div class="font-semibold text-muted-text">总加权平均分</div>  
                                 <span id="overall-weighted-score-display" class="text-4xl font-extrabold text-indigo-500">N/A</span>
                             </div>
                         </div>
@@ -384,7 +384,7 @@
                         <label class="text-sm font-medium text-muted-text">学分</label>
                         <input type="number" min="0" max="100" step="0.5" placeholder="3" class="course-credits-input form-input w-full p-2 mt-1 rounded-md">
                     </div>
-                    <div class="md:col-span-2 relative h-40 md:h-24">
+                    <div class="md:col-span-2 relative h-40 md:h-32">
                         <canvas class="course-assignment-weights-chart"></canvas>
                         <p class="absolute inset-0 flex items-center justify-center text-muted-text text-sm chart-placeholder">无权重数据</p>
                     </div>
@@ -397,10 +397,10 @@
                     <div class="assignments-table-container">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
-                                <thead class="border-b-2 border-gray-200 dark:border-gray-700">
+                                <thead class="border-b-2 border-gray-200 dark:border-gray-700">  
                                     <tr>
                                         <th class="p-3 text-sm font-semibold text-muted-text">项目</th>
-                                        <th class="p-3 text-sm font-semibold text-muted-text">标签</th>
+                                        <th class="p-3 text-sm font-semibold text-muted-text">标签</th>  
                                         <th class="p-3 text-sm font-semibold text-muted-text">权重(%)</th>
                                         <th class="p-3 text-sm font-semibold text-muted-text">得分</th>
                                         <th class="p-3 text-sm font-semibold text-muted-text">满分</th>
@@ -894,7 +894,8 @@
                     contributionDisplay.textContent = 'N/A';
                 }
 
-                renderAssignmentWeightDistributionChart(courseEl.querySelector('.course-assignment-weights-chart'), courseData);
+                // Call the corrected chart rendering function
+                renderAssignmentWeightDistributionChart(courseEl, courseData);
             }
 
             function renderAnalyticsCharts(student) {
@@ -909,12 +910,30 @@
                 renderGradeCreditDistributionBarChart(ui.barChart, student);
             }
             
-            function renderAssignmentWeightDistributionChart(canvas, courseData) {
-                const chartId = `course-weights-${courseData.name}-${Math.random()}`; // Add random to avoid conflicts
-                if (chartInstances[chartId]) chartInstances[chartId].destroy();
+            // --- BUG FIX STARTS HERE ---
+            // The previous version of this function was unreliable. This version is more robust.
+            function renderAssignmentWeightDistributionChart(courseEl, courseData) {
+                const canvas = courseEl.querySelector('.course-assignment-weights-chart');
+                if (!canvas) {
+                    console.error("Debug: Chart canvas not found for course:", courseData.name);
+                    return; // Safety exit if canvas is missing
+                }
 
-                const ctx = canvas.getContext('2d');
-                const placeholder = canvas.nextElementSibling;
+                const placeholder = canvas.parentElement.querySelector('.chart-placeholder');
+                if (!placeholder) {
+                    console.error("Debug: Chart placeholder not found for course:", courseData.name);
+                    return; // Safety exit
+                }
+
+                // Use a stable ID for the chart based on its position, allowing for proper updates.
+                const semesterIndex = courseEl.dataset.semesterIndex;
+                const courseIndex = courseEl.dataset.courseIndex;
+                const chartId = `course-weights-sem${semesterIndex}-crs${courseIndex}`;
+
+                // If a chart for this specific course already exists, destroy it before creating a new one.
+                if (chartInstances[chartId]) {
+                    chartInstances[chartId].destroy();
+                }
                 
                 const labels = [];
                 const data = [];
@@ -938,13 +957,14 @@
 
                 if (data.length === 0) {
                     placeholder.style.display = 'flex';
-                    placeholder.textContent = '无权重数据'; // More specific message
                     return;
                 }
+
                 placeholder.style.display = 'none';
                 
                 const isDark = document.documentElement.classList.contains('dark');
                 const chartBorderColor = isDark ? '#111827' : '#fff';
+                const ctx = canvas.getContext('2d');
 
                 chartInstances[chartId] = new Chart(ctx, {
                     type: 'doughnut',
@@ -953,7 +973,7 @@
                         datasets: [{ 
                             label: '权重',
                             data: data, 
-                            backgroundColor: colors.concat(['#6b7280']), // Gray for unassigned
+                            backgroundColor: colors.concat(['#6b7280']),
                             borderWidth: 3, 
                             borderColor: chartBorderColor
                         }]
@@ -964,7 +984,7 @@
                         cutout: '70%',
                         plugins: {
                             legend: { 
-                                display: false, // Set to false to save space, tooltip is enough
+                                display: false,
                             },
                             tooltip: {
                                 callbacks: {
@@ -984,6 +1004,7 @@
                     }
                 });
             }
+            // --- BUG FIX ENDS HERE ---
 
             function renderCoursePerformanceRadarChart(canvas, studentData) {
                 const chartId = 'radar-chart';
@@ -1057,7 +1078,6 @@
                 const isDark = document.documentElement.classList.contains('dark');
                 const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
                 const textColor = isDark ? '#e5e7eb' : '#6b7280';
-                const barColor = isDark ? 'rgba(99, 102, 241, 0.8)' : 'rgba(79, 70, 229, 0.7)';
                 
                 chartInstances[chartId] = new Chart(ctx, {
                     type: 'bar',
