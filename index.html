@@ -345,7 +345,6 @@
                         <button class="remove-semester-btn btn btn-danger-outline px-3" title="删除学期"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
                     </div>
                 </div>
-                <!-- 修复：将 lg:grid-cols-2 修改为 lg:grid-cols-1，让每个课程占一整行 -->
                 <div class="courses-container grid grid-cols-1 lg:grid-cols-1 gap-8"></div>
                 <div class="semester-courses-empty-state hidden"></div>
                 <div class="mt-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -358,6 +357,14 @@
                         <div class="flex justify-between items-center">
                             <div class="font-semibold text-gray-600 dark:text-gray-300">学期加权总分</div>
                             <span class="semester-weighted-score-display text-3xl font-extrabold text-blue-600">N/A</span>
+                        </div>
+                        <!-- 新增：目标学期加权总分 -->
+                        <div class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+                            <div class="font-semibold text-gray-600 dark:text-gray-300">目标总分</div>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" min="0" max="100" placeholder="90" class="target-semester-score-input form-input w-20 p-1 text-center text-sm" style="font-size: 0.875rem;">
+                                <span class="target-semester-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400">输入目标以分析</span>
+                            </div>
                         </div>
                     </div>
                     <div class="relative h-48">
@@ -382,8 +389,9 @@
                 <!-- Course Details -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 items-center">
                     <div>
-                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">学分</label>
-                        <input type="number" min="0" step="0.5" placeholder="3" class="course-credits-input form-input w-full p-2 mt-1 rounded-md">
+                        <!-- 修改：将“学分”改为“学期总分权重占比” -->
+                        <label class="text-sm font-medium text-gray-500 dark:text-gray-400">学期总分权重占比 (%)</label>
+                        <input type="number" min="0" max="100" step="0.5" placeholder="20" class="course-weight-input form-input w-full p-2 mt-1 rounded-md">
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-500 dark:text-gray-400">目标分</label>
@@ -406,6 +414,8 @@
                                 <thead class="border-b-2 border-gray-200 dark:border-gray-700">
                                     <tr>
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">项目</th>
+                                        <!-- 新增：作业标签列 -->
+                                        <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">标签</th>
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">权重(%)</th>
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">得分</th>
                                         <th class="p-3 text-sm font-semibold text-gray-500 dark:text-gray-400">满分</th>
@@ -435,6 +445,19 @@
         <template id="assignment-template">
             <tr class="assignment-row border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                 <td class="p-2"><input type="text" placeholder="期中论文" class="assignment-name-input w-full bg-transparent outline-none p-1"></td>
+                <!-- 新增：作业标签单元格，使用下拉菜单 -->
+                <td class="p-2">
+                    <select class="assignment-tag-select form-select w-full bg-transparent outline-none p-1">
+                        <option value="">选择标签...</option>
+                        <option value="测试">测试</option>
+                        <option value="期末论文">期末论文</option>
+                        <option value="作业">作业</option>
+                        <option value="项目">项目</option>
+                        <option value="出勤">出勤</option>
+                        <option value="自定义">自定义</option>
+                    </select>
+                    <input type="text" placeholder="自定义标签" class="assignment-custom-tag-input w-full bg-transparent outline-none p-1 mt-1" style="display: none;">
+                </td>
                 <td class="p-2"><input type="number" min="0" placeholder="20" class="assignment-weight-input w-20 bg-transparent outline-none p-1 text-center"></td>
                 <td class="p-2"><input type="number" min="0" placeholder="-" class="assignment-score-input w-20 bg-transparent outline-none p-1 text-center"></td>
                 <td class="p-2"><input type="number" min="0" value="100" class="assignment-max-score-input w-20 bg-transparent outline-none p-1 text-center"></td>
@@ -610,7 +633,7 @@
                     }).filter(semester => semester.courses.length > 0);
                 }
                 filteredSemesters.forEach((semesterData) => {
-                    const originalIndex = student.semesters.findIndex(s => s.name === semesterData.name); // Note: This might be fragile. Using a unique ID would be better.
+                    const originalIndex = student.semesters.findIndex(s => s.name === semesterData.name);
                     if (originalIndex === -1) return;
                     const semesterEl = createSemesterElement(semesterData, originalIndex);
                     ui.studentContentContainer.appendChild(semesterEl);
@@ -639,6 +662,15 @@
                         coursesContainer.appendChild(courseEl);
                     });
                 }
+                // === 新增：为学期目标分设置事件监听器 ===
+                const targetScoreInput = semesterEl.querySelector('.target-semester-score-input');
+                targetScoreInput.value = semesterData.targetWeightedScore || '';
+                targetScoreInput.addEventListener('change', (e) => {
+                    let studentData = JSON.parse(JSON.stringify(localStudentsData.find(s => s.id === selectedStudentId)));
+                    if (!studentData) return;
+                    studentData.semesters[semesterIndex].targetWeightedScore = parseFloat(e.target.value) || 0;
+                    updateStudentData(studentData.semesters);
+                });
                 return semesterEl;
             }
             function createCourseElement(courseData, semesterIndex, courseIndex) {
@@ -647,7 +679,8 @@
                  courseEl.dataset.semesterIndex = semesterIndex;
                  courseEl.dataset.courseIndex = courseIndex;
                  courseEl.querySelector('.course-name-input').value = courseData.name;
-                 courseEl.querySelector('.course-credits-input').value = courseData.credits;
+                 // === 修改：将 credits 改为 courseWeight，并更新输入框值 ===
+                 courseEl.querySelector('.course-weight-input').value = courseData.courseWeight || '';
                  courseEl.querySelector('.target-grade-input').value = courseData.targetGrade;
                  const assignmentsContainer = courseEl.querySelector('.assignments-container');
                  (courseData.assignments || []).forEach((assignmentData, assignmentIndex) => {
@@ -663,6 +696,22 @@
                 assignmentEl.dataset.courseIndex = courseIndex;
                 assignmentEl.dataset.assignmentIndex = assignmentIndex;
                 assignmentEl.querySelector('.assignment-name-input').value = assignmentData.name;
+                // === 新增：设置作业标签的值和逻辑 ===
+                const tagSelect = assignmentEl.querySelector('.assignment-tag-select');
+                const customTagInput = assignmentEl.querySelector('.assignment-custom-tag-input');
+                tagSelect.value = assignmentData.tag || '';
+                customTagInput.value = assignmentData.customTag || '';
+                if (assignmentData.tag === '自定义' && assignmentData.customTag) {
+                    customTagInput.style.display = 'block';
+                }
+                tagSelect.addEventListener('change', (e) => {
+                    if (e.target.value === '自定义') {
+                        customTagInput.style.display = 'block';
+                    } else {
+                        customTagInput.style.display = 'none';
+                        customTagInput.value = '';
+                    }
+                });
                 assignmentEl.querySelector('.assignment-weight-input').value = assignmentData.weight;
                 assignmentEl.querySelector('.assignment-score-input').value = assignmentData.score;
                 assignmentEl.querySelector('.assignment-max-score-input').value = assignmentData.maxScore;
@@ -758,7 +807,7 @@
                     ui.manageStudentsModal.list.appendChild(div);
                 });
             }
-            // === Calculation Logic (Restored) ===
+            // === Calculation Logic (Updated) ===
             function updateAllCalculations(student) {
                 destroyAllCharts();
                 if (!student) {
@@ -785,15 +834,26 @@
                         });
                         course.finalGrade = gradedWeight > 0 ? (currentWeightedScore / gradedWeight) * 100 : 0;
                     });
-                     let semesterTotalCredits = 0, semesterTotalQualityPoints = 0;
+                     let semesterTotalWeight = 0, semesterTotalQualityPoints = 0, semesterWeightedScoreSum = 0;
                     (semester.courses || []).forEach(course => {
-                        const credits = parseFloat(course.credits) || 0;
-                        if (course.finalGrade > 0 && credits > 0) {
-                            semesterTotalCredits += credits;
-                            semesterTotalQualityPoints += scoreToGpaPoint(course.finalGrade) * credits;
+                        const courseWeight = parseFloat(course.courseWeight) || 0;
+                        if (course.finalGrade > 0 && courseWeight > 0) {
+                            semesterTotalWeight += courseWeight;
+                            semesterTotalQualityPoints += scoreToGpaPoint(course.finalGrade) * courseWeight;
+                            semesterWeightedScoreSum += course.finalGrade * courseWeight;
                         }
                     });
-                    semester.gpa = semesterTotalCredits > 0 ? (semesterTotalQualityPoints / semesterTotalCredits) : 0;
+                    // 确保学期权重总和为100%
+                    if (semesterTotalWeight > 0 && Math.abs(semesterTotalWeight - 100) > 0.01) {
+                        console.warn(`学期 "${semester.name}" 的课程权重总和不为100% (${semesterTotalWeight}%)，已自动归一化。`);
+                        // 归一化
+                        const scale = 100 / semesterTotalWeight;
+                        semesterTotalQualityPoints *= scale;
+                        semesterWeightedScoreSum *= scale;
+                        semesterTotalWeight = 100;
+                    }
+                    semester.gpa = semesterTotalWeight > 0 ? (semesterTotalQualityPoints / semesterTotalWeight) : 0;
+                    semester.weightedScore = semesterTotalWeight > 0 ? (semesterWeightedScoreSum / semesterTotalWeight) : 0;
                 });
                 // Now render the calculations on the UI
                 document.querySelectorAll('.course-card').forEach(el => updateCourseCalculationsUI(el, student));
@@ -845,45 +905,59 @@
                 const { semesterIndex } = semesterEl.dataset;
                 const semesterData = student.semesters[semesterIndex];
                 if(!semesterData) return;
-                let weightedScoreSum = 0, totalCreditsForScore = 0;
                 const gradeDistribution = { 'A': 0, 'B': 0, 'C': 0, 'D': 0, 'F': 0 };
                 (semesterData.courses || []).forEach(course => {
-                    const credits = parseFloat(course.credits) || 0;
-                    if (course.finalGrade > 0 && credits > 0) {
-                        weightedScoreSum += course.finalGrade * credits;
-                        totalCreditsForScore += credits;
+                    const courseWeight = parseFloat(course.courseWeight) || 0;
+                    if (course.finalGrade > 0 && courseWeight > 0) {
                         const grade = scoreToGrade(course.finalGrade);
                         if(grade) gradeDistribution[grade]++;
                     }
                 });
                 semesterEl.querySelector('.semester-gpa-display').textContent = semesterData.gpa > 0 ? semesterData.gpa.toFixed(2) : 'N/A';
-                semesterEl.querySelector('.semester-weighted-score-display').textContent = totalCreditsForScore > 0 ? (weightedScoreSum / totalCreditsForScore).toFixed(2) : 'N/A';
+                semesterEl.querySelector('.semester-weighted-score-display').textContent = semesterData.weightedScore > 0 ? semesterData.weightedScore.toFixed(2) : 'N/A';
                 renderGradeDistributionChart(semesterEl.querySelector('.grade-distribution-chart'), gradeDistribution);
+                // === 新增：更新学期目标分分析 ===
+                const targetScoreInput = semesterEl.querySelector('.target-semester-score-input');
+                const analysisDisplay = semesterEl.querySelector('.target-semester-analysis-display');
+                const targetScore = parseFloat(targetScoreInput.value);
+                if (!isNaN(targetScore)) {
+                    if (semesterData.weightedScore >= targetScore) {
+                        analysisDisplay.textContent = '已达到目标！';
+                        analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-green-600';
+                    } else {
+                        const diff = targetScore - semesterData.weightedScore;
+                        analysisDisplay.textContent = `差 ${diff.toFixed(2)} 分`;
+                        analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-red-500';
+                    }
+                } else {
+                    analysisDisplay.textContent = '输入目标以分析';
+                    analysisDisplay.className = 'target-semester-analysis-display text-sm font-semibold text-gray-500 dark:text-gray-400';
+                }
             }
             function updateOverallCalculationsUI(student) {
-                let overallTotalCredits = 0, overallTotalQualityPoints = 0, totalScoreTimesCredits = 0, totalCreditsForScore = 0;
+                let overallTotalWeight = 0, overallTotalQualityPoints = 0, totalScoreTimesWeight = 0, totalWeightForScore = 0;
                 const cumulativeData = { labels: [], gpas: [], cumulativeGpas: [] };
                 student.semesters.forEach(semester => {
-                    let semesterTotalCreditsForGpa = 0;
+                    let semesterTotalWeightForGpa = 0;
                     (semester.courses || []).forEach(course => {
-                        const credits = parseFloat(course.credits) || 0;
-                        if (course.finalGrade > 0 && credits > 0) {
-                            totalScoreTimesCredits += course.finalGrade * credits;
-                            totalCreditsForScore += credits;
-                            semesterTotalCreditsForGpa += credits;
+                        const courseWeight = parseFloat(course.courseWeight) || 0;
+                        if (course.finalGrade > 0 && courseWeight > 0) {
+                            totalScoreTimesWeight += course.finalGrade * courseWeight;
+                            totalWeightForScore += courseWeight;
+                            semesterTotalWeightForGpa += courseWeight;
                         }
                     });
-                    if (semester.gpa > 0 && semesterTotalCreditsForGpa > 0) {
-                        overallTotalCredits += semesterTotalCreditsForGpa;
-                        overallTotalQualityPoints += semester.gpa * semesterTotalCreditsForGpa;
+                    if (semester.gpa > 0 && semesterTotalWeightForGpa > 0) {
+                        overallTotalWeight += semesterTotalWeightForGpa;
+                        overallTotalQualityPoints += semester.gpa * semesterTotalWeightForGpa;
                         cumulativeData.labels.push(semester.name || '未命名学期');
                         cumulativeData.gpas.push(semester.gpa);
-                        cumulativeData.cumulativeGpas.push(overallTotalQualityPoints / overallTotalCredits);
+                        cumulativeData.cumulativeGpas.push(overallTotalQualityPoints / overallTotalWeight);
                     }
                 });
-                if(overallTotalCredits > 0) {
-                    ui.overall.gpa.textContent = (overallTotalQualityPoints / overallTotalCredits).toFixed(2);
-                    ui.overall.score.textContent = (totalScoreTimesCredits / totalCreditsForScore).toFixed(2);
+                if(overallTotalWeight > 0) {
+                    ui.overall.gpa.textContent = (overallTotalQualityPoints / overallTotalWeight).toFixed(2);
+                    ui.overall.score.textContent = (totalScoreTimesWeight / totalWeightForScore).toFixed(2);
                 } else {
                     ui.overall.gpa.textContent = 'N/A';
                     ui.overall.score.textContent = 'N/A';
@@ -907,11 +981,10 @@
                 const textColor = isDark ? '#e5e7eb' : '#6b7280';
                 chartInstances[chartId] = new Chart(ctx, {
                     type: 'line',
-                    data: { labels: data.labels, datasets: [ { label: '学期 GPA',  data.gpas, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.3 }, { label: '累计 GPA',  data.cumulativeGpas, borderColor: '#10b981', fill: false, tension: 0.3, borderDash: [5, 5] } ] },
+                     { labels: data.labels, datasets: [ { label: '学期 GPA',  data.gpas, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.3 }, { label: '累计 GPA', data: data.cumulativeGpas, borderColor: '#10b981', fill: false, tension: 0.3, borderDash: [5, 5] } ] },
                     options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 4.0, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } }, plugins: { legend: { labels: { color: textColor } }, tooltip: { mode: 'index', intersect: false } } }
                 });
             }
-            // === 修复：添加饼图渲染函数的完整实现 ===
             function renderGradeDistributionChart(canvas, data) {
                 const ctx = canvas.getContext('2d');
                 const placeholder = canvas.nextElementSibling;
@@ -990,7 +1063,7 @@
 
                 chartInstances[chartId] = new Chart(ctx, {
                     type: 'doughnut',
-                     {
+                    data: {
                         labels: labels,
                         datasets: [{
                              values,
@@ -1060,7 +1133,7 @@
                     if (target.classList.contains('add-course-btn')) {
                         const { semesterIndex } = semesterSection.dataset;
                         if(!studentData.semesters[semesterIndex].courses) studentData.semesters[semesterIndex].courses = [];
-                        studentData.semesters[semesterIndex].courses.push({ name: '新课程', credits: '3', targetGrade: '90', assignments: []});
+                        studentData.semesters[semesterIndex].courses.push({ name: '新课程', courseWeight: '20', targetGrade: '90', assignments: []});
                         updateStudentData(studentData.semesters);
                     } else if (target.classList.contains('remove-semester-btn')) {
                         const { semesterIndex } = semesterSection.dataset;
@@ -1075,7 +1148,7 @@
                     } else if (target.classList.contains('add-assignment-btn')) {
                         const { semesterIndex, courseIndex } = courseCard.dataset;
                         if(!studentData.semesters[semesterIndex].courses[courseIndex].assignments) studentData.semesters[semesterIndex].courses[courseIndex].assignments = [];
-                        studentData.semesters[semesterIndex].courses[courseIndex].assignments.push({ name: '', weight: '', score: '', maxScore: 100 });
+                        studentData.semesters[semesterIndex].courses[courseIndex].assignments.push({ name: '', tag: '', customTag: '', weight: '', score: '', maxScore: 100 });
                         updateStudentData(studentData.semesters);
                     } else if (target.classList.contains('remove-assignment-btn')) {
                         const { semesterIndex, courseIndex, assignmentIndex } = target.closest('.assignment-row').dataset;
@@ -1103,13 +1176,26 @@
                             const { assignmentIndex } = assignmentRow.dataset;
                             const assignmentData = courseData.assignments[assignmentIndex];
                             if (target.classList.contains('assignment-name-input')) assignmentData.name = target.value;
+                            if (target.classList.contains('assignment-tag-select')) {
+                                assignmentData.tag = target.value;
+                                if (target.value !== '自定义') {
+                                    assignmentData.customTag = '';
+                                }
+                            }
+                            if (target.classList.contains('assignment-custom-tag-input')) {
+                                assignmentData.customTag = target.value;
+                                if (target.value) {
+                                    assignmentData.tag = '自定义';
+                                }
+                            }
                             if (target.classList.contains('assignment-weight-input')) assignmentData.weight = target.value;
                             if (target.classList.contains('assignment-score-input')) assignmentData.score = target.value;
                             if (target.classList.contains('assignment-max-score-input')) assignmentData.maxScore = target.value;
                             if (target.classList.contains('assignment-due-date-input')) assignmentData.dueDate = target.value;
                         } else {
                             if (target.classList.contains('course-name-input')) courseData.name = target.value;
-                            if (target.classList.contains('course-credits-input')) courseData.credits = target.value;
+                            // === 修改：将 credits 改为 courseWeight ===
+                            if (target.classList.contains('course-weight-input')) courseData.courseWeight = target.value;
                             if (target.classList.contains('target-grade-input')) courseData.targetGrade = target.value;
                         }
                     }
