@@ -1,1653 +1,726 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多用户成绩与GPA计算器 (全新视图)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
-    <style>
-        :root {
-            --bg-color: #f9fafb;
-            --text-color: #111827;
-            --card-bg: #ffffff;
-            --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --card-border: #e5e7eb;
-            --input-border: #d1d5db;
-            --input-focus-border: #4f46e5;
-            --primary-btn-bg: #4f46e5;
-            --primary-btn-hover-bg: #4338ca;
-            --secondary-btn-bg: #e5e7eb;
-            --secondary-btn-text: #374151;
-            --secondary-btn-hover-bg: #d1d5db;
-            --header-text: #111827;
-            --muted-text: #6b7280;
-            --tab-active-border: #4f46e5;
-            --tab-inactive-text: #6b7280;
-            --highlight-bg: #eef2ff;
-            --highlight-text: #4338ca;
-            --warning-bg: #fefce8;
-            --warning-text: #a16207;
-            --danger-bg: #fef2f2;
-            --danger-text: #b91c1c;
-        }
-        html.dark {
-            --bg-color: #030712;
-            --text-color: #f9fafb;
-            --card-bg: #111827;
-            --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --card-border: #1f2937;
-            --input-border: #374151;
-            --input-focus-border: #6366f1;
-            --primary-btn-bg: #6366f1;
-            --primary-btn-hover-bg: #4f46e5;
-            --secondary-btn-bg: #374151;
-            --secondary-btn-text: #e5e7eb;
-            --secondary-btn-hover-bg: #4b5563;
-            --header-text: #f9fafb;
-            --muted-text: #9ca3af;
-            --tab-active-border: #6366f1;
-            --tab-inactive-text: #9ca3af;
-            --highlight-bg: #1e293b;
-            --highlight-text: #818cf8;
-            --warning-bg: #422006;
-            --warning-text: #fde047;
-            --danger-bg: #450a0a;
-            --danger-text: #f87171;
-        }
-        body {
-            font-family: 'Inter', 'Helvetica Neue', 'Arial', 'sans-serif';
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 0.75rem;
-            box-shadow: var(--card-shadow);
-            border: 1px solid var(--card-border);
-            transition: all 0.3s ease-in-out;
-        }
-        .form-input, .tag-input-container, .form-select {
-            border: 1px solid var(--input-border);
-            background-color: var(--card-bg);
-            color: var(--text-color);
-            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--input-focus-border);
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.4);
-        }
-        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s ease-in-out; border: 1px solid transparent; cursor: pointer; }
-        .btn-primary { background-color: var(--primary-btn-bg); color: white; }
-        .btn-primary:hover { background-color: var(--primary-btn-hover-bg); }
-        .btn-secondary { background-color: var(--secondary-btn-bg); color: var(--secondary-btn-text); }
-        .btn-secondary:hover { background-color: var(--secondary-btn-hover-bg); }
-        .btn-danger { background-color: #ef4444; color: white; }
-        .btn-danger:hover { background-color: #dc2626; }
-        .btn-danger-outline { background-color: transparent; color: #ef4444; border-color: #ef4444; }
-        .btn-danger-outline:hover { background-color: #fef2f2; color: #dc2626; }
-        html.dark .btn-danger-outline:hover { background-color: rgba(239, 68, 68, 0.1); }
-        .fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        [v-cloak] { display: none; }
-        .tab-button {
-            padding: 0.75rem 1rem;
-            font-weight: 600;
-            border-bottom: 3px solid transparent;
-            color: var(--tab-inactive-text);
-            transition: all 0.2s ease-in-out;
-        }
-        .tab-button.active {
-            color: var(--header-text);
-            border-bottom-color: var(--tab-active-border);
-        }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .empty-state-container {
-            text-align: center;
-            padding: 4rem 2rem;
-            margin-top: 2rem;
-            border: 2px dashed var(--input-border);
-            border-radius: 0.75rem;
-            background-color: rgba(128,128,128,0.05);
-        }
-        .assignment-toggle-icon { transition: transform 0.3s ease; }
-        .assignments-collapsed .assignment-toggle-icon { transform: rotate(-90deg); }
-        .assignments-table-container { max-height: 1000px; transition: max-height 0.5s ease-in-out, opacity 0.5s ease; opacity: 1; overflow: hidden; }
-        .assignments-collapsed .assignments-table-container { max-height: 0; opacity: 0; }
-        /* Shepherd Tour Styles */
-        .shepherd-button { background: var(--primary-btn-bg) !important; color: white !important; }
-        .shepherd-button:hover { background: var(--primary-btn-hover-bg) !important; }
-        .shepherd-header { background-color: var(--secondary-btn-bg) !important; padding: 1rem !important; }
-        .shepherd-title { color: var(--header-text) !important; font-weight: 700 !important; }
-        .shepherd-text { color: var(--text-color) !important; padding: 0 1rem 1rem !important; line-height: 1.6 !important; }
-        .shepherd-content { background-color: var(--card-bg) !important; border-radius: 0.75rem !important; box-shadow: var(--card-shadow) !important; border: 1px solid var(--card-border) !important; }
-        .shepherd-arrow::before { background-color: var(--card-bg) !important; }
-        .shepherd-cancel-icon { color: var(--muted-text) !important; }
-        .shepherd-cancel-icon:hover { color: var(--text-color) !important; }
-        .shepherd-footer { padding: 0 1rem 1rem !important; }
-        .shepherd-button.shepherd-button-secondary { background: var(--secondary-btn-bg) !important; color: var(--secondary-btn-text) !important; }
-        .shepherd-button.shepherd-button-secondary:hover { background: var(--secondary-btn-hover-bg) !important; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>361° 官方商城</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .product-card:hover img {
+      transform: scale(1.05);
+    }
+    .size-btn:hover {
+      border-color: #dc2626;
+      color: #dc2626;
+    }
+    .favorite-btn:hover svg {
+      fill: #dc2626;
+      stroke: #dc2626;
+    }
+    .similar-product:hover img {
+      transform: scale(1.03);
+    }
+  </style>
 </head>
-<body class="p-4 md:p-8">
-    <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-80 dark:bg-gray-900 dark:bg-opacity-80 flex items-center justify-center z-50">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
-    </div>
-    <div id="error-container" class="fixed top-5 right-5 z-50 w-full max-w-sm"></div>
-    <div id="login-view" class="max-w-md mx-auto text-center mt-20 fade-in">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 dark:text-gray-100">GRADESC</h1>
-        <p class="text-gray-500 dark:text-gray-400 mt-3 text-lg mb-8">您的私人成绩与GPA智能管家</p>
-        <div class="card p-8">
-            <h2 class="text-xl font-bold text-gray-700 dark:text-gray-200 mb-2">欢迎使用</h2>
-            <p class="text-gray-500 dark:text-gray-400 mb-6">请登录以在云端安全地同步您的所有数据。</p>
-            <button id="login-btn" class="btn btn-primary w-full">
-                <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.28,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
-                使用 Google 登录
+<body x-data="app()" class="bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <h1 class="text-3xl font-bold text-red-600">361°</h1>
+          <nav class="ml-10 hidden md:flex space-x-8">
+            <button @click="activeCategory = 'all'" 
+                    :class="activeCategory === 'all' ? 'text-red-600' : 'text-gray-700'"
+                    class="text-sm font-medium hover:text-red-600 transition-colors duration-200">
+              👟 全部
             </button>
-            <div id="status-message" class="mt-4 text-sm text-gray-600 dark:text-gray-400"></div>
+            <button @click="activeCategory = 'running'" 
+                    :class="activeCategory === 'running' ? 'text-red-600' : 'text-gray-700'"
+                    class="text-sm font-medium hover:text-red-600 transition-colors duration-200">
+              🏃 跑步
+            </button>
+            <button @click="activeCategory = 'lifestyle'" 
+                    :class="activeCategory === 'lifestyle' ? 'text-red-600' : 'text-gray-700'"
+                    class="text-sm font-medium hover:text-red-600 transition-colors duration-200">
+              👕 休闲
+            </button>
+            <button @click="activeCategory = 'basketball'" 
+                    :class="activeCategory === 'basketball' ? 'text-red-600' : 'text-gray-700'"
+                    class="text-sm font-medium hover:text-red-600 transition-colors duration-200">
+              🏀 篮球
+            </button>
+          </nav>
         </div>
-    </div>
-    <div id="app-view" class="max-w-screen-2xl mx-auto" v-cloak>
-        <header class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-header-text">GRADESC</h1>
-            <div id="user-profile" class="flex items-center space-x-2 md:space-x-4">
-                <div class="relative inline-block text-left">
-                    <button type="button" id="student-menu-btn" class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-200 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600" aria-expanded="false" aria-haspopup="true">
-                        <span id="current-student-name-display">选择学生</span>
-                        <svg class="-mr-1 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
-                    </button>
-                    <div id="student-menu-options" class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="student-menu-btn">
-                        <div id="student-options-list" class="py-1" role="none">
-                            </div>
-                        <div class="border-t border-gray-200 dark:border-gray-700 py-1">
-                            <a href="#" id="add-student-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">添加新学生...</a>
-                            <a href="#" id="manage-students-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">管理学生...</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="relative">
-                    <input type="search" id="course-search-input" placeholder="搜索课程..." class="form-input w-32 md:w-48 p-2 pl-8 rounded-md text-sm">
-                    <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-                <div class="theme-switch-wrapper flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /></svg>
-                    <label class="relative inline-block w-12 h-6">
-                        <input type="checkbox" id="theme-checkbox" class="opacity-0 w-0 h-0" />
-                        <span class="absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 dark:bg-gray-600 rounded-full transition-colors duration-300 before:absolute before:content-[''] before:h-4 before:w-4 before:left-1 before:bottom-1 before:bg-white before:rounded-full before:transition-transform before:duration-300 checked:before:translate-x-6"></span>
-                    </label>
-                </div>
-                <div class="relative inline-block text-left">
-                    <button type="button" id="user-menu-btn" class="flex items-center gap-2">
-                        <img id="user-avatar" class="w-10 h-10 rounded-full" src="" alt="User Avatar">
-                        <span id="user-name" class="font-semibold text-gray-700 dark:text-gray-200 hidden md:block"></span>
-                    </button>
-                    <div id="user-menu-options" class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden">
-                        <div class="py-1">
-                            <a href="#" id="start-tour-btn" class="flex items-center gap-2 text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
-                                新手引导
-                            </a>
-                        </div>
-                        <div class="border-t border-gray-200 dark:border-gray-700 py-1">
-                             <a href="#" id="import-data-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">从 Excel 导入...</a>
-                            <a href="#" id="import-json-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">从 JSON 还原...</a>
-                        </div>
-                        <div class="border-t border-gray-200 dark:border-gray-700 py-1">
-                            <a href="#" id="export-json-btn" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">备份为 JSON</a>
-                            <a href="#" id="export-xlsx" class="text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">导出为 Excel (.xlsx)</a>
-                        </div>
-                        <div class="border-t border-gray-200 dark:border-gray-700 py-1">
-                            <a href="#" id="logout-btn" class="text-red-600 block w-full text-left px-4 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20">登出</a>
-                        </div>
-                    </div>
-                </div>
+        
+        <div class="flex items-center space-x-4">
+          <div class="relative">
+            <input type="text" placeholder="搜索商品..." 
+                   x-model="searchTerm"
+                   class="pl-10 pr-4 py-2 border border-gray-300 rounded-full text-sm w-64 focus:outline-none focus:ring-2 focus:ring-red-500">
+            <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+          
+          <button @click="showCart = true" class="relative">
+            <svg class="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9"></path>
+            </svg>
+            <span x-show="cart.length > 0" 
+                  x-text="cart.length" 
+                  class="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            </span>
+          </button>
+          
+          <template x-if="!user">
+            <button @click="showLoginModal = true" class="text-sm text-gray-700 hover:text-red-600">
+              登录
+            </button>
+          </template>
+          <template x-if="user">
+            <div class="flex items-center space-x-4">
+              <span class="text-sm text-gray-700">欢迎, <span x-text="user.name"></span></span>
+              <button @click="logout()" class="text-sm text-gray-700 hover:text-red-600">
+                退出
+              </button>
             </div>
-        </header>
-        <div class="border-b border-gray-200 dark:border-gray-700 mb-8">
-            <nav id="tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
-                <button class="tab-button active" data-tab="dashboard">学业总览</button>
-                <button class="tab-button" data-tab="courses">课程与成绩</button>
-                <button class="tab-button" data-tab="analytics">图表分析</button>
-            </nav>
+          </template>
         </div>
-        <main id="main-content">
-            <div id="tab-content-dashboard" class="tab-content active fade-in">
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                    <div id="overall-summary-card" class="card p-6 xl:col-span-2">
-                        <h2 class="text-xl font-bold text-header-text mb-4">学业总览</h2>
-                        <div class="space-y-8">
-                            <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                                <div class="font-semibold text-muted-text">累计总 GPA</div>
-                                <span id="overall-gpa-display" class="text-4xl font-extrabold text-green-500">N/A</span>
-                            </div>
-                            <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                                <div class="font-semibold text-muted-text">总加权平均分</div>
-                                <span id="overall-weighted-score-display" class="text-4xl font-extrabold text-indigo-500">N/A</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="upcoming-deadlines-card" class="card p-6 xl:col-span-1">
-                        <h2 class="text-xl font-bold text-header-text mb-4">近期日程</h2>
-                        <div id="deadlines-list" class="space-y-3 max-h-96 overflow-y-auto"></div>
-                    </div>
-                </div>
-            </div>
-            <div id="tab-content-courses" class="tab-content">
-                <div id="student-content-container" class="space-y-12">
-                    </div>
-                <div id="courses-empty-state" class="hidden"></div>
-                <div class="mt-10 text-center">
-                    <!-- 修复快捷键：从 Ctrl+A 改为 Ctrl+Shift+A -->
-                    <button id="add-semester-btn" class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" /></svg>
-                        添加新学期 (Ctrl+Shift+A)
-                    </button>
-                </div>
-            </div>
-            <div id="tab-content-analytics" class="tab-content">
-                 <div id="analytics-empty-state" class="hidden"></div>
-                 <div id="analytics-content" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="card p-6 min-h-[400px]">
-                        <h3 class="text-lg font-bold text-header-text mb-4">课程表现雷达图</h3>
-                        <div class="relative h-96">
-                            <canvas id="course-performance-radar-chart"></canvas>
-                        </div>
-                    </div>
-                    <div class="card p-6 min-h-[400px]">
-                         <h3 class="text-lg font-bold text-header-text mb-4">学分质量分布</h3>
-                         <div class="relative h-96">
-                            <canvas id="grade-credit-distribution-bar-chart"></canvas>
-                         </div>
-                    </div>
-                 </div>
-            </div>
-        </main>
+      </div>
     </div>
-    <div id="gpa-info-popup" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-        <div class="card p-8 max-w-md w-full fade-in">
-            <h3 class="text-2xl font-bold mb-4 text-header-text">GPA换算规则</h3>
-            <ul class="space-y-2 text-gray-700 dark:text-gray-300">
-                <li class="flex justify-between"><span>90-100分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">4.0 绩点</span></li>
-                <li class="flex justify-between"><span>85-89分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">3.7 绩点</span></li>
-                 <li class="flex justify-between"><span>82-84分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">3.3 绩点</span></li>
-                <li class="flex justify-between"><span>78-81分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">3.0 绩点</span></li>
-                <li class="flex justify-between"><span>75-77分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">2.7 绩点</span></li>
-                <li class="flex justify-between"><span>72-74分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">2.3 绩点</span></li>
-                <li class="flex justify-between"><span>68-71分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">2.0 绩点</span></li>
-                <li class="flex justify-between"><span>65-67分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">1.7 绩点</span></li>
-                <li class="flex justify-between"><span>60-64分</span><span class="font-semibold text-indigo-600 dark:text-indigo-400">1.0 绩点</span></li>
-                <li class="flex justify-between"><span>60分以下</span><span class="font-semibold text-red-600 dark:text-red-400">0.0 绩点</span></li>
-            </ul>
-            <button onclick="document.getElementById('gpa-info-popup').style.display='none'" class="btn btn-primary w-full mt-8">我明白了</button>
+  </header>
+
+  <!-- Mobile Category Nav -->
+  <div class="md:hidden bg-gray-50 border-b">
+    <div class="flex overflow-x-auto px-4 py-3 space-x-4">
+      <button @click="activeCategory = 'all'" 
+              :class="activeCategory === 'all' ? 'bg-red-600 text-white' : 'bg-white text-gray-700'"
+              class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium">
+        👟 全部
+      </button>
+      <button @click="activeCategory = 'running'" 
+              :class="activeCategory === 'running' ? 'bg-red-600 text-white' : 'bg-white text-gray-700'"
+              class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium">
+        🏃 跑步
+      </button>
+      <button @click="activeCategory = 'lifestyle'" 
+              :class="activeCategory === 'lifestyle' ? 'bg-red-600 text-white' : 'bg-white text-gray-700'"
+              class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium">
+        👕 休闲
+      </button>
+      <button @click="activeCategory = 'basketball'" 
+              :class="activeCategory === 'basketball' ? 'bg-red-600 text-white' : 'bg-white text-gray-700'"
+              class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium">
+        🏀 篮球
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+      <!-- Product Grid -->
+      <div class="flex-1">
+        <div class="flex items-center justify-between mb-6">
+          <h1 class="text-2xl font-bold text-gray-800">
+            <span x-text="activeCategory === 'all' ? '全部商品' : categories.find(c => c.id === activeCategory)?.name"></span>
+            <span class="text-gray-500 ml-2">(<span x-text="filteredProducts.length"></span>款)</span>
+          </h1>
         </div>
-    </div>
-    <div id="confirm-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-        <div class="card p-8 max-w-md w-full fade-in">
-            <h3 id="confirm-modal-title" class="text-xl font-bold mb-4 text-header-text">确认操作</h3>
-            <p id="confirm-modal-body" class="mb-8 text-muted-text">您确定要继续吗？</p>
-            <div class="flex justify-end space-x-4">
-                <button id="confirm-modal-cancel-btn" class="btn btn-secondary">取消</button>
-                <button id="confirm-modal-confirm-btn" class="btn btn-danger">确认</button>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <template x-for="product in filteredProducts" :key="product.id">
+            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 product-card">
+              <div class="relative overflow-hidden">
+                <img :src="product.image" :alt="product.name" 
+                     class="w-full h-80 object-cover transition-transform duration-300">
+                <template x-if="product.isNew">
+                  <div class="absolute top-4 left-4 bg-red-600 text-white px-2 py-1 text-xs font-semibold rounded">
+                    NEW
+                  </div>
+                </template>
+                <button @click="toggleFavorite(product.id)" 
+                        :class="favorites.includes(product.id) ? 'bg-red-600 text-white' : 'bg-white text-gray-400'"
+                        class="absolute top-4 right-4 p-2 rounded-full favorite-btn transition-colors duration-200">
+                  <svg class="h-5 w-5" :fill="favorites.includes(product.id) ? 'currentColor' : 'none'" 
+                       stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.682l-1.318-1.364a4.5 4.5 0 00-6.364 0z"></path>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2 line-clamp-2" x-text="product.name"></h3>
+                <p class="text-sm text-gray-600 mb-1">款号: <span x-text="product.model"></span></p>
+                <p class="text-sm text-gray-600 mb-3">序号: <span x-text="product.sku"></span></p>
+                
+                <div class="flex items-center mb-3">
+                  <span class="text-lg font-bold text-red-600">¥<span x-text="product.salePrice"></span></span>
+                  <span class="text-sm text-gray-500 line-through ml-2">¥<span x-text="product.retailPrice"></span></span>
+                </div>
+                
+                <button @click="selectedProduct = product" 
+                        class="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-semibold">
+                  选择尺码
+                </button>
+              </div>
             </div>
+          </template>
         </div>
-    </div>
-    <div id="import-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-         <div class="card p-8 max-w-2xl w-full fade-in">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-bold text-header-text">从 Excel 导入数据</h3>
-                <button id="import-modal-close-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
+      </div>
+
+      <!-- Shopping Cart Sidebar -->
+      <div class="w-full lg:w-80">
+        <div class="bg-white rounded-lg shadow-md p-6 sticky top-8">
+          <h3 class="text-xl font-bold text-gray-800 mb-4">购物车 (<span x-text="cart.length"></span>件)</h3>
+          
+          <template x-if="cart.length === 0">
+            <div class="text-center py-8 text-gray-500">
+              <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9"></path>
+              </svg>
+              <p class="mt-4">购物车为空</p>
+              <p class="text-sm mt-2">选择商品加入购物车</p>
             </div>
-            <div class="flex flex-col sm:flex-row gap-4">
-                <button id="download-template-btn" class="btn btn-secondary w-full sm:w-auto">下载模板</button>
-                <input type="file" id="import-file-input" class="hidden" accept=".xlsx">
-                <label for="import-file-input" class="btn btn-primary w-full sm:w-auto">选择文件并上传</label>
-            </div>
-            <div id="import-status" class="mt-4 text-sm"></div>
-        </div>
-    </div>
-    <div id="manage-students-modal" style="display:none;" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-        <div class="card p-8 max-w-md w-full fade-in">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-header-text">管理学生</h3>
-                <button id="manage-students-modal-close-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
-            </div>
-            <div class="mb-4">
-                <label for="new-student-name" class="block text-sm font-medium text-muted-text mb-2">添加新学生</label>
-                <div class="flex">
-                    <input type="text" id="new-student-name-modal" placeholder="输入学生姓名..." class="form-input w-full p-2 rounded-l-md">
-                    <button id="add-student-modal-btn" class="btn btn-primary rounded-l-none px-4">+</button>
-                </div>
-            </div>
-            <div id="student-management-list" class="space-y-2">
-                </div>
-        </div>
-    </div>
-    <div class="hidden">
-        <template id="semester-template">
-            <div class="semester-section card p-6">
-                <div class="flex flex-col md:flex-row justify-between md:items-center mb-6">
-                    <div class="flex items-center gap-4">
-                        <span class="drag-handle cursor-move text-muted-text hover:text-text-color" title="拖拽排序"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg></span>
-                        <input type="text" class="semester-name-input text-3xl font-bold text-header-text bg-transparent focus:border-b-2 focus:border-indigo-500 outline-none w-full md:w-auto">
+          </template>
+          
+          <template x-if="cart.length > 0">
+            <div class="space-y-4 mb-6 max-h-96 overflow-y-auto">
+              <template x-for="item in cart" :key="item.id">
+                <div class="border rounded-lg p-4">
+                  <div class="flex space-x-3">
+                    <img :src="item.image" :alt="item.name" class="w-16 h-16 object-cover rounded">
+                    <div class="flex-1 min-w-0">
+                      <h4 class="text-sm font-medium text-gray-800 truncate" x-text="item.name"></h4>
+                      <p class="text-xs text-gray-500">尺码: <span x-text="item.size"></span></p>
+                      <p class="text-xs text-gray-500">颜色: <span x-text="item.color"></span></p>
+                      <p class="text-sm font-semibold text-red-600 mt-1">¥<span x-text="item.salePrice"></span></p>
                     </div>
-                    <div class="flex items-center space-x-2 mt-4 md:mt-0">
-                        <button class="add-course-btn btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>添加课程</button>
-                        <button class="copy-semester-btn btn btn-secondary px-3" title="复制学期"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" /><path d="M4 3a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V5a2 2 0 00-2-2H4z" /></svg></button>
-                        <button class="remove-semester-btn btn btn-danger-outline px-3" title="删除学期"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
-                    </div>
-                </div>
-                <div class="courses-container grid grid-cols-1 lg:grid-cols-1 gap-8"></div>
-                <div class="semester-courses-empty-state hidden"></div>
-                <div class="mt-8 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                    <div class="space-y-4">
-                        <h3 class="text-xl font-bold text-header-text mb-4">学期总结</h3>
-                        <div class="flex justify-between items-center">
-                            <div class="font-semibold text-muted-text flex items-center">学期 GPA <span class="ml-2 text-indigo-500 cursor-pointer" onclick="document.getElementById('gpa-info-popup').style.display='flex'"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg></span></div>
-                            <span class="semester-gpa-display text-3xl font-extrabold text-green-500">N/A</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="font-semibold text-muted-text">学期加权总分</div>
-                            <span class="semester-weighted-score-display text-3xl font-extrabold text-indigo-500">N/A</span>
-                        </div>
-                    </div>
-                    <div class="relative h-48">
-                        <canvas class="grade-distribution-chart"></canvas>
-                        <p class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm chart-placeholder">无数据</p>
-                    </div>
-                </div>
-            </div>
-        </template>
-        <template id="course-template">
-            <div class="card p-6 course-card fade-in">
-                <div class="flex justify-between items-start mb-5">
-                    <div class="flex items-center gap-2 w-full">
-                        <span class="drag-handle cursor-move text-muted-text hover:text-text-color" title="拖拽排序"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg></span>
-                        <input type="text" class="course-name-input text-2xl font-bold text-header-text bg-transparent border-b-2 border-transparent focus:border-indigo-500 outline-none w-2/3 p-0" placeholder="输入课程名称...">
-                    </div>
+                  </div>
+                  
+                  <div class="flex items-center justify-between mt-3">
                     <div class="flex items-center space-x-2">
-                        <button class="copy-course-btn text-gray-400 hover:text-indigo-500 transition" title="复制课程"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
-                        <button class="remove-course-btn text-gray-400 hover:text-red-500 transition" title="删除课程"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                      <button @click="updateQuantity(item.id, item.quantity - 1)" 
+                              class="w-6 h-6 bg-gray-200 rounded flex items-center justify-center hover:bg-gray-300">
+                        -
+                      </button>
+                      <span class="w-8 text-center text-sm" x-text="item.quantity"></span>
+                      <button @click="updateQuantity(item.id, item.quantity + 1)" 
+                              class="w-6 h-6 bg-gray-200 rounded flex items-center justify-center hover:bg-gray-300">
+                        +
+                      </button>
                     </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 items-center">
-                    <div>
-                        <label class="text-sm font-medium text-muted-text">学分</label>
-                        <input type="number" min="0" max="100" step="0.5" placeholder="3" class="course-credits-input form-input w-full p-2 mt-1 rounded-md">
-                    </div>
-                    <div class="md:col-span-2 relative h-40 md:h-24">
-                        <canvas class="course-assignment-weights-chart"></canvas>
-                        <p class="absolute inset-0 flex items-center justify-center text-muted-text text-sm chart-placeholder">无权重数据</p>
-                    </div>
-                </div>
-                <div class="assignments-section">
-                    <button class="assignments-toggle-btn flex justify-between items-center w-full py-2 text-left font-semibold">
-                        <span>评分项目</span>
-                        <svg class="assignment-toggle-icon h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    <button @click="removeFromCart(item.id)" class="text-red-500 hover:text-red-700 text-sm">
+                      删除
                     </button>
-                    <div class="assignments-table-container">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="border-b-2 border-gray-200 dark:border-gray-700">
-                                    <tr>
-                                        <th class="p-3 text-sm font-semibold text-muted-text">项目</th>
-                                        <th class="p-3 text-sm font-semibold text-muted-text">标签</th>
-                                        <th class="p-3 text-sm font-semibold text-muted-text">权重(%)</th>
-                                        <th class="p-3 text-sm font-semibold text-muted-text">得分</th>
-                                        <th class="p-3 text-sm font-semibold text-muted-text">满分</th>
-                                        <th class="p-3 text-sm font-semibold text-muted-text">截止</th>
-                                        <th class="p-3"></th>
-                                    </tr>
-                                </thead>
-                                <tbody class="assignments-container"></tbody>
-                            </table>
-                        </div>
-                        <button class="add-assignment-btn mt-4 w-full btn btn-secondary">+ 添加项目 (Ctrl+Enter)</button>
-                    </div>
+                  </div>
                 </div>
-                <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-md font-semibold text-muted-text">当前总分:</h3>
-                        <p class="current-grade-display text-2xl font-bold text-indigo-600 dark:text-indigo-400">N/A</p>
-                    </div>
-                    <div class="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <h3 class="text-md font-semibold text-muted-text">对学期总分贡献:</h3>
-                        <p class="semester-contribution-display text-lg font-bold text-green-600 dark:text-green-400">N/A</p>
-                    </div>
-                </div>
+              </template>
             </div>
-        </template>
-        <template id="assignment-template">
-            <tr class="assignment-row border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                <td class="p-2"><input type="text" placeholder="期中论文" class="assignment-name-input w-full bg-transparent outline-none p-1"></td>
-                <td class="p-2">
-                    <select class="assignment-tag-select form-select w-full bg-transparent outline-none p-1">
-                        <option value="">选择标签...</option>
-                        <option value="测试">测试</option>
-                        <option value="期末论文">期末论文</option>
-                        <option value="作业">作业</option>
-                        <option value="项目">项目</option>
-                        <option value="出勤">出勤</option>
-                        <option value="自定义">自定义</option>
-                    </select>
-                    <input type="text" placeholder="自定义标签" class="assignment-custom-tag-input w-full bg-transparent outline-none p-1 mt-1" style="display: none;">
-                </td>
-                <td class="p-2"><input type="number" min="0" placeholder="20" class="assignment-weight-input w-20 bg-transparent outline-none p-1 text-center"></td>
-                <td class="p-2"><input type="number" min="0" placeholder="-" class="assignment-score-input w-20 bg-transparent outline-none p-1 text-center"></td>
-                <td class="p-2"><input type="number" min="0" value="100" class="assignment-max-score-input w-20 bg-transparent outline-none p-1 text-center"></td>
-                <td class="p-2"><input type="date" class="assignment-due-date-input w-full bg-transparent outline-none p-1"></td>
-                <td class="p-2 text-center"><button class="remove-assignment-btn text-gray-400 hover:text-red-500 transition">×</button></td>
-            </tr>
-        </template>
-        <template id="empty-state-template">
-            <div class="empty-state-container">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200 empty-state-title"></h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 empty-state-message"></p>
-                <div class="mt-6">
-                    <button type="button" class="btn btn-primary empty-state-action-btn"></button>
-                </div>
+          </template>
+          
+          <template x-if="cart.length > 0">
+            <div class="border-t pt-4">
+              <div class="flex justify-between mb-2">
+                <span class="text-gray-600">商品总额:</span>
+                <span class="font-semibold">¥<span x-text="getTotalPrice().toLocaleString()"></span></span>
+              </div>
+              <div class="flex justify-between mb-4">
+                <span class="text-gray-600">共<span x-text="getTotalItems()"></span>件商品</span>
+              </div>
+              
+              <button class="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors duration-200 font-semibold">
+                去结算
+              </button>
             </div>
-        </template>
+          </template>
+        </div>
+      </div>
     </div>
-    <input type="file" id="import-json-file-input" class="hidden" accept=".json">
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, query, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        // === App State ===
-        let currentUser = null;
-        let studentsUnsubscribe = null;
-        let localStudentsData = [];
-        let selectedStudentId = null;
-        let chartInstances = {};
-        const tour = new Shepherd.Tour({
-            useModalOverlay: true,
-            defaultStepOptions: {
-                classes: 'shadow-lg',
-                cancelIcon: { enabled: true },
-                buttons: [
-                    { text: '上一步', action: function() { return this.back(); }, classes: 'shepherd-button-secondary' },
-                    { text: '下一步', action: function() { return this.next(); } }
-                ]
+  </div>
+
+  <!-- Product Detail Modal -->
+  <template x-if="selectedProduct">
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-6">
+            <h2 class="text-2xl font-bold text-gray-800" x-text="selectedProduct.name"></h2>
+            <button @click="selectedProduct = null" class="text-gray-400 hover:text-gray-600">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <img :src="selectedProduct.image" :alt="selectedProduct.name" 
+                   class="w-full h-96 object-cover rounded-lg">
+            </div>
+            
+            <div>
+              <div class="space-y-4">
+                <div>
+                  <p class="text-sm text-gray-600">款号: <span x-text="selectedProduct.model"></span></p>
+                  <p class="text-sm text-gray-600">序号: <span x-text="selectedProduct.sku"></span></p>
+                </div>
+                
+                <div class="flex items-center">
+                  <span class="text-2xl font-bold text-red-600">¥<span x-text="selectedProduct.salePrice"></span></span>
+                  <span class="text-lg text-gray-500 line-through ml-3">¥<span x-text="selectedProduct.retailPrice"></span></span>
+                </div>
+                
+                <p class="text-gray-700" x-text="selectedProduct.description"></p>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">选择颜色</label>
+                  <div class="flex space-x-2">
+                    <template x-for="color in selectedProduct.colors" :key="color">
+                      <button class="px-4 py-2 border border-gray-300 rounded-full text-sm hover:border-red-500 hover:text-red-600 transition-colors duration-200">
+                        <span x-text="color"></span>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">选择尺码</label>
+                  <div class="grid grid-cols-5 gap-2">
+                    <template x-for="size in selectedProduct.sizes" :key="size">
+                      <button class="h-10 border border-gray-300 rounded flex items-center justify-center text-sm hover:border-red-500 hover:text-red-600 transition-colors duration-200 size-btn">
+                        <span x-text="size"></span>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+                
+                <div class="flex space-x-4">
+                  <button @click="addToCart(selectedProduct, '40', '黑色')" 
+                          class="flex-1 bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-semibold">
+                    加入购物车
+                  </button>
+                  <button @click="toggleFavorite(selectedProduct.id)" 
+                          :class="favorites.includes(selectedProduct.id) ? 'bg-red-600 text-white' : 'border-gray-300'"
+                          class="p-3 border rounded-lg transition-colors duration-200">
+                    <svg class="h-5 w-5" :fill="favorites.includes(selectedProduct.id) ? 'currentColor' : 'none'" 
+                         stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.682l-1.318-1.364a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Similar Products -->
+          <div class="mt-12">
+            <h3 class="text-xl font-bold text-gray-800 mb-6">推荐相似款式</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <template x-for="similar in getSimilarProducts()" :key="similar.id">
+                <div class="border rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300 similar-product">
+                  <img :src="similar.image" :alt="similar.name" class="w-full h-48 object-cover">
+                  <div class="p-4">
+                    <h4 class="font-semibold text-gray-800 mb-2" x-text="similar.name"></h4>
+                    <p class="text-sm text-gray-600 mb-2">¥<span x-text="similar.salePrice"></span></p>
+                    <button @click="selectedProduct = similar" class="text-red-600 text-sm font-semibold hover:text-red-700">
+                      查看详情
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Login Modal -->
+  <template x-if="showLoginModal">
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-lg max-w-md w-full p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-800">登录</h2>
+          <button @click="showLoginModal = false" class="text-gray-400 hover:text-gray-600">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="mb-6">
+          <div class="flex border-b">
+            <button @click="loginMethod = 'email'" 
+                    :class="loginMethod === 'email' ? 'text-red-600 border-b-2 border-red-600' : 'text-gray-500'"
+                    class="py-2 px-4 font-medium">
+              邮箱登录
+            </button>
+            <button @click="loginMethod = 'google'" 
+                    :class="loginMethod === 'google' ? 'text-red-600 border-b-2 border-red-600' : 'text-gray-500'"
+                    class="py-2 px-4 font-medium">
+              Google登录
+            </button>
+          </div>
+        </div>
+        
+        <template x-if="loginMethod === 'email'">
+          <form @submit.prevent="handleLogin" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+              <input type="email" x-model="loginForm.email" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+              <input type="password" x-model="loginForm.password" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
+            </div>
+            <button type="submit" 
+                    class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700 transition-colors duration-200 font-semibold">
+              登录
+            </button>
+            <div class="text-center mt-4">
+              <p class="text-sm text-gray-600">
+                还没有账号? 
+                <button type="button" @click="showLoginModal = false; showRegisterModal = true;" 
+                        class="text-red-600 hover:text-red-700">
+                  注册
+                </button>
+              </p>
+            </div>
+          </form>
+        </template>
+        
+        <template x-if="loginMethod === 'google'">
+          <div class="space-y-4">
+            <button @click="handleGoogleLogin" 
+                    class="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-50 transition-colors duration-200 font-semibold flex items-center justify-center">
+              <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              使用Google账号登录
+            </button>
+            <p class="text-sm text-gray-600 text-center mt-4">
+              使用Google登录即表示您同意我们的服务条款和隐私政策。
+            </p>
+          </div>
+        </template>
+      </div>
+    </div>
+  </template>
+
+  <!-- Register Modal -->
+  <template x-if="showRegisterModal">
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-lg max-w-md w-full p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-800">注册</h2>
+          <button @click="showRegisterModal = false" class="text-gray-400 hover:text-gray-600">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <form @submit.prevent="handleRegister" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+            <input type="text" x-model="registerForm.name" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+            <input type="email" x-model="registerForm.email" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+            <input type="password" x-model="registerForm.password" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required minlength="6">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
+            <input type="password" x-model="registerForm.confirmPassword" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" required>
+          </div>
+          <button type="submit" 
+                  class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700 transition-colors duration-200 font-semibold">
+            注册
+          </button>
+          <div class="text-center mt-4">
+            <p class="text-sm text-gray-600">
+              已有账号? 
+              <button type="button" @click="showRegisterModal = false; showLoginModal = true;" 
+                      class="text-red-600 hover:text-red-700">
+                登录
+              </button>
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </template>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white mt-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <h3 class="text-lg font-semibold mb-4">361°</h3>
+          <p class="text-gray-300 text-sm">专业运动品牌，致力于为运动爱好者提供高品质的运动装备。</p>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-4">客户服务</h4>
+          <ul class="space-y-2 text-sm text-gray-300">
+            <li><a href="#" class="hover:text-white">帮助中心</a></li>
+            <li><a href="#" class="hover:text-white">配送信息</a></li>
+            <li><a href="#" class="hover:text-white">退换货政策</a></li>
+            <li><a href="#" class="hover:text-white">联系我们</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-4">关于我们</h4>
+          <ul class="space-y-2 text-sm text-gray-300">
+            <li><a href="#" class="hover:text-white">品牌故事</a></li>
+            <li><a href="#" class="hover:text-white">新闻中心</a></li>
+            <li><a href="#" class="hover:text-white">社会责任</a></li>
+            <li><a href="#" class="hover:text-white">加入我们</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-4">订阅我们</h4>
+          <p class="text-gray-300 text-sm mb-4">获取最新产品信息和优惠活动</p>
+          <div class="flex">
+            <input type="email" placeholder="您的邮箱" 
+                   class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-l text-sm focus:outline-none">
+            <button class="bg-red-600 px-4 py-2 rounded-r text-sm font-semibold">
+              订阅
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
+        <p>&copy; 2024 361°. 保留所有权利。</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function app() {
+      return {
+        activeCategory: 'all',
+        searchTerm: '',
+        cart: [],
+        favorites: [],
+        selectedProduct: null,
+        showCart: false,
+        showLoginModal: false,
+        showRegisterModal: false,
+        loginMethod: 'email',
+        user: null,
+        loginForm: { email: '', password: '' },
+        registerForm: { name: '', email: '', password: '', confirmPassword: '' },
+        
+        categories: [
+          { id: 'all', name: '全部' },
+          { id: 'running', name: '跑步' },
+          { id: 'lifestyle', name: '休闲' },
+          { id: 'basketball', name: '篮球' }
+        ],
+        
+        products: [
+          {
+            id: 1,
+            name: "361° ULTRA 专业跑步鞋",
+            image: "https://placehold.co/400x400/1e40af/ffffff?text=361°+ULTRA+Running",
+            category: "running",
+            sku: "361R001-01",
+            model: "ULTRA-2024",
+            retailPrice: 899,
+            salePrice: 699,
+            sizes: ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"],
+            colors: ["蓝色", "黑色", "白色"],
+            description: "采用QU!KFOAM中底科技，提供卓越缓震性能，适合长距离跑步训练。",
+            isNew: true
+          },
+          {
+            id: 2,
+            name: "361° SPHERE 休闲运动鞋",
+            image: "https://placehold.co/400x400/dc2626/ffffff?text=361°+SPHERE",
+            category: "lifestyle",
+            sku: "361L002-02",
+            model: "SPHERE-2024",
+            retailPrice: 599,
+            salePrice: 459,
+            sizes: ["37", "38", "39", "40", "41", "42", "43", "44"],
+            colors: ["红色", "灰色", "绿色"],
+            description: "时尚都市风格，轻盈舒适，适合日常穿着和轻度运动。",
+            isNew: false
+          },
+          {
+            id: 3,
+            name: "361° BASKET 篮球训练鞋",
+            image: "https://placehold.co/400x400/7c2d12/ffffff?text=361°+BASKET",
+            category: "basketball",
+            sku: "361B003-03",
+            model: "BASKET-2024",
+            retailPrice: 799,
+            salePrice: 649,
+            sizes: ["38", "39", "40", "41", "42", "43", "44", "45"],
+            colors: ["黑色", "蓝色", "橙色"],
+            description: "专业篮球鞋设计，提供出色支撑和抓地力，适合球场表现。",
+            isNew: true
+          },
+          {
+            id: 4,
+            name: "361° WALK 健步鞋",
+            image: "https://placehold.co/400x400/059669/ffffff?text=361°+WALK",
+            category: "lifestyle",
+            sku: "361W004-04",
+            model: "WALK-2024",
+            retailPrice: 659,
+            salePrice: 529,
+            sizes: ["39", "40", "41", "42", "43", "44", "45", "46"],
+            colors: ["白色", "蓝色", "灰色"],
+            description: "专为健步设计，提供全天候舒适体验，适合日常步行和轻运动。",
+            isNew: false
+          }
+        ],
+        
+        get filteredProducts() {
+          return this.products.filter(product => {
+            const matchesCategory = this.activeCategory === 'all' || product.category === this.activeCategory;
+            const matchesSearch = product.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                                 product.model.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                                 product.sku.toLowerCase().includes(this.searchTerm.toLowerCase());
+            return matchesCategory && matchesSearch;
+          });
+        },
+        
+        toggleFavorite(productId) {
+          if (!this.user) {
+            this.showLoginModal = true;
+            return;
+          }
+          
+          if (this.favorites.includes(productId)) {
+            this.favorites = this.favorites.filter(id => id !== productId);
+          } else {
+            this.favorites.push(productId);
+          }
+        },
+        
+        addToCart(product, size, color) {
+          if (!this.user) {
+            this.showLoginModal = true;
+            return;
+          }
+          
+          if (!size) {
+            alert('请选择尺码');
+            return;
+          }
+          
+          const cartItem = {
+            id: `${product.id}-${size}-${color}`,
+            ...product,
+            size,
+            color,
+            quantity: 1
+          };
+          
+          const existing = this.cart.find(item => item.id === cartItem.id);
+          if (existing) {
+            existing.quantity++;
+          } else {
+            this.cart.push(cartItem);
+          }
+          
+          this.selectedProduct = null;
+        },
+        
+        removeFromCart(cartItemId) {
+          this.cart = this.cart.filter(item => item.id !== cartItemId);
+        },
+        
+        updateQuantity(cartItemId, newQuantity) {
+          if (newQuantity === 0) {
+            this.removeFromCart(cartItemId);
+          } else {
+            const item = this.cart.find(item => item.id === cartItemId);
+            if (item) {
+              item.quantity = newQuantity;
             }
-        });
-        let confirmCallback = null;
-        // === UI Elements ===
-        const ui = {
-            loginView: document.getElementById('login-view'),
-            appView: document.getElementById('app-view'),
-            loadingOverlay: document.getElementById('loading-overlay'),
-            errorContainer: document.getElementById('error-container'),
-            statusMessage: document.getElementById('status-message'),
-            userName: document.getElementById('user-name'),
-            userAvatar: document.getElementById('user-avatar'),
-            studentContentContainer: document.getElementById('student-content-container'),
-            confirmModal: { el: document.getElementById('confirm-modal'), title: document.getElementById('confirm-modal-title'), body: document.getElementById('confirm-modal-body'), confirmBtn: document.getElementById('confirm-modal-confirm-btn'), cancelBtn: document.getElementById('confirm-modal-cancel-btn') },
-            importModal: { el: document.getElementById('import-modal'), closeBtn: document.getElementById('import-modal-close-btn'), downloadBtn: document.getElementById('download-template-btn'), fileInput: document.getElementById('import-file-input'), status: document.getElementById('import-status') },
-            manageStudentsModal: { el: document.getElementById('manage-students-modal'), closeBtn: document.getElementById('manage-students-modal-close-btn'), list: document.getElementById('student-management-list'), newNameInput: document.getElementById('new-student-name-modal'), addBtn: document.getElementById('add-student-modal-btn') },
-            overall: { gpa: document.getElementById('overall-gpa-display'), score: document.getElementById('overall-weighted-score-display') },
-            studentMenu: { btn: document.getElementById('student-menu-btn'), options: document.getElementById('student-menu-options'), list: document.getElementById('student-options-list'), addBtn: document.getElementById('add-student-btn'), manageBtn: document.getElementById('manage-students-btn'), currentName: document.getElementById('current-student-name-display') },
-            userMenu: { btn: document.getElementById('user-menu-btn'), options: document.getElementById('user-menu-options') },
-            importJsonFileInput: document.getElementById('import-json-file-input'),
-            deadlines: { list: document.getElementById('deadlines-list') },
-            themeToggle: document.getElementById('theme-checkbox'),
-            courseSearchInput: document.getElementById('course-search-input'),
-            startTourBtn: document.getElementById('start-tour-btn'),
-            addSemesterBtn: document.getElementById('add-semester-btn'),
-            tabNav: document.getElementById('tab-nav'),
-            mainContent: document.getElementById('main-content'),
-            coursesEmptyState: document.getElementById('courses-empty-state'),
-            analyticsEmptyState: document.getElementById('analytics-empty-state'),
-            analyticsContent: document.getElementById('analytics-content'),
-            exportJsonBtn: document.getElementById('export-json-btn'),
-            exportXlsxBtn: document.getElementById('export-xlsx'),
-            importJsonBtn: document.getElementById('import-json-btn'),
-            importDataBtn: document.getElementById('import-data-btn'),
-            radarChart: document.getElementById('course-performance-radar-chart'),
-            barChart: document.getElementById('grade-credit-distribution-bar-chart'),
-        };
-        // === Utility Functions ===
-        function showMessage(message, type = 'success', details = null) {
-            const id = `msg-${Date.now()}`;
-            const div = document.createElement('div');
-            div.id = id;
-            const isError = type === 'error';
-            if (isError) {
-                div.className = 'error-message mb-2 fade-in bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative';
-                div.innerHTML = `<strong class="font-bold">错误:</strong><span class="block sm:inline"> ${message}</span>${details ? `<div class="mt-2 text-sm">${details}</div>` : ''}<span class="absolute top-0 bottom-0 right-0 px-4 py-3"><svg onclick="document.getElementById('${id}').remove()" class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.818l-2.651 3.031a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg></span>`;
-            } else {
-                div.className = 'fade-in p-4 mb-2 rounded-lg bg-green-50 border border-green-200 text-green-800 dark:bg-green-900/30 dark:border-green-700 dark:text-green-300';
-                div.innerHTML = `<div class="flex justify-between items-center"><span><strong>成功:</strong> ${message}</span><button onclick="document.getElementById('${id}').remove()" class="text-lg font-bold text-green-600">&times;</button></div>`;
-            }
-            ui.errorContainer.appendChild(div);
-            setTimeout(() => { div.remove(); }, isError ? 6000 : 3000);
+          }
+        },
+        
+        getTotalPrice() {
+          return this.cart.reduce((total, item) => total + (item.salePrice * item.quantity), 0);
+        },
+        
+        getTotalItems() {
+          return this.cart.reduce((total, item) => total + item.quantity, 0);
+        },
+        
+        getSimilarProducts() {
+          if (!this.selectedProduct) return [];
+          return this.products
+            .filter(product => product.id !== this.selectedProduct.id && product.category === this.selectedProduct.category)
+            .slice(0, 3);
+        },
+        
+        handleLogin() {
+          // 模拟登录
+          if (this.loginForm.email === 'user@example.com' && this.loginForm.password === 'password123') {
+            this.user = { id: 1, email: this.loginForm.email, name: '张三' };
+            this.showLoginModal = false;
+            this.loginForm = { email: '', password: '' };
+          } else {
+            alert('邮箱或密码错误');
+          }
+        },
+        
+        handleRegister() {
+          if (this.registerForm.password !== this.registerForm.confirmPassword) {
+            alert('密码不匹配');
+            return;
+          }
+          
+          this.user = { 
+            id: Math.random(), 
+            email: this.registerForm.email, 
+            name: this.registerForm.name 
+          };
+          
+          this.showRegisterModal = false;
+          this.registerForm = { name: '', email: '', password: '', confirmPassword: '' };
+        },
+        
+        handleGoogleLogin() {
+          this.user = { id: 999, email: 'google.user@gmail.com', name: 'Google 用户' };
+          this.showLoginModal = false;
+        },
+        
+        logout() {
+          this.user = null;
+          this.cart = [];
+          this.favorites = [];
         }
-
-        // 实现 GPA 换算函数
-        function scoreToGpaPoint(score) {
-            if (score >= 90) return 4.0;
-            if (score >= 85) return 3.7;
-            if (score >= 82) return 3.3;
-            if (score >= 78) return 3.0;
-            if (score >= 75) return 2.7;
-            if (score >= 72) return 2.3;
-            if (score >= 68) return 2.0;
-            if (score >= 65) return 1.7;
-            if (score >= 60) return 1.0;
-            return 0.0;
-        }
-
-        function scoreToGrade(score) {
-            if (score >= 90) return 'A';
-            if (score >= 85) return 'A-';
-            if (score >= 82) return 'B+';
-            if (score >= 78) return 'B';
-            if (score >= 75) return 'B-';
-            if (score >= 72) return 'C+';
-            if (score >= 68) return 'C';
-            if (score >= 65) return 'C-';
-            if (score >= 60) return 'D';
-            return 'F';
-        }
-
-        function destroyAllCharts() {
-            Object.keys(chartInstances).forEach(key => {
-                if (chartInstances[key]) {
-                    chartInstances[key].destroy();
-                }
-            });
-            chartInstances = {};
-        }
-
-        function debounce(func, delay) {
-            let timeoutId;
-            return function (...args) {
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => func.apply(this, args), delay);
-            };
-        }
-
-        // === Firebase & App Initialization ===
-        try {
-            const firebaseConfig = {
-                apiKey: "AIzaSyBgYSM_HCYqUSvIN5VifHbX-j9p6IjhVJs",
-                authDomain: "sample-firebase-ai-app-87f8f.firebaseapp.com",
-                projectId: "sample-firebase-ai-app-87f8f",
-                storageBucket: "sample-firebase-ai-app-87f8f.firebasestorage.app",
-                messagingSenderId: "887928734431",
-                appId: "1:887928734431:web:348a48ea1cde4a932cdf6a"
-            };
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            const provider = new GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
-
-            onAuthStateChanged(auth, (user) => {
-                ui.loadingOverlay.style.display = 'flex';
-                if (user) {
-                    currentUser = user;
-                    ui.loginView.style.display = 'none';
-                    ui.appView.style.display = 'block';
-                    ui.userName.textContent = user.displayName;
-                    ui.userAvatar.src = user.photoURL;
-                    setupStudentListener();
-                } else {
-                    currentUser = null;
-                    if (studentsUnsubscribe) studentsUnsubscribe();
-                    ui.appView.style.display = 'none';
-                    ui.loginView.style.display = 'block';
-                    ui.loadingOverlay.style.display = 'none';
-                }
-            });
-
-            function setupStudentListener() {
-                if (!currentUser) return;
-                const studentsColRef = collection(db, 'users', currentUser.uid, 'students');
-                const q = query(studentsColRef);
-                if (studentsUnsubscribe) studentsUnsubscribe();
-                studentsUnsubscribe = onSnapshot(q, (snapshot) => {
-                    localStudentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    localStudentsData.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
-                    if (!selectedStudentId || !localStudentsData.some(s => s.id === selectedStudentId)) {
-                        selectedStudentId = localStudentsData[0]?.id || null;
-                    }
-                    renderApp();
-                    ui.loadingOverlay.style.display = 'none';
-                }, (error) => {
-                    showMessage(`数据加载失败: ${error.message}`, 'error');
-                    ui.loadingOverlay.style.display = 'none';
-                });
-            }
-
-            // === 核心业务逻辑函数实现 ===
-            function renderApp(searchTerm = '') {
-                const student = localStudentsData.find(s => s.id === selectedStudentId);
-                if (!student) {
-                    ui.studentContentContainer.innerHTML = '';
-                    showEmptyState(ui.coursesEmptyState, {
-                        title: '暂无学生数据',
-                        message: '请先添加一个学生来开始记录成绩。',
-                        actionText: '添加学生',
-                        action: () => ui.studentMenu.addBtn.click()
-                    });
-                    ui.coursesEmptyState.classList.remove('hidden');
-                    ui.analyticsEmptyState.classList.remove('hidden');
-                    ui.analyticsContent.classList.add('hidden');
-                    return;
-                }
-                ui.coursesEmptyState.classList.add('hidden');
-                ui.analyticsEmptyState.classList.add('hidden');
-                ui.analyticsContent.classList.remove('hidden');
-                renderStudentContent(student, searchTerm);
-                renderStudentSelector();
-                renderOverallUI(student);
-                renderUpcomingDeadlines(student);
-                renderAnalyticsCharts(student);
-            }
-
-            function renderStudentContent(student, searchTerm = '') {
-                ui.studentContentContainer.innerHTML = '';
-                if (!student.semesters || student.semesters.length === 0) {
-                    const emptyState = document.getElementById('empty-state-template').content.cloneNode(true);
-                    emptyState.querySelector('.empty-state-title').textContent = '暂无学期';
-                    emptyState.querySelector('.empty-state-message').textContent = '添加一个学期来开始记录课程和成绩。';
-                    emptyState.querySelector('.empty-state-action-btn').textContent = '添加学期';
-                    emptyState.querySelector('.empty-state-action-btn').onclick = () => ui.addSemesterBtn.click();
-                    ui.studentContentContainer.appendChild(emptyState);
-                    return;
-                }
-                const filteredSemesters = student.semesters.filter(semester => {
-                    if (!searchTerm) return true;
-                    return semester.courses.some(course => 
-                        course.name.toLowerCase().includes(searchTerm.toLowerCase())
-                    );
-                });
-                filteredSemesters.forEach((semester, index) => {
-                    const semesterEl = createSemesterElement(semester, index);
-                    ui.studentContentContainer.appendChild(semesterEl);
-                });
-            }
-
-            function createSemesterElement(semesterData, semesterIndex) {
-                const template = document.getElementById('semester-template');
-                const clone = template.content.cloneNode(true);
-                const semesterEl = clone.querySelector('.semester-section');
-                const nameInput = semesterEl.querySelector('.semester-name-input');
-                nameInput.value = semesterData.name || `第${semesterIndex + 1}学期`;
-                nameInput.dataset.semesterIndex = semesterIndex;
-                nameInput.addEventListener('input', handleSemesterNameChange);
-
-                const addCourseBtn = semesterEl.querySelector('.add-course-btn');
-                addCourseBtn.dataset.semesterIndex = semesterIndex;
-                addCourseBtn.addEventListener('click', handleAddCourse);
-
-                const copyBtn = semesterEl.querySelector('.copy-semester-btn');
-                copyBtn.dataset.semesterIndex = semesterIndex;
-                copyBtn.addEventListener('click', handleCopySemester);
-
-                const removeBtn = semesterEl.querySelector('.remove-semester-btn');
-                removeBtn.dataset.semesterIndex = semesterIndex;
-                removeBtn.addEventListener('click', handleRemoveSemester);
-
-                const coursesContainer = semesterEl.querySelector('.courses-container');
-                if (semesterData.courses && semesterData.courses.length > 0) {
-                    semesterData.courses.forEach((course, courseIndex) => {
-                        const courseEl = createCourseElement(course, semesterIndex, courseIndex);
-                        coursesContainer.appendChild(courseEl);
-                    });
-                } else {
-                    const emptyState = document.getElementById('empty-state-template').content.cloneNode(true);
-                    emptyState.querySelector('.empty-state-title').textContent = '暂无课程';
-                    emptyState.querySelector('.empty-state-message').textContent = '在本学期中添加一门课程。';
-                    emptyState.querySelector('.empty-state-action-btn').textContent = '添加课程';
-                    emptyState.querySelector('.empty-state-action-btn').onclick = () => addCourseBtn.click();
-                    const emptyStateEl = emptyState;
-                    coursesContainer.appendChild(emptyStateEl);
-                }
-
-                // 初始化拖拽排序
-                new Sortable(coursesContainer, {
-                    handle: '.drag-handle',
-                    animation: 150,
-                    onEnd: function () {
-                        const newOrder = Array.from(coursesContainer.children).map(el => {
-                            return el.dataset.courseIndex;
-                        }).filter(index => index !== undefined);
-                        reorderCourses(semesterIndex, newOrder);
-                    }
-                });
-
-                updateSemesterCalculationsUI(semesterEl, semesterData);
-                return semesterEl;
-            }
-
-            function createCourseElement(courseData, semesterIndex, courseIndex) {
-                const template = document.getElementById('course-template');
-                const clone = template.content.cloneNode(true);
-                const courseEl = clone.querySelector('.course-card');
-                courseEl.dataset.semesterIndex = semesterIndex;
-                courseEl.dataset.courseIndex = courseIndex;
-
-                const nameInput = courseEl.querySelector('.course-name-input');
-                nameInput.value = courseData.name || '未命名课程';
-                nameInput.addEventListener('input', handleCourseNameChange);
-
-                const creditsInput = courseEl.querySelector('.course-credits-input');
-                creditsInput.value = courseData.credits || 3;
-                creditsInput.addEventListener('change', handleCourseCreditsChange);
-
-                const assignmentsContainer = courseEl.querySelector('.assignments-container');
-                if (courseData.assignments && courseData.assignments.length > 0) {
-                    courseData.assignments.forEach((assignment, assignmentIndex) => {
-                        const assignmentEl = createAssignmentElement(assignment, semesterIndex, courseIndex, assignmentIndex);
-                        assignmentsContainer.appendChild(assignmentEl);
-                    });
-                }
-
-                const addAssignmentBtn = courseEl.querySelector('.add-assignment-btn');
-                addAssignmentBtn.dataset.semesterIndex = semesterIndex;
-                addAssignmentBtn.dataset.courseIndex = courseIndex;
-                addAssignmentBtn.addEventListener('click', handleAddAssignment);
-
-                const copyBtn = courseEl.querySelector('.copy-course-btn');
-                copyBtn.dataset.semesterIndex = semesterIndex;
-                copyBtn.dataset.courseIndex = courseIndex;
-                copyBtn.addEventListener('click', handleCopyCourse);
-
-                const removeBtn = courseEl.querySelector('.remove-course-btn');
-                removeBtn.dataset.semesterIndex = semesterIndex;
-                removeBtn.dataset.courseIndex = courseIndex;
-                removeBtn.addEventListener('click', handleRemoveCourse);
-
-                const assignmentsToggleBtn = courseEl.querySelector('.assignments-toggle-btn');
-                assignmentsToggleBtn.addEventListener('click', () => {
-                    courseEl.classList.toggle('assignments-collapsed');
-                });
-
-                const chartCanvas = courseEl.querySelector('.course-assignment-weights-chart');
-                renderAssignmentWeightDistributionChart(chartCanvas, courseData);
-
-                updateCourseCalculationsUI(courseEl, courseData, getStudentFromId(selectedStudentId));
-                return courseEl;
-            }
-
-            function createAssignmentElement(assignmentData, semesterIndex, courseIndex, assignmentIndex) {
-                const template = document.getElementById('assignment-template');
-                const clone = template.content.cloneNode(true);
-                const row = clone.querySelector('.assignment-row');
-                row.dataset.semesterIndex = semesterIndex;
-                row.dataset.courseIndex = courseIndex;
-                row.dataset.assignmentIndex = assignmentIndex;
-
-                const nameInput = row.querySelector('.assignment-name-input');
-                nameInput.value = assignmentData.name || '未命名项目';
-                nameInput.addEventListener('input', handleAssignmentNameChange);
-
-                const tagSelect = row.querySelector('.assignment-tag-select');
-                tagSelect.value = assignmentData.tag || '';
-                tagSelect.addEventListener('change', handleAssignmentTagChange);
-
-                const customTagInput = row.querySelector('.assignment-custom-tag-input');
-                if (assignmentData.tag === '自定义') {
-                    customTagInput.style.display = 'block';
-                    customTagInput.value = assignmentData.customTag || '';
-                }
-                customTagInput.addEventListener('input', handleAssignmentCustomTagChange);
-
-                const weightInput = row.querySelector('.assignment-weight-input');
-                weightInput.value = assignmentData.weight || '';
-                weightInput.addEventListener('change', handleAssignmentWeightChange);
-
-                const scoreInput = row.querySelector('.assignment-score-input');
-                scoreInput.value = assignmentData.score !== undefined ? assignmentData.score : '';
-                scoreInput.addEventListener('change', handleAssignmentScoreChange);
-
-                const maxScoreInput = row.querySelector('.assignment-max-score-input');
-                maxScoreInput.value = assignmentData.maxScore !== undefined ? assignmentData.maxScore : 100;
-                maxScoreInput.addEventListener('change', handleAssignmentMaxScoreChange);
-
-                const dueDateInput = row.querySelector('.assignment-due-date-input');
-                dueDateInput.value = assignmentData.dueDate || '';
-                dueDateInput.addEventListener('change', handleAssignmentDueDateChange);
-
-                const removeBtn = row.querySelector('.remove-assignment-btn');
-                removeBtn.addEventListener('click', handleRemoveAssignment);
-
-                return row;
-            }
-
-            function renderEmptyStates(student) {
-                if (!student.semesters || student.semesters.length === 0) {
-                    showEmptyState(ui.coursesEmptyState, {
-                        title: '暂无学期',
-                        message: '添加一个学期来开始记录课程和成绩。',
-                        actionText: '添加学期',
-                        action: () => ui.addSemesterBtn.click()
-                    });
-                    ui.coursesEmptyState.classList.remove('hidden');
-                } else {
-                    ui.coursesEmptyState.classList.add('hidden');
-                }
-            }
-
-            function showEmptyState(container, { title, message, actionText, action }) {
-                container.innerHTML = '';
-                const template = document.getElementById('empty-state-template');
-                const clone = template.content.cloneNode(true);
-                clone.querySelector('.empty-state-title').textContent = title;
-                clone.querySelector('.empty-state-message').textContent = message;
-                clone.querySelector('.empty-state-action-btn').textContent = actionText;
-                clone.querySelector('.empty-state-action-btn').addEventListener('click', action);
-                container.appendChild(clone);
-            }
-
-            function renderStudentSelector() {
-                ui.studentMenu.list.innerHTML = '';
-                localStudentsData.forEach(student => {
-                    const div = document.createElement('div');
-                    div.className = 'py-1';
-                    const a = document.createElement('a');
-                    a.href = '#';
-                    a.className = 'text-gray-700 dark:text-gray-300 block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700';
-                    a.textContent = student.name;
-                    a.dataset.studentId = student.id;
-                    a.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        selectedStudentId = student.id;
-                        renderApp();
-                        ui.studentMenu.currentName.textContent = student.name;
-                        ui.studentMenu.options.classList.add('hidden');
-                    });
-                    div.appendChild(a);
-                    ui.studentMenu.list.appendChild(div);
-                });
-                const currentStudent = localStudentsData.find(s => s.id === selectedStudentId);
-                ui.studentMenu.currentName.textContent = currentStudent ? currentStudent.name : '选择学生';
-            }
-
-            function updateAllCalculations(student) {
-                let totalWeightedScore = 0;
-                let totalCredits = 0;
-                let totalWeightedGpa = 0;
-
-                student.semesters.forEach(semester => {
-                    let semesterWeightedScore = 0;
-                    let semesterCredits = 0;
-                    let semesterWeightedGpa = 0;
-
-                    semester.courses.forEach(course => {
-                        const credits = parseFloat(course.credits) || 0;
-                        const courseScore = calculateCourseScore(course);
-                        const courseGpa = scoreToGpaPoint(courseScore);
-
-                        const courseContribution = courseScore * credits;
-                        semesterWeightedScore += courseContribution;
-                        semesterCredits += credits;
-                        semesterWeightedGpa += courseGpa * credits;
-                    });
-
-                    semester.totalWeightedScore = semesterWeightedScore;
-                    semester.totalCredits = semesterCredits;
-                    semester.gpa = semesterCredits > 0 ? (semesterWeightedGpa / semesterCredits) : 0;
-                });
-
-                student.semesters.forEach(semester => {
-                    totalWeightedScore += semester.totalWeightedScore;
-                    totalCredits += semester.totalCredits;
-                    totalWeightedGpa += semester.gpa * semester.totalCredits;
-                });
-
-                student.overallGpa = totalCredits > 0 ? (totalWeightedGpa / totalCredits) : 0;
-                student.overallWeightedScore = totalCredits > 0 ? (totalWeightedScore / totalCredits) : 0;
-            }
-
-            function renderOverallUI(student) {
-                updateAllCalculations(student);
-                ui.overall.gpa.textContent = student.overallGpa ? student.overallGpa.toFixed(2) : 'N/A';
-                ui.overall.score.textContent = student.overallWeightedScore ? student.overallWeightedScore.toFixed(2) : 'N/A';
-            }
-
-            function updateSemesterCalculationsUI(semesterEl, semesterData) {
-                const gpaDisplay = semesterEl.querySelector('.semester-gpa-display');
-                const scoreDisplay = semesterEl.querySelector('.semester-weighted-score-display');
-                const chartCanvas = semesterEl.querySelector('.grade-distribution-chart');
-                const placeholder = semesterEl.querySelector('.chart-placeholder');
-
-                if (semesterData.totalCredits > 0) {
-                    gpaDisplay.textContent = semesterData.gpa.toFixed(2);
-                    scoreDisplay.textContent = (semesterData.totalWeightedScore / semesterData.totalCredits).toFixed(2);
-                    // 这里可以添加一个饼图来显示成绩分布
-                    if (placeholder) placeholder.style.display = 'none';
-                    if (chartCanvas) {
-                        // 简单示例：创建一个占位图
-                        const ctx = chartCanvas.getContext('2d');
-                        ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
-                        ctx.fillStyle = '#4f46e5';
-                        ctx.fillRect(10, 10, 100, 100);
-                    }
-                } else {
-                    gpaDisplay.textContent = 'N/A';
-                    scoreDisplay.textContent = 'N/A';
-                    if (placeholder) placeholder.style.display = 'flex';
-                }
-            }
-
-            function updateCourseCalculationsUI(courseEl, courseData, semesterData) {
-                const currentGradeDisplay = courseEl.querySelector('.current-grade-display');
-                const contributionDisplay = courseEl.querySelector('.semester-contribution-display');
-                const credits = parseFloat(courseData.credits) || 0;
-                const courseScore = calculateCourseScore(courseData);
-                const weightedScore = courseScore * credits;
-                const semesterTotalCredits = semesterData?.totalCredits || 0;
-                const contribution = semesterTotalCredits > 0 ? (weightedScore / semesterTotalCredits * 100) : 0;
-
-                currentGradeDisplay.textContent = courseScore ? courseScore.toFixed(2) : 'N/A';
-                contributionDisplay.textContent = contribution ? `${contribution.toFixed(1)}%` : 'N/A';
-
-                const chartCanvas = courseEl.querySelector('.course-assignment-weights-chart');
-                if (chartCanvas) {
-                    renderAssignmentWeightDistributionChart(chartCanvas, courseData);
-                }
-            }
-
-            function renderAnalyticsCharts(student) {
-                destroyAllCharts();
-                renderCoursePerformanceRadarChart(ui.radarChart, student);
-                renderGradeCreditDistributionBarChart(ui.barChart, student);
-            }
-
-            function renderAssignmentWeightDistributionChart(canvas, courseData) {
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                if (chartInstances[canvas.id]) {
-                    chartInstances[canvas.id].destroy();
-                }
-                const labels = courseData.assignments?.map(a => a.name) || [];
-                const weights = courseData.assignments?.map(a => parseFloat(a.weight) || 0) || [];
-                if (weights.reduce((a, b) => a + b, 0) === 0) {
-                    canvas.nextElementSibling.style.display = 'flex';
-                    return;
-                }
-                canvas.nextElementSibling.style.display = 'none';
-                chartInstances[canvas.id] = new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: weights,
-                            backgroundColor: [
-                                '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#fb7185', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#0891b2'
-                            ]
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { position: 'right' },
-                            datalabels: {
-                                color: '#fff',
-                                formatter: (value, ctx) => {
-                                    let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                    let percentage = (value * 100 / sum).toFixed(1) + "%";
-                                    return percentage;
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            function renderCoursePerformanceRadarChart(canvas, studentData) {
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                if (chartInstances['radarChart']) chartInstances['radarChart'].destroy();
-                const courseNames = studentData.semesters?.flatMap(semester => semester.courses.map(c => c.name)) || [];
-                const courseScores = studentData.semesters?.flatMap(semester => semester.courses.map(c => calculateCourseScore(c))) || [];
-                if (courseNames.length === 0) {
-                    canvas.parentElement.querySelector('.chart-placeholder').style.display = 'flex';
-                    return;
-                }
-                canvas.parentElement.querySelector('.chart-placeholder').style.display = 'none';
-                chartInstances['radarChart'] = new Chart(ctx, {
-                    type: 'radar',
-                    data: {
-                        labels: courseNames,
-                        datasets: [{
-                            label: '课程得分',
-                            data: courseScores,
-                            backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                            borderColor: 'rgb(99, 102, 241)',
-                            pointBackgroundColor: 'rgb(99, 102, 241)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgb(99, 102, 241)'
-                        }]
-                    },
-                    options: {
-                        scales: { r: { min: 0, max: 100 } },
-                        plugins: { legend: { position: 'top' } }
-                    }
-                });
-            }
-
-            function renderGradeCreditDistributionBarChart(canvas, studentData) {
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                if (chartInstances['barChart']) chartInstances['barChart'].destroy();
-                const grades = ['A', 'B', 'C', 'D', 'F'];
-                const credits = Array(grades.length).fill(0);
-                studentData.semesters?.forEach(semester => {
-                    semester.courses.forEach(course => {
-                        const score = calculateCourseScore(course);
-                        const grade = scoreToGrade(score);
-                        const credit = parseFloat(course.credits) || 0;
-                        const index = grades.indexOf(grade);
-                        if (index !== -1) credits[index] += credit;
-                    });
-                });
-                if (credits.reduce((a, b) => a + b, 0) === 0) {
-                    canvas.parentElement.querySelector('.chart-placeholder').style.display = 'flex';
-                    return;
-                }
-                canvas.parentElement.querySelector('.chart-placeholder').style.display = 'none';
-                chartInstances['barChart'] = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: grades,
-                        datasets: [{
-                            label: '学分',
-                            data: credits,
-                            backgroundColor: 'rgba(59, 130, 246, 0.6)'
-                        }]
-                    },
-                    options: {
-                        scales: { y: { beginAtZero: true } },
-                        plugins: { legend: { display: false } }
-                    }
-                });
-            }
-
-            function renderUpcomingDeadlines(student) {
-                ui.deadlines.list.innerHTML = '';
-                const now = new Date();
-                const deadlines = [];
-                student.semesters?.forEach((semester, sIdx) => {
-                    semester.courses?.forEach((course, cIdx) => {
-                        course.assignments?.forEach((assignment, aIdx) => {
-                            if (assignment.dueDate) {
-                                const dueDate = new Date(assignment.dueDate);
-                                if (dueDate > now) {
-                                    deadlines.push({
-                                        date: dueDate,
-                                        course: course.name,
-                                        assignment: assignment.name,
-                                        semester: semester.name
-                                    });
-                                }
-                            }
-                        });
-                    });
-                });
-                deadlines.sort((a, b) => a.date - b.date).slice(0, 5).forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800';
-                    div.innerHTML = `
-                        <p class="font-semibold text-sm">${item.assignment}</p>
-                        <p class="text-xs text-muted-text">${item.course} - ${item.semester}</p>
-                        <p class="text-xs text-muted-text mt-1">${item.date.toLocaleDateString()}</p>
-                    `;
-                    ui.deadlines.list.appendChild(div);
-                });
-                if (deadlines.length === 0) {
-                    const div = document.createElement('div');
-                    div.className = 'text-center text-muted-text text-sm py-4';
-                    div.textContent = '没有即将到期的日程。';
-                    ui.deadlines.list.appendChild(div);
-                }
-            }
-
-            // === 新手引导 ===
-            function setupAndStartTour() {
-                // 重新定义 tour 步骤，避免重复定义
-                if (tour.steps.length > 0) {
-                    tour.cancel();
-                }
-                tour.addSteps([
-                    {
-                        id: 'intro',
-                        title: '欢迎使用 GRADESC！',
-                        text: '这是一个全新的多用户成绩与GPA计算器。让我们快速浏览一下主要功能。',
-                        attachTo: { element: '#app-view', on: 'auto' }
-                    },
-                    {
-                        id: 'student-menu',
-                        title: '选择学生',
-                        text: '您可以在这里切换和管理不同的学生档案。',
-                        attachTo: { element: '#student-menu-btn', on: 'right' }
-                    },
-                    {
-                        id: 'tab-nav',
-                        title: '功能标签页',
-                        text: '通过这些标签页在“学业总览”、“课程与成绩”和“图表分析”之间切换。',
-                        attachTo: { element: '#tab-nav', on: 'bottom' }
-                    },
-                    {
-                        id: 'add-semester',
-                        title: '添加学期',
-                        text: '点击这里开始添加您的第一个学期。',
-                        attachTo: { element: '#add-semester-btn', on: 'top' }
-                    },
-                    {
-                        id: 'conclusion',
-                        title: '开始吧！',
-                        text: '现在您已经了解了基本操作。您可以随时点击右上角的用户菜单重新启动引导。祝您使用愉快！',
-                        attachTo: { element: '#user-menu-btn', on: 'left' }
-                    }
-                ]);
-                tour.start();
-            }
-
-            // === 事件处理函数 (Event Handlers) ===
-            function setupEventListeners() {
-                // 下拉菜单
-                const setupDropdown = (btn, options) => {
-                    if (!btn || !options) return;
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        options.classList.toggle('hidden');
-                    });
-                };
-                setupDropdown(ui.studentMenu.btn, ui.studentMenu.options);
-                setupDropdown(ui.userMenu.btn, ui.userMenu.options);
-                window.addEventListener('click', () => { 
-                    if (ui.studentMenu.options) ui.studentMenu.options.classList.add('hidden'); 
-                    if (ui.userMenu.options) ui.userMenu.options.classList.add('hidden'); 
-                });
-
-                // 主题切换
-                if (ui.themeToggle) {
-                    ui.themeToggle.addEventListener('change', () => {
-                        if (ui.themeToggle.checked) {
-                            document.documentElement.classList.add('dark');
-                            localStorage.setItem('theme', 'dark');
-                        } else {
-                            document.documentElement.classList.remove('dark');
-                            localStorage.setItem('theme', 'light');
-                        }
-                    });
-                }
-
-                // 标签页切换
-                if (ui.tabNav) {
-                    ui.tabNav.addEventListener('click', (e) => {
-                        if (e.target.classList.contains('tab-button')) {
-                            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                            e.target.classList.add('active');
-                            const tabId = e.target.dataset.tab;
-                            document.getElementById(`tab-content-${tabId}`).classList.add('active');
-                        }
-                    });
-                }
-
-                // 搜索功能
-                if (ui.courseSearchInput) {
-                    const debouncedSearch = debounce((e) => {
-                        renderApp(e.target.value);
-                    }, 300);
-                    ui.courseSearchInput.addEventListener('input', debouncedSearch);
-                }
-
-                // 新手引导
-                if (ui.startTourBtn) {
-                    ui.startTourBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        setupAndStartTour();
-                    });
-                }
-
-                // 添加学期
-                if (ui.addSemesterBtn) {
-                    ui.addSemesterBtn.addEventListener('click', handleAddSemester);
-                    // 修复快捷键：监听 Ctrl+Shift+A
-                    window.addEventListener('keydown', (e) => {
-                        if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-                            e.preventDefault();
-                            ui.addSemesterBtn.click();
-                        }
-                    });
-                }
-
-                // 其他按钮
-                if (document.getElementById('login-btn')) {
-                    document.getElementById('login-btn').addEventListener('click', () => signInWithPopup(auth, provider).catch(err => showMessage('登录失败', 'error', err.message)));
-                }
-                if (document.getElementById('logout-btn')) {
-                    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).catch(err => showMessage('登出失败', 'error', err.message)));
-                }
-
-                // MODIFIED/ADDED Listeners
-                if (ui.studentMenu.manageBtn) {
-                    ui.studentMenu.manageBtn.addEventListener('click', (e) => { 
-                        e.preventDefault(); 
-                        renderManageStudentsModal(); 
-                        ui.manageStudentsModal.el.style.display = 'flex'; 
-                        if (ui.studentMenu.options) ui.studentMenu.options.classList.add('hidden'); 
-                    });
-                }
-                if (ui.manageStudentsModal.closeBtn) {
-                    ui.manageStudentsModal.closeBtn.addEventListener('click', () => ui.manageStudentsModal.el.style.display = 'none');
-                }
-                if (ui.manageStudentsModal.addBtn) {
-                    ui.manageStudentsModal.addBtn.addEventListener('click', handleAddStudent);
-                }
-                if (ui.manageStudentsModal.newNameInput) {
-                    ui.manageStudentsModal.newNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleAddStudent(); });
-                }
-                if (ui.manageStudentsModal.list) {
-                    ui.manageStudentsModal.list.addEventListener('click', e => {
-                        if (e.target.classList.contains('remove-student-btn')) {
-                            const studentId = e.target.dataset.studentId;
-                            const studentName = e.target.dataset.studentName;
-                            handleRemoveStudent(studentId, studentName);
-                        }
-                    });
-                }
-                if (ui.confirmModal.confirmBtn) {
-                    ui.confirmModal.confirmBtn.addEventListener('click', () => { 
-                        if (typeof confirmCallback === 'function') confirmCallback(); 
-                        hideConfirmModal(); 
-                    });
-                }
-                if (ui.confirmModal.cancelBtn) {
-                    ui.confirmModal.cancelBtn.addEventListener('click', hideConfirmModal);
-                }
-            }
-
-            // === 辅助函数 ===
-            function calculateCourseScore(course) {
-                if (!course.assignments || course.assignments.length === 0) return 0;
-                let totalScore = 0;
-                let totalWeight = 0;
-                course.assignments.forEach(assignment => {
-                    const weight = parseFloat(assignment.weight) || 0;
-                    const score = parseFloat(assignment.score) || 0;
-                    const maxScore = parseFloat(assignment.maxScore) || 100;
-                    if (weight > 0 && maxScore > 0) {
-                        const normalizedScore = (score / maxScore) * 100;
-                        totalScore += normalizedScore * weight;
-                        totalWeight += weight;
-                    }
-                });
-                return totalWeight > 0 ? (totalScore / totalWeight) : 0;
-            }
-
-            function getStudentFromId(id) {
-                return localStudentsData.find(s => s.id === id);
-            }
-
-            function reorderCourses(semesterIndex, newOrder) {
-                const student = getStudentFromId(selectedStudentId);
-                if (!student || !student.semesters[semesterIndex]) return;
-                const semester = student.semesters[semesterIndex];
-                const newCourses = newOrder.map(index => semester.courses[parseInt(index)]);
-                semester.courses = newCourses;
-                updateStudentInFirestore(student);
-            }
-
-            async function updateStudentInFirestore(student) {
-                if (!currentUser) return;
-                try {
-                    const studentDocRef = doc(db, 'users', currentUser.uid, 'students', student.id);
-                    await updateDoc(studentDocRef, {
-                        semesters: student.semesters
-                    });
-                    showMessage('数据已保存！');
-                } catch (error) {
-                    showMessage('保存失败', 'error', error.message);
-                }
-            }
-
-            // === 事件处理函数实现 ===
-            function handleSemesterNameChange(e) {
-                const semesterIndex = parseInt(e.target.dataset.semesterIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (student && student.semesters[semesterIndex]) {
-                    student.semesters[semesterIndex].name = e.target.value;
-                    updateStudentInFirestore(student);
-                }
-            }
-
-            function handleAddSemester() {
-                const student = getStudentFromId(selectedStudentId);
-                if (!student) return;
-                const newSemester = {
-                    name: `第${student.semesters.length + 1}学期`,
-                    courses: [],
-                    createdAt: new Date()
-                };
-                student.semesters.push(newSemester);
-                updateStudentInFirestore(student);
-            }
-
-            function handleAddCourse(e) {
-                const semesterIndex = parseInt(e.target.dataset.semesterIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (!student || !student.semesters[semesterIndex]) return;
-                const newCourse = {
-                    name: '新课程',
-                    credits: 3,
-                    assignments: []
-                };
-                student.semesters[semesterIndex].courses.push(newCourse);
-                updateStudentInFirestore(student);
-            }
-
-            function handleCopySemester(e) {
-                const semesterIndex = parseInt(e.target.dataset.semesterIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (!student || !student.semesters[semesterIndex]) return;
-                const semesterToCopy = JSON.parse(JSON.stringify(student.semesters[semesterIndex]));
-                semesterToCopy.name = `${semesterToCopy.name} (副本)`;
-                semesterToCopy.createdAt = new Date();
-                student.semesters.push(semesterToCopy);
-                updateStudentInFirestore(student);
-            }
-
-            function handleRemoveSemester(e) {
-                const semesterIndex = parseInt(e.target.dataset.semesterIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (!student || !student.semesters[semesterIndex]) return;
-                showConfirmModal(
-                    '删除学期',
-                    `您确定要删除“${student.semesters[semesterIndex].name}”吗？该学期的所有课程和成绩将被永久删除。`,
-                    async () => {
-                        student.semesters.splice(semesterIndex, 1);
-                        await updateStudentInFirestore(student);
-                        renderApp();
-                    }
-                );
-            }
-
-            function handleCourseNameChange(e) {
-                const courseEl = e.target.closest('.course-card');
-                const semesterIndex = parseInt(courseEl.dataset.semesterIndex);
-                const courseIndex = parseInt(courseEl.dataset.courseIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (student && student.semesters[semesterIndex] && student.semesters[semesterIndex].courses[courseIndex]) {
-                    student.semesters[semesterIndex].courses[courseIndex].name = e.target.value;
-                    updateStudentInFirestore(student);
-                }
-            }
-
-            function handleCourseCreditsChange(e) {
-                const courseEl = e.target.closest('.course-card');
-                const semesterIndex = parseInt(courseEl.dataset.semesterIndex);
-                const courseIndex = parseInt(courseEl.dataset.courseIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (student && student.semesters[semesterIndex] && student.semesters[semesterIndex].courses[courseIndex]) {
-                    student.semesters[semesterIndex].courses[courseIndex].credits = parseFloat(e.target.value) || 0;
-                    updateStudentInFirestore(student);
-                }
-            }
-
-            function handleAddAssignment(e) {
-                const semesterIndex = parseInt(e.target.dataset.semesterIndex);
-                const courseIndex = parseInt(e.target.dataset.courseIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (!student || !student.semesters[semesterIndex] || !student.semesters[semesterIndex].courses[courseIndex]) return;
-                const newAssignment = {
-                    name: '新项目',
-                    tag: '',
-                    weight: 10,
-                    score: 0,
-                    maxScore: 100,
-                    dueDate: ''
-                };
-                student.semesters[semesterIndex].courses[courseIndex].assignments.push(newAssignment);
-                updateStudentInFirestore(student);
-            }
-
-            function handleCopyCourse(e) {
-                const semesterIndex = parseInt(e.target.dataset.semesterIndex);
-                const courseIndex = parseInt(e.target.dataset.courseIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (!student || !student.semesters[semesterIndex] || !student.semesters[semesterIndex].courses[courseIndex]) return;
-                const courseToCopy = JSON.parse(JSON.stringify(student.semesters[semesterIndex].courses[courseIndex]));
-                courseToCopy.name = `${courseToCopy.name} (副本)`;
-                student.semesters[semesterIndex].courses.push(courseToCopy);
-                updateStudentInFirestore(student);
-            }
-
-            function handleRemoveCourse(e) {
-                const courseEl = e.target.closest('.course-card');
-                const semesterIndex = parseInt(courseEl.dataset.semesterIndex);
-                const courseIndex = parseInt(courseEl.dataset.courseIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (!student || !student.semesters[semesterIndex] || !student.semesters[semesterIndex].courses[courseIndex]) return;
-                showConfirmModal(
-                    '删除课程',
-                    `您确定要删除“${student.semesters[semesterIndex].courses[courseIndex].name}”吗？`,
-                    async () => {
-                        student.semesters[semesterIndex].courses.splice(courseIndex, 1);
-                        await updateStudentInFirestore(student);
-                        renderApp();
-                    }
-                );
-            }
-
-            function handleAssignmentNameChange(e) {
-                const row = e.target.closest('.assignment-row');
-                const semesterIndex = parseInt(row.dataset.semesterIndex);
-                const courseIndex = parseInt(row.dataset.courseIndex);
-                const assignmentIndex = parseInt(row.dataset.assignmentIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (student && student.semesters[semesterIndex] && student.semesters[semesterIndex].courses[courseIndex] && student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex]) {
-                    student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex].name = e.target.value;
-                    updateStudentInFirestore(student);
-                }
-            }
-
-            function handleAssignmentTagChange(e) {
-                const row = e.target.closest('.assignment-row');
-                const semesterIndex = parseInt(row.dataset.semesterIndex);
-                const courseIndex = parseInt(row.dataset.courseIndex);
-                const assignmentIndex = parseInt(row.dataset.assignmentIndex);
-                const student = getStudentFromId(selectedStudentId);
-                const customTagInput = row.querySelector('.assignment-custom-tag-input');
-                if (e.target.value === '自定义') {
-                    customTagInput.style.display = 'block';
-                } else {
-                    customTagInput.style.display = 'none';
-                }
-                if (student && student.semesters[semesterIndex] && student.semesters[semesterIndex].courses[courseIndex] && student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex]) {
-                    student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex].tag = e.target.value;
-                    updateStudentInFirestore(student);
-                }
-            }
-
-            function handleAssignmentCustomTagChange(e) {
-                const row = e.target.closest('.assignment-row');
-                const semesterIndex = parseInt(row.dataset.semesterIndex);
-                const courseIndex = parseInt(row.dataset.courseIndex);
-                const assignmentIndex = parseInt(row.dataset.assignmentIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (student && student.semesters[semesterIndex] && student.semesters[semesterIndex].courses[courseIndex] && student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex]) {
-                    student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex].customTag = e.target.value;
-                    updateStudentInFirestore(student);
-                }
-            }
-
-            function handleAssignmentWeightChange(e) {
-                const row = e.target.closest('.assignment-row');
-                const semesterIndex = parseInt(row.dataset.semesterIndex);
-                const courseIndex = parseInt(row.dataset.courseIndex);
-                const assignmentIndex = parseInt(row.dataset.assignmentIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (student && student.semesters[semesterIndex] && student.semesters[semesterIndex].courses[courseIndex] && student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex]) {
-                    student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex].weight = parseFloat(e.target.value) || 0;
-                    updateStudentInFirestore(student);
-                }
-            }
-
-            function handleAssignmentScoreChange(e) {
-                const row = e.target.closest('.assignment-row');
-                const semesterIndex = parseInt(row.dataset.semesterIndex);
-                const courseIndex = parseInt(row.dataset.courseIndex);
-                const assignmentIndex = parseInt(row.dataset.assignmentIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (student && student.semesters[semesterIndex] && student.semesters[semesterIndex].courses[courseIndex] && student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex]) {
-                    student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex].score = parseFloat(e.target.value) || 0;
-                    updateStudentInFirestore(student);
-                }
-            }
-
-            function handleAssignmentMaxScoreChange(e) {
-                const row = e.target.closest('.assignment-row');
-                const semesterIndex = parseInt(row.dataset.semesterIndex);
-                const courseIndex = parseInt(row.dataset.courseIndex);
-                const assignmentIndex = parseInt(row.dataset.assignmentIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (student && student.semesters[semesterIndex] && student.semesters[semesterIndex].courses[courseIndex] && student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex]) {
-                    student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex].maxScore = parseFloat(e.target.value) || 100;
-                    updateStudentInFirestore(student);
-                }
-            }
-
-            function handleAssignmentDueDateChange(e) {
-                const row = e.target.closest('.assignment-row');
-                const semesterIndex = parseInt(row.dataset.semesterIndex);
-                const courseIndex = parseInt(row.dataset.courseIndex);
-                const assignmentIndex = parseInt(row.dataset.assignmentIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (student && student.semesters[semesterIndex] && student.semesters[semesterIndex].courses[courseIndex] && student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex]) {
-                    student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex].dueDate = e.target.value;
-                    updateStudentInFirestore(student);
-                }
-            }
-
-            function handleRemoveAssignment(e) {
-                const row = e.target.closest('.assignment-row');
-                const semesterIndex = parseInt(row.dataset.semesterIndex);
-                const courseIndex = parseInt(row.dataset.courseIndex);
-                const assignmentIndex = parseInt(row.dataset.assignmentIndex);
-                const student = getStudentFromId(selectedStudentId);
-                if (!student || !student.semesters[semesterIndex] || !student.semesters[semesterIndex].courses[courseIndex] || !student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex]) return;
-                showConfirmModal(
-                    '删除评分项目',
-                    `您确定要删除“${student.semesters[semesterIndex].courses[courseIndex].assignments[assignmentIndex].name}”吗？`,
-                    async () => {
-                        student.semesters[semesterIndex].courses[courseIndex].assignments.splice(assignmentIndex, 1);
-                        await updateStudentInFirestore(student);
-                        renderApp();
-                    }
-                );
-            }
-
-            // === MODIFIED/ADDED SECTION START ===
-            function renderManageStudentsModal() {
-                ui.manageStudentsModal.list.innerHTML = '';
-                if(localStudentsData.length === 0) {
-                    ui.manageStudentsModal.list.innerHTML = `<p class="text-sm text-center text-gray-500 dark:text-gray-400 py-4">没有学生可管理。</p>`;
-                    return;
-                }
-                localStudentsData.forEach(student => {
-                    const div = document.createElement('div');
-                    div.className = 'flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-md';
-                    div.innerHTML = `
-                        <span class="font-medium">${student.name}</span>
-                        <button data-student-id="${student.id}" data-student-name="${student.name}" class="remove-student-btn btn btn-danger-outline p-2 text-xs">删除</button>
-                    `;
-                    ui.manageStudentsModal.list.appendChild(div);
-                });
-            }
-
-            function showConfirmModal(title, body, onConfirm) {
-                ui.confirmModal.title.textContent = title;
-                ui.confirmModal.body.textContent = body;
-                confirmCallback = onConfirm;
-                ui.confirmModal.el.style.display = 'flex';
-            }
-
-            function hideConfirmModal() {
-                ui.confirmModal.el.style.display = 'none';
-                confirmCallback = null;
-            }
-
-            async function handleAddStudent() {
-                if (!currentUser) {
-                    showMessage('请先登录再添加学生。', 'error');
-                    return;
-                }
-                const studentName = ui.manageStudentsModal.newNameInput.value.trim();
-                if (!studentName) {
-                    showMessage('学生姓名不能为空。', 'error');
-                    return;
-                }
-                try {
-                    const studentsColRef = collection(db, 'users', currentUser.uid, 'students');
-                    await addDoc(studentsColRef, {
-                        name: studentName,
-                        semesters: [],
-                        createdAt: new Date()
-                    });
-                    showMessage(`学生 "${studentName}" 添加成功！`);
-                    ui.manageStudentsModal.newNameInput.value = '';
-                } catch (error) {
-                    showMessage(`添加学生失败: ${error.message}`, 'error');
-                    console.error("Error adding student: ", error);
-                }
-            }
-
-            function handleRemoveStudent(studentId, studentName) {
-                showConfirmModal(
-                    `删除学生 "${studentName}"`,
-                    '您确定要删除该学生的所有数据吗？此操作无法撤销。',
-                    async () => {
-                        if (!currentUser) {
-                            showMessage('请先登录。', 'error');
-                            return;
-                        }
-                        try {
-                            const studentDocRef = doc(db, 'users', currentUser.uid, 'students', studentId);
-                            await deleteDoc(studentDocRef);
-                            showMessage(`学生 "${studentName}" 已被删除。`);
-                            if (selectedStudentId === studentId) {
-                                selectedStudentId = null;
-                            }
-                        } catch (error) {
-                            showMessage(`删除失败: ${error.message}`, 'error');
-                        }
-                    }
-                );
-            }
-            // === MODIFIED/ADDED SECTION END ===
-
-            // Initial setup
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-                if (ui.themeToggle) ui.themeToggle.checked = true;
-            } else {
-                document.documentElement.classList.remove('dark');
-                if (ui.themeToggle) ui.themeToggle.checked = false;
-            }
-            setupEventListeners();
-        } catch (error) {
-            console.error("初始化失败:", error);
-            showMessage('应用初始化失败', 'error', error.message);
-        }
-    </script>
+      }
+    }
+  </script>
 </body>
 </html>
